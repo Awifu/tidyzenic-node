@@ -1,20 +1,21 @@
 const express = require('express');
-const app = express();
 const path = require('path');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-app.use(express.static('public'));
+// Serve static files from "public"
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Set EJS view engine (if you’re using EJS views)
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Optional route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/dashboard', (req, res) => {
-  res.render('dashboard');
-});
-
-const PORT = process.env.PORT || 3000;
+// Start server
 app.listen(PORT, () => {
-  console.log(`Tidyzenic app running on port ${PORT}`);
+  console.log(`Server running at http://localhost:${PORT}`);
 });

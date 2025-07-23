@@ -1,4 +1,10 @@
 /*! tailwindcss v4.1.11 | MIT License | https://tailwindcss.com */
+.static {
+  position: static;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
 .text-center {
   text-align: center;
 }
