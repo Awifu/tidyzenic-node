@@ -10,26 +10,26 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// === 1. Middleware ===
+// === 1. Security & Middleware ===
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// Use Morgan for logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// === 2. CORS Configuration ===
+// === 2. CORS Setup ===
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://tidyzenic.com',         // ✅ Use your actual domains
+  'https://tidyzenic.com',
   'https://www.tidyzenic.com',
-  /\.tidyzenic\.com$/              // ✅ Allow subdomains
+  /\.tidyzenic\.com$/ // ✅ Allow subdomains
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.some(pattern => pattern instanceof RegExp ? pattern.test(origin) : pattern === origin)) {
+    if (!origin || allowedOrigins.some(pattern =>
+      pattern instanceof RegExp ? pattern.test(origin) : pattern === origin
+    )) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));
@@ -37,19 +37,20 @@ app.use(cors({
   credentials: true
 }));
 
-// === 3. Static Files (HTML, CSS, JS) ===
+// === 3. Serve Static Frontend ===
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
   etag: true
 }));
 
-// === 4. Multi-Tenant Middleware ===
+// === 4. Multi-Tenant Resolver ===
 const tenantResolver = require('./middleware/tenantResolver');
 app.use(tenantResolver);
 
-// === 5. Routes ===
+// === 5. API Routes ===
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
+app.use('/api', require('./routes/business')); // ✅ Must be BEFORE 404
 
 // === 6. Public Page Routes ===
 app.get('/login', (req, res) => {
@@ -64,7 +65,7 @@ app.get('/verified.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'verified.html'));
 });
 
-// === 7. 404 Fallback ===
+// === 7. 404 Handler (Must come AFTER routes) ===
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
