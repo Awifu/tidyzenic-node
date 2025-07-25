@@ -1,71 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Sidebar – Tidyzenic</title>
+  <title>Admin Panel – Tidyzenic</title>
   <link href="/styles.css" rel="stylesheet" />
   <script defer src="/admin/js/sidebar.js"></script>
-  <script defer>
-    // Mobile toggle
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
-    }
-  </script>
 </head>
-<body class="bg-gray-100 flex min-h-screen overflow-x-hidden">
-
-  <!-- Mobile Top Bar -->
-  <header class="md:hidden flex justify-between items-center bg-white shadow px-4 py-3 w-full fixed top-0 z-50">
-    <div class="flex items-center space-x-2">
-      <button onclick="toggleSidebar()" class="text-gray-600 focus:outline-none">
-        ☰
-      </button>
-      <span id="bizName" class="font-semibold text-gray-700">Business</span>
-    </div>
-    <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-8 h-8 rounded-full" />
-  </header>
+<body class="flex h-full bg-gray-100">
+  <!-- Mobile Hamburger -->
+  <div class="md:hidden absolute top-4 left-4 z-50">
+    <button id="toggleSidebar" class="text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </div>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="w-64 bg-white shadow-lg fixed inset-y-0 left-0 z-40 flex flex-col transform md:translate-x-0 -translate-x-full transition-transform duration-300">
-    <div class="p-6 border-b hidden md:flex items-center space-x-3">
-      <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full" />
-      <h1 id="bizName" class="text-lg font-semibold text-gray-800">Business</h1>
+  <aside id="sidebar" class="bg-white w-72 md:translate-x-0 -translate-x-full fixed md:static z-40 h-full shadow-xl transition-transform duration-300 ease-in-out">
+    <div class="p-6 border-b border-gray-200 flex items-center space-x-3">
+      <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow-sm" />
+      <h1 id="bizName" class="text-xl font-semibold text-gray-800 truncate">Business</h1>
     </div>
 
-    <nav class="flex-1 overflow-y-auto p-4 space-y-1 text-gray-700">
-      <a href="/admin/dashboard.html" class="block py-2 px-4 rounded hover:bg-blue-100">🏠 Dashboard</a>
-      <a href="/admin/services.html" class="block py-2 px-4 rounded hover:bg-blue-100">🧹 Services</a>
-      <a href="/admin/bookings.html" class="block py-2 px-4 rounded hover:bg-blue-100">📆 Bookings</a>
-      <a href="/admin/calendar.html" class="block py-2 px-4 rounded hover:bg-blue-100">🗓️ Calendar</a>
-      <a href="/admin/staff.html" class="block py-2 px-4 rounded hover:bg-blue-100">👥 Staff</a>
-      <a href="/admin/clients.html" class="block py-2 px-4 rounded hover:bg-blue-100">👤 Clients</a>
-      <a href="/admin/invoices.html" class="block py-2 px-4 rounded hover:bg-blue-100">📄 Invoices</a>
-      <a href="/admin/payments.html" class="block py-2 px-4 rounded hover:bg-blue-100">💳 Payments</a>
-      <a href="/admin/availability.html" class="block py-2 px-4 rounded hover:bg-blue-100">⏱ Availability</a>
-      <a href="/admin/notifications.html" class="block py-2 px-4 rounded hover:bg-blue-100">🔔 Notifications</a>
-      <a href="/admin/reviews.html" class="block py-2 px-4 rounded hover:bg-blue-100">🌟 Reviews</a>
-      <a href="/admin/marketing.html" class="block py-2 px-4 rounded hover:bg-blue-100">📣 Marketing</a>
-      <a href="/admin/discounts.html" class="block py-2 px-4 rounded hover:bg-blue-100">🏷️ Discounts</a>
-      <a href="/admin/settings.html" class="block py-2 px-4 rounded hover:bg-blue-100">⚙️ Settings</a>
-      <a href="/admin/billing.html" class="block py-2 px-4 rounded hover:bg-blue-100">🧾 Billing</a>
-      <a href="/admin/reports.html" class="block py-2 px-4 rounded hover:bg-blue-100">📊 Reports</a>
-      <a href="/admin/support.html" class="block py-2 px-4 rounded hover:bg-blue-100">🆘 Support</a>
-      <a href="/admin/zapier.html" class="block py-2 px-4 rounded hover:bg-blue-100">⚡ Automations</a>
-      <a href="/admin/ai-assistant.html" class="block py-2 px-4 rounded hover:bg-blue-100">🤖 AI Assistant</a>
+    <nav class="overflow-y-auto h-full p-4 space-y-1 font-medium text-gray-700">
+      <a href="/admin/dashboard.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🏠</span><span>Dashboard</span>
+      </a>
+      <a href="/admin/services.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🧹</span><span>Services</span>
+      </a>
+      <a href="/admin/bookings.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>📆</span><span>Bookings</span>
+      </a>
+      <a href="/admin/calendar.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🗓️</span><span>Calendar</span>
+      </a>
+      <a href="/admin/staff.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>👥</span><span>Staff</span>
+      </a>
+      <a href="/admin/clients.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>👤</span><span>Clients</span>
+      </a>
+      <a href="/admin/invoices.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>📄</span><span>Invoices</span>
+      </a>
+      <a href="/admin/payments.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>💳</span><span>Payments</span>
+      </a>
+      <a href="/admin/availability.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>⏱</span><span>Availability</span>
+      </a>
+      <a href="/admin/notifications.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🔔</span><span>Notifications</span>
+      </a>
+      <a href="/admin/reviews.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🌟</span><span>Reviews</span>
+      </a>
+      <a href="/admin/marketing.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>📣</span><span>Marketing</span>
+      </a>
+      <a href="/admin/discounts.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🏷️</span><span>Discounts</span>
+      </a>
+      <a href="/admin/settings.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>⚙️</span><span>Settings</span>
+      </a>
+      <a href="/admin/billing.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🧾</span><span>Billing</span>
+      </a>
+      <a href="/admin/reports.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>📊</span><span>Reports</span>
+      </a>
+      <a href="/admin/support.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🆘</span><span>Support</span>
+      </a>
+      <a href="/admin/zapier.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>⚡</span><span>Automations</span>
+      </a>
+      <a href="/admin/ai-assistant.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
+        <span>🤖</span><span>AI Assistant</span>
+      </a>
     </nav>
 
-    <div class="p-4 border-t">
-      <button onclick="logout()" class="w-full text-left px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
+    <div class="p-4 border-t border-gray-200">
+      <button onclick="logout()" class="w-full text-left px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
         🚪 Logout
       </button>
     </div>
   </aside>
 
-  <!-- Main Content -->
-  <main class="flex-1 ml-0 md:ml-64 mt-16 md:mt-0 p-6">
-    <h2 class="text-2xl font-semibold mb-4">Welcome to your Admin Dashboard</h2>
-    <!-- Dynamic admin content goes here -->
+  <!-- Main content -->
+  <main class="flex-1 md:ml-72 p-6">
+    <h2 class="text-2xl font-semibold text-gray-800">Welcome to your Admin Dashboard</h2>
+    <p class="text-gray-500 mt-2">Your full control center is on the left 👈</p>
   </main>
+
+  <script>
+    const btn = document.getElementById("toggleSidebar");
+    const sidebar = document.getElementById("sidebar");
+
+    btn?.addEventListener("click", () => {
+      sidebar.classList.toggle("-translate-x-full");
+    });
+
+    async function logout() {
+      // Clear cookies or tokens if needed
+      window.location.href = "/login.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const bizNameEl = document.getElementById("bizName");
+      const logoEl = document.getElementById("logo");
+
+      const subdomain = window.location.hostname.split(".")[0];
+      const API_BASE = location.hostname.includes("localhost")
+        ? "http://localhost:3000"
+        : `https://${subdomain}.tidyzenic.com`;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/business?subdomain=${subdomain}`);
+        const data = await res.json();
+        if (data.business_name) bizNameEl.textContent = data.business_name;
+        if (data.logo_filename) logoEl.src = `/uploads/${data.logo_filename}`;
+      } catch (err) {
+        console.error("⚠️ Failed to load business info:", err);
+      }
+    });
+  </script>
 </body>
 </html>
