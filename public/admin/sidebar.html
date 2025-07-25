@@ -1,133 +1,130 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel – Tidyzenic</title>
-  <link href="/styles.css" rel="stylesheet" />
-  <script defer src="/admin/js/sidebar.js"></script>
-</head>
-<body class="flex h-full bg-gray-100">
-  <!-- Mobile Hamburger -->
-  <div class="md:hidden absolute top-4 left-4 z-50">
-    <button id="toggleSidebar" class="text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
-    </button>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel – Tidyzenic</title>
+    <link href="/styles.css" rel="stylesheet" />
+    <script defer src="/admin/js/sidebar.js"></script>
+  </head>
+  <body class="h-full bg-gradient-to-br from-gray-100 to-white text-gray-900">
+    <!-- Mobile Nav Toggle -->
+    <header class="md:hidden flex items-center justify-between p-4 shadow-sm bg-white sticky top-0 z-50">
+      <div class="flex items-center space-x-3">
+        <button id="menuToggle" class="text-gray-700 focus:outline-none">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span class="font-bold text-lg">Admin</span>
+      </div>
+    </header>
 
-  <!-- Sidebar -->
-  <aside id="sidebar" class="bg-white w-72 md:translate-x-0 -translate-x-full fixed md:static z-40 h-full shadow-xl transition-transform duration-300 ease-in-out">
-    <div class="p-6 border-b border-gray-200 flex items-center space-x-3">
-      <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow-sm" />
-      <h1 id="bizName" class="text-xl font-semibold text-gray-800 truncate">Business</h1>
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <aside
+        id="sidebar"
+        class="fixed inset-y-0 left-0 z-40 w-72 bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:relative md:z-auto md:flex flex-col"
+      >
+        <div class="p-6 border-b flex items-center space-x-4">
+          <img id="logo" src="/assets/logo-placeholder.png" class="w-10 h-10 rounded-full shadow-md" alt="Logo" />
+          <h1 id="bizName" class="text-xl font-bold truncate">Business</h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 font-medium">
+          <a href="/admin/dashboard.html" class="nav-link">🏠 Dashboard</a>
+          <a href="/admin/services.html" class="nav-link">🧹 Services</a>
+          <a href="/admin/bookings.html" class="nav-link">📆 Bookings</a>
+          <a href="/admin/calendar.html" class="nav-link">🗓️ Calendar</a>
+          <a href="/admin/staff.html" class="nav-link">👥 Staff</a>
+          <a href="/admin/clients.html" class="nav-link">👤 Clients</a>
+          <a href="/admin/invoices.html" class="nav-link">📄 Invoices</a>
+          <a href="/admin/payments.html" class="nav-link">💳 Payments</a>
+          <a href="/admin/availability.html" class="nav-link">⏱ Availability</a>
+          <a href="/admin/notifications.html" class="nav-link">🔔 Notifications</a>
+          <a href="/admin/reviews.html" class="nav-link">🌟 Reviews</a>
+          <a href="/admin/marketing.html" class="nav-link">📣 Marketing</a>
+          <a href="/admin/discounts.html" class="nav-link">🏷️ Discounts</a>
+          <a href="/admin/settings.html" class="nav-link">⚙️ Settings</a>
+          <a href="/admin/billing.html" class="nav-link">🧾 Billing</a>
+          <a href="/admin/reports.html" class="nav-link">📊 Reports</a>
+          <a href="/admin/support.html" class="nav-link">🆘 Support</a>
+          <a href="/admin/zapier.html" class="nav-link">⚡ Automations</a>
+          <a href="/admin/ai-assistant.html" class="nav-link">🤖 AI Assistant</a>
+        </nav>
+
+        <div class="p-4 border-t">
+          <button onclick="logout()" class="w-full text-left px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md">
+            🚪 Logout
+          </button>
+        </div>
+      </aside>
+
+      <!-- Overlay for mobile -->
+      <div
+        id="sidebarBackdrop"
+        class="fixed inset-0 z-30 bg-black bg-opacity-40 backdrop-blur-sm hidden md:hidden"
+      ></div>
+
+      <!-- Main Content -->
+      <main class="flex-1 p-6 md:ml-72 overflow-y-auto">
+        <h2 class="text-2xl font-semibold mb-4">Welcome to your Admin Dashboard</h2>
+        <p class="text-gray-600">Manage services, staff, clients, and more all in one place.</p>
+      </main>
     </div>
 
-    <nav class="overflow-y-auto h-full p-4 space-y-1 font-medium text-gray-700">
-      <a href="/admin/dashboard.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🏠</span><span>Dashboard</span>
-      </a>
-      <a href="/admin/services.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🧹</span><span>Services</span>
-      </a>
-      <a href="/admin/bookings.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>📆</span><span>Bookings</span>
-      </a>
-      <a href="/admin/calendar.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🗓️</span><span>Calendar</span>
-      </a>
-      <a href="/admin/staff.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>👥</span><span>Staff</span>
-      </a>
-      <a href="/admin/clients.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>👤</span><span>Clients</span>
-      </a>
-      <a href="/admin/invoices.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>📄</span><span>Invoices</span>
-      </a>
-      <a href="/admin/payments.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>💳</span><span>Payments</span>
-      </a>
-      <a href="/admin/availability.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>⏱</span><span>Availability</span>
-      </a>
-      <a href="/admin/notifications.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🔔</span><span>Notifications</span>
-      </a>
-      <a href="/admin/reviews.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🌟</span><span>Reviews</span>
-      </a>
-      <a href="/admin/marketing.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>📣</span><span>Marketing</span>
-      </a>
-      <a href="/admin/discounts.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🏷️</span><span>Discounts</span>
-      </a>
-      <a href="/admin/settings.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>⚙️</span><span>Settings</span>
-      </a>
-      <a href="/admin/billing.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🧾</span><span>Billing</span>
-      </a>
-      <a href="/admin/reports.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>📊</span><span>Reports</span>
-      </a>
-      <a href="/admin/support.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🆘</span><span>Support</span>
-      </a>
-      <a href="/admin/zapier.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>⚡</span><span>Automations</span>
-      </a>
-      <a href="/admin/ai-assistant.html" class="flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-blue-100">
-        <span>🤖</span><span>AI Assistant</span>
-      </a>
-    </nav>
+    <script>
+      // Toggle for mobile
+      const toggle = document.getElementById("menuToggle");
+      const sidebar = document.getElementById("sidebar");
+      const backdrop = document.getElementById("sidebarBackdrop");
 
-    <div class="p-4 border-t border-gray-200">
-      <button onclick="logout()" class="w-full text-left px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
-        🚪 Logout
-      </button>
-    </div>
-  </aside>
+      toggle?.addEventListener("click", () => {
+        sidebar.classList.toggle("-translate-x-full");
+        backdrop.classList.toggle("hidden");
+      });
 
-  <!-- Main content -->
-  <main class="flex-1 md:ml-72 p-6">
-    <h2 class="text-2xl font-semibold text-gray-800">Welcome to your Admin Dashboard</h2>
-    <p class="text-gray-500 mt-2">Your full control center is on the left 👈</p>
-  </main>
+      backdrop?.addEventListener("click", () => {
+        sidebar.classList.add("-translate-x-full");
+        backdrop.classList.add("hidden");
+      });
 
-  <script>
-    const btn = document.getElementById("toggleSidebar");
-    const sidebar = document.getElementById("sidebar");
-
-    btn?.addEventListener("click", () => {
-      sidebar.classList.toggle("-translate-x-full");
-    });
-
-    async function logout() {
-      // Clear cookies or tokens if needed
-      window.location.href = "/login.html";
-    }
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      const bizNameEl = document.getElementById("bizName");
-      const logoEl = document.getElementById("logo");
-
-      const subdomain = window.location.hostname.split(".")[0];
-      const API_BASE = location.hostname.includes("localhost")
-        ? "http://localhost:3000"
-        : `https://${subdomain}.tidyzenic.com`;
-
-      try {
-        const res = await fetch(`${API_BASE}/api/business?subdomain=${subdomain}`);
-        const data = await res.json();
-        if (data.business_name) bizNameEl.textContent = data.business_name;
-        if (data.logo_filename) logoEl.src = `/uploads/${data.logo_filename}`;
-      } catch (err) {
-        console.error("⚠️ Failed to load business info:", err);
+      async function logout() {
+        window.location.href = "/login.html";
       }
-    });
-  </script>
-</body>
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        const bizNameEl = document.getElementById("bizName");
+        const logoEl = document.getElementById("logo");
+        const subdomain = window.location.hostname.split(".")[0];
+        const API_BASE = location.hostname.includes("localhost")
+          ? "http://localhost:3000"
+          : `https://${subdomain}.tidyzenic.com`;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/business?subdomain=${subdomain}`);
+          const data = await res.json();
+          if (data.business_name) bizNameEl.textContent = data.business_name;
+          if (data.logo_filename) logoEl.src = `/uploads/${data.logo_filename}`;
+        } catch (err) {
+          console.error("⚠️ Failed to load business info:", err);
+        }
+      });
+    </script>
+
+    <style>
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        transition: background 0.2s;
+        color: #374151;
+      }
+      .nav-link:hover {
+        background: #eff6ff;
+      }
+    </style>
+  </body>
 </html>
