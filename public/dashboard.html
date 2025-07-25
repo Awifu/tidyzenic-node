@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TidyZenic Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">TidyZenic</h1>
+    <div class="flex items-center space-x-4">
+      <span id="tenantName" class="text-sm text-gray-600"></span>
+      <button onclick="logout()" class="text-red-500 font-semibold hover:underline">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="p-6">
+    <h2 class="text-2xl font-semibold mb-4">Dashboard</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white p-4 rounded-xl shadow-md">
+        <h3 class="text-lg font-medium">Upcoming Bookings</h3>
+        <p class="text-sm mt-2 text-gray-500">No upcoming bookings yet.</p>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow-md">
+        <h3 class="text-lg font-medium">Cleaners Assigned</h3>
+        <p class="text-sm mt-2 text-gray-500">2 active cleaners</p>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow-md">
+        <h3 class="text-lg font-medium">Revenue This Month</h3>
+        <p class="text-sm mt-2 text-green-500 font-bold">$0.00</p>
+      </div>
+    </div>
+
+    <!-- Add more widgets, charts, or management sections here -->
+  </div>
+
+  <script>
+    // Simulated tenant info (replace with actual API later)
+    document.getElementById('tenantName').innerText = 'Agency: demo';
+
+    function logout() {
+      // Clear auth cookies and redirect to login
+      document.cookie = 'token=; Max-Age=0; path=/';
+      window.location.href = '/login.html';
+    }
+  </script>
+</body>
+</html>
