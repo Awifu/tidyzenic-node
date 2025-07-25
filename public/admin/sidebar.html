@@ -6,15 +6,31 @@
   <title>Admin Sidebar – Tidyzenic</title>
   <link href="/styles.css" rel="stylesheet" />
   <script defer src="/admin/js/sidebar.js"></script>
+  <script defer>
+    // Mobile toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    }
+  </script>
 </head>
-<body class="bg-gray-100 flex min-h-screen">
+<body class="bg-gray-100 flex min-h-screen overflow-x-hidden">
+
+  <!-- Mobile Top Bar -->
+  <header class="md:hidden flex justify-between items-center bg-white shadow px-4 py-3 w-full fixed top-0 z-50">
+    <div class="flex items-center space-x-2">
+      <button onclick="toggleSidebar()" class="text-gray-600 focus:outline-none">
+        ☰
+      </button>
+      <span id="bizName" class="font-semibold text-gray-700">Business</span>
+    </div>
+    <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-8 h-8 rounded-full" />
+  </header>
+
   <!-- Sidebar -->
-  <aside class="w-64 bg-white shadow-lg fixed inset-y-0 left-0 z-40 flex flex-col transition-transform duration-300" id="sidebar">
-    <div class="p-6 border-b">
-      <div class="flex items-center space-x-3">
-        <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full" />
-        <h1 id="bizName" class="text-lg font-semibold text-gray-800">Business</h1>
-      </div>
+  <aside id="sidebar" class="w-64 bg-white shadow-lg fixed inset-y-0 left-0 z-40 flex flex-col transform md:translate-x-0 -translate-x-full transition-transform duration-300">
+    <div class="p-6 border-b hidden md:flex items-center space-x-3">
+      <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full" />
+      <h1 id="bizName" class="text-lg font-semibold text-gray-800">Business</h1>
     </div>
 
     <nav class="flex-1 overflow-y-auto p-4 space-y-1 text-gray-700">
@@ -46,10 +62,10 @@
     </div>
   </aside>
 
-  <!-- Main Content Placeholder -->
-  <main class="ml-64 p-6 w-full">
-    <h2 class="text-xl font-bold">Welcome to your Admin Dashboard</h2>
-    <!-- Dynamic content goes here -->
+  <!-- Main Content -->
+  <main class="flex-1 ml-0 md:ml-64 mt-16 md:mt-0 p-6">
+    <h2 class="text-2xl font-semibold mb-4">Welcome to your Admin Dashboard</h2>
+    <!-- Dynamic admin content goes here -->
   </main>
 </body>
 </html>
