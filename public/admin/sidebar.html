@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Sidebar – Tidyzenic</title>
+  <link href="/styles.css" rel="stylesheet" />
+  <script defer src="/admin/js/sidebar.js"></script>
+</head>
+<body class="bg-gray-100 flex min-h-screen">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg fixed inset-y-0 left-0 z-40 flex flex-col transition-transform duration-300" id="sidebar">
+    <div class="p-6 border-b">
+      <div class="flex items-center space-x-3">
+        <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full" />
+        <h1 id="bizName" class="text-lg font-semibold text-gray-800">Business</h1>
+      </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto p-4 space-y-1 text-gray-700">
+      <a href="/admin/dashboard.html" class="block py-2 px-4 rounded hover:bg-blue-100">🏠 Dashboard</a>
+      <a href="/admin/services.html" class="block py-2 px-4 rounded hover:bg-blue-100">🧹 Services</a>
+      <a href="/admin/bookings.html" class="block py-2 px-4 rounded hover:bg-blue-100">📆 Bookings</a>
+      <a href="/admin/calendar.html" class="block py-2 px-4 rounded hover:bg-blue-100">🗓️ Calendar</a>
+      <a href="/admin/staff.html" class="block py-2 px-4 rounded hover:bg-blue-100">👥 Staff</a>
+      <a href="/admin/clients.html" class="block py-2 px-4 rounded hover:bg-blue-100">👤 Clients</a>
+      <a href="/admin/invoices.html" class="block py-2 px-4 rounded hover:bg-blue-100">📄 Invoices</a>
+      <a href="/admin/payments.html" class="block py-2 px-4 rounded hover:bg-blue-100">💳 Payments</a>
+      <a href="/admin/availability.html" class="block py-2 px-4 rounded hover:bg-blue-100">⏱ Availability</a>
+      <a href="/admin/notifications.html" class="block py-2 px-4 rounded hover:bg-blue-100">🔔 Notifications</a>
+      <a href="/admin/reviews.html" class="block py-2 px-4 rounded hover:bg-blue-100">🌟 Reviews</a>
+      <a href="/admin/marketing.html" class="block py-2 px-4 rounded hover:bg-blue-100">📣 Marketing</a>
+      <a href="/admin/discounts.html" class="block py-2 px-4 rounded hover:bg-blue-100">🏷️ Discounts</a>
+      <a href="/admin/settings.html" class="block py-2 px-4 rounded hover:bg-blue-100">⚙️ Settings</a>
+      <a href="/admin/billing.html" class="block py-2 px-4 rounded hover:bg-blue-100">🧾 Billing</a>
+      <a href="/admin/reports.html" class="block py-2 px-4 rounded hover:bg-blue-100">📊 Reports</a>
+      <a href="/admin/support.html" class="block py-2 px-4 rounded hover:bg-blue-100">🆘 Support</a>
+      <a href="/admin/zapier.html" class="block py-2 px-4 rounded hover:bg-blue-100">⚡ Automations</a>
+      <a href="/admin/ai-assistant.html" class="block py-2 px-4 rounded hover:bg-blue-100">🤖 AI Assistant</a>
+    </nav>
+
+    <div class="p-4 border-t">
+      <button onclick="logout()" class="w-full text-left px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded">
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Placeholder -->
+  <main class="ml-64 p-6 w-full">
+    <h2 class="text-xl font-bold">Welcome to your Admin Dashboard</h2>
+    <!-- Dynamic content goes here -->
+  </main>
+</body>
+</html>
