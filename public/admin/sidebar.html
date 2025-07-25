@@ -6,9 +6,27 @@
     <title>Admin Panel – Tidyzenic</title>
     <link href="/styles.css" rel="stylesheet" />
     <script defer src="/admin/js/sidebar.js"></script>
+    <style>
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        transition: background 0.2s;
+        color: #374151;
+      }
+      .nav-link:hover {
+        background: #eff6ff;
+      }
+      .sidebar-open {
+        transform: translateX(0) !important;
+      }
+    </style>
   </head>
+
   <body class="h-full bg-gradient-to-br from-gray-100 to-white text-gray-900">
-    <!-- Mobile Nav Toggle -->
+    <!-- Mobile Header with Hamburger -->
     <header class="md:hidden flex items-center justify-between p-4 shadow-sm bg-white sticky top-0 z-50">
       <div class="flex items-center space-x-3">
         <button id="menuToggle" class="text-gray-700 focus:outline-none">
@@ -24,7 +42,7 @@
       <!-- Sidebar -->
       <aside
         id="sidebar"
-        class="fixed inset-y-0 left-0 z-40 w-72 bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:relative md:z-auto md:flex flex-col"
+        class="fixed inset-y-0 left-0 z-40 w-72 bg-white shadow-lg transform -translate-x-full md:translate-x-0 md:relative md:z-auto md:flex flex-col transition-transform duration-300 ease-in-out"
       >
         <div class="p-6 border-b flex items-center space-x-4">
           <img id="logo" src="/assets/logo-placeholder.png" class="w-10 h-10 rounded-full shadow-md" alt="Logo" />
@@ -60,33 +78,37 @@
         </div>
       </aside>
 
-      <!-- Overlay for mobile -->
+      <!-- Backdrop for Mobile -->
       <div
         id="sidebarBackdrop"
         class="fixed inset-0 z-30 bg-black bg-opacity-40 backdrop-blur-sm hidden md:hidden"
       ></div>
 
       <!-- Main Content -->
-      <main class="flex-1 p-6 md:ml-72 overflow-y-auto">
+      <main class="flex-1 p-4 md:p-6 overflow-y-auto transition-all duration-300">
         <h2 class="text-2xl font-semibold mb-4">Welcome to your Admin Dashboard</h2>
         <p class="text-gray-600">Manage services, staff, clients, and more all in one place.</p>
       </main>
     </div>
 
+    <!-- Scripts -->
     <script>
-      // Toggle for mobile
       const toggle = document.getElementById("menuToggle");
       const sidebar = document.getElementById("sidebar");
       const backdrop = document.getElementById("sidebarBackdrop");
 
       toggle?.addEventListener("click", () => {
-        sidebar.classList.toggle("-translate-x-full");
-        backdrop.classList.toggle("hidden");
+        sidebar.classList.add("sidebar-open");
+        sidebar.classList.remove("-translate-x-full");
+        backdrop.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
       });
 
       backdrop?.addEventListener("click", () => {
+        sidebar.classList.remove("sidebar-open");
         sidebar.classList.add("-translate-x-full");
         backdrop.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
       });
 
       async function logout() {
@@ -111,20 +133,5 @@
         }
       });
     </script>
-
-    <style>
-      .nav-link {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
-        transition: background 0.2s;
-        color: #374151;
-      }
-      .nav-link:hover {
-        background: #eff6ff;
-      }
-    </style>
   </body>
 </html>
