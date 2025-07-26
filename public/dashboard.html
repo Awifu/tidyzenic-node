@@ -43,7 +43,6 @@
 
   <script>
     // Simulated tenant info (replace with actual API later)
-    document.getElementById('tenantName').innerText = 'Agency: demo';
 
     function logout() {
       // Clear auth cookies and redirect to login
@@ -51,5 +50,34 @@
       window.location.href = '/login.html';
     }
   </script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res = await fetch('/auth/me', { credentials: 'include' });
+      if (!res.ok) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const user = await res.json();
+      console.log('✅ Logged in as:', user.email);
+
+      // Optional: Display user or role
+      document.getElementById('tenantName').innerText = `Logged in as: ${user.email}`;
+    } catch (err) {
+      window.location.href = '/login.html';
+    }
+  });
+
+  function logout() {
+    fetch('/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    }).finally(() => {
+      window.location.href = '/login.html';
+    });
+  }
+</script>
+
 </body>
 </html>

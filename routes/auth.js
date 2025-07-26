@@ -7,8 +7,8 @@ const transporter = require('../utils/mailer');
 
 const router = express.Router();
 
-// === Utility functions ===
-function generateJWT(payload, expiresIn = '1d') {
+// === Utility Functions ===
+function generateJWT(payload, expiresIn = '7d') {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 }
 
@@ -53,7 +53,9 @@ async function sendVerificationEmail(email, token) {
   });
 }
 
+//
 // === POST /auth/login ===
+//
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -78,20 +80,30 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials.' });
 
     const token = generateJWT({
-      id: user.id,
+      user_id: user.id,
       email: user.email,
       role: user.role,
       business_id: user.business_id
     });
 
-    res.status(200).json({ message: 'Login successful', token, role: user.role });
+    // ✅ Set secure HttpOnly cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    res.status(200).json({ role: user.role });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error.' });
   }
 });
 
+//
 // === POST /auth/forgot-password ===
+//
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email is required.' });
@@ -113,7 +125,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     const token = generateResetToken();
-    const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 mins
 
     await pool.query(
       'UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?',
@@ -129,7 +141,9 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+//
 // === POST /auth/reset-password ===
+//
 router.post('/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword || newPassword.length < 8)
@@ -158,7 +172,9 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+//
 // === POST /auth/resend-verification ===
+//
 router.post('/resend-verification', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email is required.' });
@@ -191,7 +207,9 @@ router.post('/resend-verification', async (req, res) => {
   }
 });
 
+//
 // === GET /auth/verify?token=... ===
+//
 router.get('/verify', async (req, res) => {
   const { token } = req.query;
   if (!token) return res.status(400).send('Invalid verification link.');
@@ -215,6 +233,15 @@ router.get('/verify', async (req, res) => {
     console.error('Verification error:', err);
     res.status(500).send('Server error during verification.');
   }
+});
+// === POST /auth/logout ===
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
 });
 
 module.exports = router;

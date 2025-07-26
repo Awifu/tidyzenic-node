@@ -1,34 +1,56 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const bizNameEl = document.getElementById('bizName');
   const logoEl = document.getElementById('logo');
+  const toggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
 
-  const subdomain = window.location.hostname.split('.')[0];
-  const API_BASE = location.hostname.includes('localhost')
-    ? 'http://localhost:3000'
-    : `https://${subdomain}.tidyzenic.com`;
-
+  // 🔄 Fetch business info using backend's tenantResolver
   try {
-    const res = await fetch(`${API_BASE}/api/business?subdomain=${subdomain}`);
+    const res = await fetch('/api/business', { credentials: 'include' });
     const data = await res.json();
 
-    if (data.business_name) {
-      bizNameEl.textContent = data.business_name;
+    console.log('✅ Business data loaded:', data);
+
+    if (data.business_name && bizNameEl) {
+      bizNameEl.textContent = data.business_name.toUpperCase();
     }
 
-    if (data.logo_filename) {
-      logoEl.src = `/uploads/${data.logo_filename}?v=${Date.now()}`;
+    if (data.logo_filename && logoEl) {
+      const logoPath = `/uploads/${data.logo_filename}?v=${Date.now()}`;
+      console.log('🖼️ Logo URL:', logoPath);
+      logoEl.src = logoPath;
+
       logoEl.onerror = () => {
+        console.warn('⚠️ Logo failed to load, using fallback.');
         logoEl.src = '/assets/logo-placeholder.png';
       };
+    } else if (logoEl) {
+      logoEl.src = '/assets/logo-placeholder.png';
     }
-  } catch (err) {
-    console.error('⚠️ Failed to load business info:', err);
-    bizNameEl.textContent = 'My Business';
-    logoEl.src = '/assets/logo-placeholder.png';
+  } catch (error) {
+    console.error('❌ Failed to fetch business info:', error);
+    if (bizNameEl) bizNameEl.textContent = 'Your Business';
+    if (logoEl) logoEl.src = '/assets/logo-placeholder.png';
   }
+
+  // 📱 Mobile sidebar toggle
+  toggle?.addEventListener('click', () => {
+    sidebar?.classList.remove('-translate-x-full');
+    backdrop?.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  });
+
+  // ✖️ Backdrop click to close sidebar
+  backdrop?.addEventListener('click', () => {
+    sidebar?.classList.add('-translate-x-full');
+    backdrop?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  });
 });
 
+// 🔐 Logout redirection
 function logout() {
-  // Future improvement: Clear token from cookie/localStorage
+  // In production: also clear auth token or session
   window.location.href = '/login.html';
 }

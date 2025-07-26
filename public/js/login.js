@@ -92,25 +92,20 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('rememberedEmail');
       }
 
-      localStorage.setItem('authToken', result.token);
+  // Role redirect
+switch (result.role) {
+  case 'superadmin':
+    window.location.href = '/superadmin-dashboard.html';
+    break;
+  case 'admin':
+    window.location.href = '/admin-dashboard.html';
+    break;
+  case 'user':
+  default:
+    window.location.href = '/dashboard.html';
+    break;
+}
 
-      // Role redirect
-      switch (result.role) {
-        case 'superadmin':
-          window.location.href = '/superadmin-dashboard.html';
-          break;
-        case 'admin':
-          window.location.href = '/admin-dashboard.html';
-          break;
-        case 'user':
-        default:
-          window.location.href = '/dashboard.html';
-          break;
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      showError('⚠️ Network error. Please try again.');
-    }
   });
 
   // === Show resend verification prompt ===
