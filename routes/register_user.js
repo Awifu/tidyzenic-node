@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const pool = require('../db');
 
@@ -46,7 +46,6 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Check for existing user and business
     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     const [businesses] = await pool.query('SELECT * FROM businesses WHERE email = ?', [email]);
     const existingUser = users[0] || null;
@@ -56,21 +55,17 @@ router.post('/', async (req, res) => {
     if (existingUser) {
       if (existingUser.is_deleted) {
         const hashed = await bcrypt.hash(password, 10);
+        const token = crypto.randomUUID();
+
         await pool.query(`
           UPDATE users 
-          SET is_deleted = 0, password_hash = ?, is_verified = 0, verification_token = NULL 
+          SET is_deleted = 0, password_hash = ?, is_verified = 0, verification_token = ? 
           WHERE id = ?
-        `, [hashed, existingUser.id]);
+        `, [hashed, token, existingUser.id]);
 
         if (existingUser.business_id) {
           await pool.query('UPDATE businesses SET is_deleted = 0 WHERE id = ?', [existingUser.business_id]);
         }
-
-        const token = jwt.sign(
-          { id: existingUser.id, email, business_id: existingUser.business_id },
-          process.env.JWT_SECRET,
-          { expiresIn: '1d' }
-        );
 
         await sendVerificationEmail(email, token, 'Reactivate Your Tidyzenic Account');
 
@@ -87,11 +82,7 @@ router.post('/', async (req, res) => {
     // === Orphaned business (business exists, but user doesn't) ===
     if (existingBusiness && !existingUser) {
       const hashed = await bcrypt.hash(password, 10);
-      const token = jwt.sign(
-        { email, business_id: existingBusiness.id },
-        process.env.JWT_SECRET,
-        { expiresIn: '1d' }
-      );
+      const token = crypto.randomUUID();
 
       await pool.query(`
         INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token)
@@ -132,16 +123,12 @@ router.post('/', async (req, res) => {
     const businessId = businessResult.insertId;
 
     // === Create new user ===
-    const [userResult] = await pool.query(`
-      INSERT INTO users (business_id, email, password_hash, role, is_verified)
-      VALUES (?, ?, ?, ?, ?)
-    `, [businessId, email, hashedPassword, 'admin', 0]);
+    const token = crypto.randomUUID();
 
-    const token = jwt.sign(
-      { id: userResult.insertId, email, business_id: businessId },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
+    await pool.query(`
+      INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [businessId, email, hashedPassword, 'admin', 0, token]);
 
     await sendVerificationEmail(email, token);
 
