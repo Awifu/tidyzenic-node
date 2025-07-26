@@ -53,9 +53,10 @@ app.use('/auth', require('./routes/auth'));
 app.use('/api', require('./routes/business')); // ✅ Must be BEFORE 404
 
 // === 6. Public Page Routes ===
-app.get('/login', (req, res) => {
+app.get(['/login', '/login.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+
 
 app.get('/reset-password.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
