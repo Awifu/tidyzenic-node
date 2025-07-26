@@ -1,50 +1,24 @@
 const express = require('express');
+const router = express.Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../db');
 const transporter = require('../utils/mailer');
 
-const router = express.Router();
-
-// === Utility Functions ===
-const generateJWT = (payload, expiresIn = '1d') =>
-  jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
-
-const generateResetToken = () => crypto.randomBytes(32).toString('hex');
-
-const buildResetLink = (token) =>
-  `https://${process.env.APP_DOMAIN}/reset-password.html?token=${token}`;
-
-const buildVerificationLink = (token) =>
-  `https://${process.env.APP_DOMAIN}/auth/verify?token=${token}`;
-
-const sendResetEmail = async (email, token) => {
-  const link = buildResetLink(token);
-  return transporter.sendMail({
-    from: `"Tidyzenic Support" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: 'Password Reset Instructions',
-    html: `
-      <p>Hello,</p>
-      <p>You requested a password reset. Click the link below:</p>
-      <a href="${link}">${link}</a>
-      <p>This link expires in 30 minutes.</p>
-    `,
-  });
-};
-
+// === Email helper ===
 const sendVerificationEmail = async (email, token) => {
-  const link = buildVerificationLink(token);
+  const link = `https://${process.env.APP_DOMAIN}/auth/verify?token=${token}`;
+  const html = `
+    <p>Welcome to Tidyzenic!</p>
+    <p>Please verify your email address:</p>
+    <a href="${link}">${link}</a>
+  `;
+
   return transporter.sendMail({
-    from: `"Tidyzenic Support" <${process.env.EMAIL_USER}>`,
+    from: `"Tidyzenic" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Verify Your Tidyzenic Account',
-    html: `
-      <p>Welcome to Tidyzenic!</p>
-      <p>Please verify your email by clicking below:</p>
-      <a href="${link}">${link}</a>
-    `,
+    subject: 'Verify Your Email',
+    html,
   });
 };
 
@@ -66,20 +40,13 @@ router.post('/register', async (req, res) => {
     }
 
     const password_hash = await bcrypt.hash(password, 10);
+    const token = crypto.randomUUID(); // ✅ Unique verification token
 
-    const [result] = await pool.query(
-      `INSERT INTO users (email, password_hash, name, role, business_id)
-       VALUES (?, ?, ?, ?, ?)`,
-      [email, password_hash, name, role, business_id]
+    await pool.query(
+      `INSERT INTO users (email, password_hash, name, role, business_id, is_verified, verification_token)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [email, password_hash, name, role, business_id, 0, token]
     );
-
-    const userId = result.insertId;
-
-    const token = generateJWT({
-      id: userId,
-      email,
-      business_id,
-    }, '1d');
 
     await sendVerificationEmail(email, token);
 
@@ -96,30 +63,25 @@ router.get('/verify', async (req, res) => {
   if (!token) return res.status(400).send('Invalid verification link.');
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = payload.id;
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE verification_token = ?',
+      [token]
+    );
 
-    const [users] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
-
-    if (!users.length)
-      return res.status(404).send('User not found.');
-
-    if (users[0].is_verified)
-      return res.redirect(`https://${process.env.APP_DOMAIN}/verified.html`);
+    if (!users.length) {
+      return res.status(400).send('Invalid or expired token.');
+    }
 
     await pool.query(
-      'UPDATE users SET is_verified = 1 WHERE id = ?',
-      [userId]
+      'UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?',
+      [users[0].id]
     );
 
     res.redirect(`https://${process.env.APP_DOMAIN}/verified.html`);
   } catch (err) {
     console.error('Verification error:', err.message);
-    res.status(400).send('Invalid or expired token.');
+    res.status(500).send('Server error during verification.');
   }
 });
-
-// === Other routes (login, forgot-password, reset-password, logout, resend-verification) ===
-// (you can keep them as is — no changes needed unless you want JWT for reset too)
 
 module.exports = router;
