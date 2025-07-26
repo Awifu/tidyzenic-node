@@ -2,27 +2,28 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const auth = require('../middleware/auth');
-const LRU = require('lru-cache');
+const { LRUCache } = require('lru-cache');
 
-// ⏱ Cache for 5 minutes
-const cache = new LRU({
-  max: 100, // up to 100 tenants
-  ttl: 1000 * 60 * 5 // 5 minutes
+// 🧠 Set up in-memory cache (5 minutes)
+const cache = new LRUCache({
+  max: 100,               // Maximum 100 cached items
+  ttl: 1000 * 60 * 5      // Time-to-live: 5 minutes
 });
 
-// GET /api/business (requires auth + subdomain)
+// 🔐 GET /api/business (Requires token + subdomain from middleware)
 router.get('/business', auth, async (req, res) => {
   const subdomain = req.tenant;
-  const tokenBusinessId = req.user?.business_id;
+  const userBusinessId = req.user?.business_id;
 
   if (!subdomain) {
-    return res.status(400).json({ error: 'Subdomain (tenant) is required' });
+    return res.status(400).json({ error: 'Subdomain is required' });
   }
 
   const cacheKey = `business:${subdomain}`;
   const cached = cache.get(cacheKey);
+
   if (cached) {
-    console.log(`⚡ Cache hit for ${subdomain}`);
+    console.log(`⚡ Cache hit: ${subdomain}`);
     return res.json(cached);
   }
 
@@ -38,13 +39,13 @@ router.get('/business', auth, async (req, res) => {
 
     const business = rows[0];
 
-    // 🔒 Match token to business
-    if (business.id !== tokenBusinessId) {
+    // 🔐 Enforce business match for authenticated user
+    if (business.id !== userBusinessId) {
       return res.status(403).json({ error: 'Unauthorized for this business' });
     }
 
-    cache.set(cacheKey, business); // ✅ Cache it
-    console.log(`✅ Business loaded & cached: ${business.business_name}`);
+    cache.set(cacheKey, business); // ✅ Store in cache
+    console.log(`✅ Cached business: ${business.business_name}`);
 
     res.json(business);
   } catch (err) {
