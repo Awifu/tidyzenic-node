@@ -230,5 +230,42 @@ router.post('/logout', (req, res) => {
   });
   res.json({ message: 'Logged out successfully' });
 });
+//
+// === POST /auth/register ===
+//
+router.post('/register', async (req, res) => {
+  const { email, password, name, role = 'user', business_id } = req.body;
+
+  if (!email || !password || password.length < 8 || !name || !business_id) {
+    return res.status(400).json({ error: 'Missing or invalid fields.' });
+  }
+
+  try {
+    // Check if already exists
+    const [existing] = await pool.query(
+      'SELECT id FROM users WHERE email = ? AND is_deleted = 0',
+      [email]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Email already in use.' });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const verification_token = crypto.randomUUID();
+
+    await pool.query(
+      `INSERT INTO users (email, password_hash, name, role, business_id, verification_token)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [email, password_hash, name, role, business_id, verification_token]
+    );
+
+    await sendVerificationEmail(email, verification_token);
+
+    res.status(201).json({ message: 'Account created. Please check your email to verify.' });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'Server error during registration.' });
+  }
+});
 
 module.exports = router;
