@@ -1,28 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const pool = require('../db');
-const auth = require('../middleware/auth');
-const { LRUCache } = require('lru-cache');
-
-// 🧠 In-memory cache (5 min)
-const cache = new LRUCache({
-  max: 100,
-  ttl: 1000 * 60 * 5
-});
-
-// 🔐 GET /api/business (requires auth + subdomain)
-router.get('/', auth, async (req, res) => {
+// ✅ GET /api/business/public – Get basic business info via subdomain (no auth)
+router.get('/public', async (req, res) => {
   const subdomain = req.tenant;
-  const userBusinessId = req.user?.business_id;
-
   if (!subdomain) {
     return res.status(400).json({ error: 'Subdomain is required' });
   }
 
-  const cacheKey = `business:${subdomain}`;
+  const cacheKey = `public-business:${subdomain}`;
   const cached = cache.get(cacheKey);
   if (cached) {
-    console.log(`⚡ Cache hit: ${subdomain}`);
     return res.json(cached);
   }
 
@@ -36,19 +21,16 @@ router.get('/', auth, async (req, res) => {
       return res.status(404).json({ error: 'Business not found' });
     }
 
-    const business = rows[0];
+    const publicData = {
+      id: rows[0].id,
+      business_name: rows[0].business_name,
+      logo_filename: rows[0].logo_filename
+    };
 
-    if (business.id !== userBusinessId) {
-      return res.status(403).json({ error: 'Unauthorized for this business' });
-    }
-
-    cache.set(cacheKey, business);
-    console.log(`✅ Cached business: ${business.business_name}`);
-    res.json(business);
+    cache.set(cacheKey, publicData);
+    res.json(publicData);
   } catch (err) {
-    console.error('❌ Error fetching business:', err);
+    console.error('❌ Error fetching public business info:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-module.exports = router;
