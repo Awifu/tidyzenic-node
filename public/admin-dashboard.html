@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
 
-  <body class="h-full bg-gray-100 text-gray-900">
+  <body class="min-h-screen bg-gray-100 text-gray-900">
     <!-- Mobile Header -->
     <header class="md:hidden flex items-center justify-between p-4 bg-white shadow z-50 sticky top-0">
       <div class="flex items-center space-x-2">
@@ -20,8 +20,8 @@
       </div>
     </header>
 
-    <div class="flex h-screen overflow-hidden relative">
-      <!-- Sidebar will be injected here -->
+    <div class="flex relative min-h-screen">
+      <!-- Sidebar injected here -->
       <div id="sidebar-container"></div>
 
       <!-- Backdrop for mobile -->
@@ -36,7 +36,7 @@
       </main>
     </div>
 
-    <!-- External sidebar loader script (CSP compliant) -->
+    <!-- Sidebar Loader (external JS) -->
     <script src="/admin/js/load-sidebar.js" defer></script>
   </body>
 </html>
