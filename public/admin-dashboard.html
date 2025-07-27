@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
 
-  <body class="min-h-screen bg-gray-100 text-gray-900">
+  <body class="min-h-screen bg-gray-100 text-gray-900 overflow-auto">
     <!-- Mobile Header -->
     <header class="md:hidden flex items-center justify-between p-4 bg-white shadow z-50 sticky top-0">
       <div class="flex items-center space-x-2">
@@ -21,22 +21,24 @@
     </header>
 
     <div class="flex relative min-h-screen">
-      <!-- Sidebar injected here -->
+      <!-- Sidebar will be injected here -->
       <div id="sidebar-container"></div>
 
-      <!-- Backdrop for mobile -->
+      <!-- Mobile Backdrop -->
       <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
       <!-- Main Content -->
       <main class="flex-1 overflow-y-auto p-4 md:p-8 md:ml-72 transition-all duration-300">
-        <h2 class="text-2xl font-semibold mb-4 text-blue-700">Welcome to your Admin Dashboard</h2>
-        <div class="bg-white p-6 rounded-2xl shadow">
-          <p>Manage your services, bookings, clients and more. Use the sidebar to navigate your admin tools.</p>
+        <div class="max-w-3xl mx-auto">
+          <h2 class="text-2xl font-semibold mb-4 text-blue-700">Welcome to your Admin Dashboard</h2>
+          <div class="bg-white p-6 rounded-2xl shadow">
+            <p>Manage your services, bookings, clients and more. Use the sidebar to navigate your admin tools.</p>
+          </div>
         </div>
       </main>
     </div>
 
-    <!-- Sidebar Loader (external JS) -->
+    <!-- Load Sidebar and Script (CSP-friendly) -->
     <script src="/admin/js/load-sidebar.js" defer></script>
   </body>
 </html>
