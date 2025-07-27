@@ -36,28 +36,18 @@
       </main>
     </div>
 
+    <!-- Dynamically load sidebar and its script -->
     <script>
-      // Dynamically load the sidebar
       fetch('/admin/sidebar.html')
         .then(response => response.text())
         .then(html => {
           document.getElementById('sidebar-container').innerHTML = html;
 
-          // Setup toggle logic AFTER sidebar is injected
-          const menuBtn = document.getElementById('menuToggle');
-          const sidebar = document.getElementById('sidebar');
-          const backdrop = document.getElementById('sidebarBackdrop');
-
-          menuBtn?.addEventListener('click', () => {
-            sidebar?.classList.toggle('-translate-x-full');
-            backdrop?.classList.toggle('hidden');
-          });
-
-          backdrop?.addEventListener('click', () => {
-            sidebar?.classList.add('-translate-x-full');
-            backdrop?.classList.add('hidden');
-          });
-        });
+          const script = document.createElement('script');
+          script.src = '/admin/js/sidebar.js';
+          document.body.appendChild(script);
+        })
+        .catch(error => console.error('Failed to load sidebar:', error));
     </script>
   </body>
 </html>
