@@ -3,21 +3,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const res = await fetch('/api/support', { credentials: 'include' });
-
-    if (!res.ok) {
-      container.innerHTML = '<p class="text-red-600">Unauthorized or failed to load data.</p>';
-      return;
-    }
-
+    if (!res.ok) throw new Error('Failed to fetch tickets');
     const tickets = await res.json();
 
     if (!Array.isArray(tickets)) {
-      container.innerHTML = '<p class="text-red-600">Failed to load support tickets.</p>';
+      container.innerHTML = '<p class="text-red-600">Invalid response format.</p>';
       return;
     }
 
     if (tickets.length === 0) {
-      container.innerHTML = '<p class="text-gray-500">No support tickets yet.</p>';
+      container.innerHTML = '<p class="text-center text-gray-500">No support tickets yet.</p>';
       return;
     }
 
@@ -28,8 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         <p class="mt-2 text-gray-800">${ticket.message}</p>
       </div>
     `).join('');
-  } catch (error) {
-    console.error('❌ Failed to fetch tickets:', error);
-    container.innerHTML = '<p class="text-red-600">Error fetching support data.</p>';
+  } catch (err) {
+    console.error('❌ Support fetch error:', err);
+    container.innerHTML = '<p class="text-red-600">Could not load support tickets.</p>';
   }
 });

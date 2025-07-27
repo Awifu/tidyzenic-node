@@ -20,6 +20,7 @@
       </div>
     </header>
 
+    <!-- Layout -->
     <div class="flex min-h-screen">
       <!-- Sidebar -->
       <div id="sidebar-container" class="w-72 hidden md:block"></div>
@@ -31,15 +32,17 @@
       <main class="flex-1 overflow-y-auto p-4 md:p-8">
         <div class="max-w-3xl mx-auto w-full px-4 md:px-0">
           <h2 class="text-2xl font-semibold mb-4 text-blue-700 text-center">Support Center</h2>
+
           <div id="supportTickets" class="space-y-4">
-            <!-- Support tickets will be injected here -->
+            <!-- Support tickets will be rendered here -->
           </div>
         </div>
       </main>
     </div>
 
-    <!-- External Scripts -->
+    <!-- Scripts -->
     <script src="/admin/js/load-sidebar.js" defer></script>
+    <script src="/admin/js/sidebar.js" defer></script>
     <script src="/admin/js/support-page.js" defer></script>
   </body>
 </html>
