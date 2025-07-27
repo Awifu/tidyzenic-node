@@ -1,18 +1,23 @@
-// middleware/tenantResolver.js
-
 module.exports = (req, res, next) => {
-  const host = req.hostname; // e.g., "client1.tidyzenic.com"
-  const parts = host.split('.');
+  const host = req.headers.host; // ✅ More reliable in prod than req.hostname
+  const parts = host.split('.'); // e.g., client1.tidyzenic.com
 
-  // Example: "client1.tidyzenic.com" => ['client1', 'tidyzenic', 'com']
-  const subdomain = parts.length > 2 ? parts[0] : null;
+  let subdomain = null;
 
-  // Set tenant only if it's not the root domain or 'www'
+  if (parts.length >= 3) {
+    // Remove port if any (e.g., client1.tidyzenic.com:443)
+    parts[0] = parts[0].split(':')[0];
+    subdomain = parts[0];
+  }
+
   if (subdomain && subdomain !== 'www' && subdomain !== 'tidyzenic') {
     req.tenant = subdomain;
   } else {
     req.tenant = null;
   }
+
+  // Optional: log for debug
+  console.log(`🔎 Host: ${host} | Subdomain: ${req.tenant}`);
 
   next();
 };
