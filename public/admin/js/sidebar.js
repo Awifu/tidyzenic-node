@@ -1,3 +1,5 @@
+// public/admin/js/sidebar.js
+
 (async () => {
   const bizNameEl = document.getElementById('bizName');
   const logoEl = document.getElementById('logo');
@@ -5,7 +7,7 @@
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('sidebarBackdrop');
 
-  // Load business info
+  // Load branding
   try {
     const res = await fetch('/api/business', { credentials: 'include' });
     const data = await res.json();
@@ -19,21 +21,20 @@
     if (logoEl) logoEl.src = '/assets/logo-placeholder.png';
   }
 
-  // Toggle sidebar on mobile
+  // 🟢 Toggle open
   toggle?.addEventListener('click', () => {
     sidebar?.classList.remove('-translate-x-full');
     backdrop?.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
   });
 
-  // Close sidebar on backdrop click
+  // 🔴 Toggle close
   backdrop?.addEventListener('click', () => {
     sidebar?.classList.add('-translate-x-full');
     backdrop?.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
   });
-})();
 
-function logout() {
-  window.location.href = '/login.html';
-}
+  // Enable scrolling inside sidebar
+  if (sidebar) sidebar.classList.add('overflow-y-auto');
+})();
