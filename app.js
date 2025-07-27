@@ -61,7 +61,6 @@ app.use(tenantResolver);
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
-app.use('/api/support', require('./routes/support'));
 
 // === 6. Public Pages ===
 const sendPublicFile = (filename) => (req, res) =>
