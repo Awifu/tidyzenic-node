@@ -15,7 +15,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // support inline config/JS loading
       styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
       imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'", 'https://tidyzenic.com', 'https://*.tidyzenic.com'],
@@ -32,16 +32,14 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://tidyzenic.com',
   'https://www.tidyzenic.com',
-  /\.tidyzenic\.com$/ // ✅ Allow subdomains
+  /\.tidyzenic\.com$/
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.some(pattern =>
-      pattern instanceof RegExp ? pattern.test(origin) : pattern === origin
-    )) {
-      return callback(null, true);
-    }
+    if (!origin || allowedOrigins.some(p =>
+      p instanceof RegExp ? p.test(origin) : p === origin
+    )) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
@@ -61,6 +59,7 @@ app.use(tenantResolver);
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
+app.use('/api/support', require('./routes/support'));
 
 // === 6. Public Pages ===
 const sendPublicFile = (filename) => (req, res) =>
