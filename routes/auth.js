@@ -83,5 +83,47 @@ router.get('/verify', async (req, res) => {
     res.status(500).send('Server error during verification.');
   }
 });
+// === POST /auth/login ===
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res.status(400).json({ error: 'Email and password are required.' });
+
+  try {
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE email = ? AND is_deleted = 0',
+      [email]
+    );
+
+    if (!users.length)
+      return res.status(401).json({ error: 'Invalid credentials.' });
+
+    const user = users[0];
+
+    if (!user.is_verified)
+      return res.status(403).json({ error: 'Please verify your account first.' });
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch)
+      return res.status(401).json({ error: 'Invalid credentials.' });
+
+    // Generate token (optional, can also use session/cookie)
+    const token = crypto.randomUUID(); // Can be replaced with JWT if needed
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    res.json({ role: user.role });
+  } catch (err) {
+    console.error('Login error:', err.message);
+    res.status(500).json({ error: 'Server error during login.' });
+  }
+});
 
 module.exports = router;
