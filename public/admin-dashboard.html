@@ -36,18 +36,7 @@
       </main>
     </div>
 
-    <!-- Dynamically load sidebar and its script -->
-    <script>
-      fetch('/admin/sidebar.html')
-        .then(response => response.text())
-        .then(html => {
-          document.getElementById('sidebar-container').innerHTML = html;
-
-          const script = document.createElement('script');
-          script.src = '/admin/js/sidebar.js';
-          document.body.appendChild(script);
-        })
-        .catch(error => console.error('Failed to load sidebar:', error));
-    </script>
+    <!-- External sidebar loader script (CSP compliant) -->
+    <script src="/admin/js/load-sidebar.js" defer></script>
   </body>
 </html>
