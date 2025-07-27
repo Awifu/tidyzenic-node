@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
 
-  <body class="min-h-screen bg-gray-100 text-gray-900">
+  <body class="min-h-screen bg-gray-100 text-gray-900 overflow-auto">
     <!-- Mobile Header -->
-    <header class="md:hidden flex items-center justify-between p-4 bg-white shadow z-50 sticky top-0">
+    <header class="md:hidden flex items-center justify-between p-4 bg-white shadow sticky top-0 z-50">
       <div class="flex items-center space-x-2">
         <button id="menuToggle" class="text-gray-700 focus:outline-none">
           <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -20,26 +20,26 @@
       </div>
     </header>
 
-    <!-- Layout -->
+    <!-- Main Layout -->
     <div class="flex min-h-screen">
-      <!-- Sidebar will be injected here -->
-      <div id="sidebar-container" class="w-72 hidden md:block"></div>
+      <!-- Sidebar (loaded dynamically) -->
+      <div id="sidebar-container"></div>
 
       <!-- Mobile Backdrop -->
       <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
       <!-- Main Content -->
-      <main class="flex-1 overflow-y-auto px-4 py-6 md:px-8">
-        <div class="max-w-3xl w-full mx-auto">
-          <h2 class="text-2xl font-semibold mb-4 text-blue-700">Welcome to your Admin Dashboard</h2>
-          <div class="bg-white p-6 rounded-2xl shadow">
-            <p>Manage your services, bookings, clients and more. Use the sidebar to navigate your admin tools.</p>
-          </div>
-        </div>
-      </main>
+<main class="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+  <div class="max-w-3xl mx-auto w-full">
+    <h2 class="text-2xl font-semibold mb-4 text-blue-700">Welcome to your Admin Dashboard</h2>
+    <div class="bg-white p-6 rounded-2xl shadow">
+      <p>Manage your services, bookings, clients and more. Use the sidebar to navigate your admin tools.</p>
     </div>
+  </div>
+</main>
 
-    <!-- Load Sidebar and JS -->
+</div>
+    <!-- Load Sidebar HTML and JS -->
     <script src="/admin/js/load-sidebar.js" defer></script>
   </body>
 </html>
