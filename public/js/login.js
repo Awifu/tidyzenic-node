@@ -6,14 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const switchDot = document.getElementById('switchDot');
   const loginForm = document.getElementById('loginForm');
 
-  // === Toggle Switch Style ===
-  function updateSwitchUI(isChecked) {
-    switchTrack.classList.toggle('bg-blue-600', isChecked);
-    switchTrack.classList.toggle('bg-gray-300', !isChecked);
-    switchDot.classList.toggle('translate-x-5', isChecked);
-  }
-
-  // === Error Box ===
+  // === UI Helpers ===
   const errorBox = document.createElement('div');
   errorBox.id = 'loginError';
   errorBox.className = 'text-sm text-red-600 mt-2 hidden';
@@ -24,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
     errorBox.classList.remove('hidden');
   };
 
-  // === Toast ===
   const toast = document.createElement('div');
   toast.textContent = 'Email remembered!';
   toast.className =
@@ -37,7 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => toast.classList.add('opacity-0'), 2500);
   };
 
-  // === Load Remembered Email ===
+  const updateSwitchUI = (isChecked) => {
+    switchTrack.classList.toggle('bg-blue-600', isChecked);
+    switchTrack.classList.toggle('bg-gray-300', !isChecked);
+    switchDot.classList.toggle('translate-x-5', isChecked);
+  };
+
+  // === Remembered Email ===
   const savedEmail = localStorage.getItem('rememberedEmail');
   if (savedEmail) {
     emailInput.value = savedEmail;
@@ -47,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
     emailInput.focus();
   }
 
-  // === Toggle iOS Switch UI ===
   rememberMe.addEventListener('change', () => {
     updateSwitchUI(rememberMe.checked);
   });
@@ -56,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorBox.classList.add('hidden');
-    errorBox.innerHTML = ''; // Clear previous
+    errorBox.textContent = '';
 
     const email = emailInput.value.trim();
     const password = passwordInput.value;
@@ -67,18 +64,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-    const response = await fetch('/auth/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  credentials: 'include', // ✅ Add this line
-  body: JSON.stringify({ email, password })
-});
-
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password })
+      });
 
       const result = await response.json();
 
       if (!response.ok) {
-        if (response.status === 403 && result.error === 'Please verify your account first.') {
+        if (response.status === 403 && result.error?.includes('verify')) {
           showUnverifiedPrompt(email);
         } else {
           showError(result.error || 'Login failed. Please try again.');
@@ -86,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Remember email
+      // ✅ Remember email
       if (rememberMe.checked) {
         localStorage.setItem('rememberedEmail', email);
         showToast();
@@ -94,23 +90,21 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('rememberedEmail');
       }
 
-  // Role redirect
-switch (result.role) {
-  case 'superadmin':
-    window.location.href = '/superadmin-dashboard.html';
-    break;
-  case 'admin':
-    window.location.href = '/admin-dashboard.html';
-    break;
-  case 'user':
-  default:
-    window.location.href = '/dashboard.html';
-    break;
-}
-
+      // ✅ Redirect logic
+      if (result.role === 'superadmin') {
+        window.location.href = '/superadmin-dashboard.html';
+      } else if (result.businessSubdomain) {
+        window.location.href = `https://${result.businessSubdomain}.tidyzenic.com/admin/dashboard.html`;
+      } else {
+        showError('Missing business subdomain.');
+      }
+    } catch (err) {
+      console.error('❌ Login request failed:', err);
+      showError('Network error. Please try again.');
+    }
   });
 
-  // === Show resend verification prompt ===
+  // === Resend Verification ===
   function showUnverifiedPrompt(email) {
     showError('Please verify your account first.');
 
@@ -134,13 +128,12 @@ switch (result.role) {
 
         if (res.ok) {
           resendLink.textContent = 'Verification sent!';
-          resendLink.classList.remove('text-blue-600');
-          resendLink.classList.add('text-green-600');
+          resendLink.classList.replace('text-blue-600', 'text-green-600');
         } else {
           resendLink.textContent = data.error || 'Failed to resend';
           resendLink.disabled = false;
         }
-      } catch (err) {
+      } catch {
         resendLink.textContent = 'Network error';
         resendLink.disabled = false;
       }
