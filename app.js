@@ -11,7 +11,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // === 1. Security & Middleware ===
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://tidyzenic.com', 'https://*.tidyzenic.com'],
+    }
+  }
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -43,30 +53,26 @@ app.use(express.static(path.join(__dirname, 'public'), {
   etag: true
 }));
 
-// === 4. Multi-Tenant Resolver ===
+// === 4. Multi-Tenant Middleware ===
 const tenantResolver = require('./middleware/tenantResolver');
 app.use(tenantResolver);
 
 // === 5. API Routes ===
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
-app.use('/api', require('./routes/business')); // ✅ Must be BEFORE 404
+app.use('/api/business', require('./routes/business'));
 app.use('/api/support', require('./routes/support'));
-// === 6. Public Page Routes ===
-app.get(['/login', '/login.html'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
 
+// === 6. Public Pages ===
+const sendPublicFile = (filename) => (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', filename));
 
-app.get('/reset-password.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'reset-password.html'));
-});
+app.get(['/login', '/login.html'], sendPublicFile('login.html'));
+app.get('/reset-password.html', sendPublicFile('reset-password.html'));
+app.get('/verified.html', sendPublicFile('verified.html'));
+app.get('/admin/support.html', sendPublicFile('admin/support.html'));
 
-app.get('/verified.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'verified.html'));
-});
-
-// === 7. 404 Handler (Must come AFTER routes) ===
+// === 7. 404 Handler ===
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
