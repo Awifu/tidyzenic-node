@@ -1,10 +1,7 @@
-// public/admin/js/load-sidebar.js
+console.log('🚀 Loading sidebar...');
 
 fetch('/admin/sidebar.html')
-  .then((res) => {
-    if (!res.ok) throw new Error('Sidebar not found');
-    return res.text();
-  })
+  .then((res) => res.text())
   .then((html) => {
     document.getElementById('sidebar-container').innerHTML = html;
 
@@ -12,7 +9,9 @@ fetch('/admin/sidebar.html')
     script.src = '/admin/js/sidebar.js';
     script.defer = true;
     document.body.appendChild(script);
+
+    console.log('✅ Sidebar injected');
   })
   .catch((err) => {
-    console.error('❌ Failed to load sidebar:', err);
+    console.error('❌ Sidebar load error:', err);
   });

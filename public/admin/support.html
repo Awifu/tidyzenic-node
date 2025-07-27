@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support – Admin Panel | Tidyzenic</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+
+  <body class="min-h-screen bg-gray-100 text-gray-900 overflow-auto">
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between p-4 bg-white shadow z-50 sticky top-0">
+      <div class="flex items-center space-x-2">
+        <button id="menuToggle" class="text-gray-700 focus:outline-none">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span class="font-bold text-lg text-blue-600">Admin</span>
+      </div>
+    </header>
+
+    <!-- Layout -->
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <div id="sidebar-container" class="w-72 hidden md:block"></div>
+
+      <!-- Backdrop -->
+      <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto p-4 md:p-8">
+        <div class="max-w-5xl w-full md:ml-[calc((100vw-288px-1024px)/2)]">
+          <h2 class="text-2xl font-semibold mb-6 text-blue-700">Support Center</h2>
+
+          <!-- Tickets Section -->
+          <section class="bg-white rounded-2xl shadow p-6 mb-8">
+            <h3 class="text-xl font-semibold mb-4">📨 Support Tickets</h3>
+            <p class="text-gray-600 mb-4">View and respond to submitted tickets from your clients.</p>
+            <div class="border border-gray-200 rounded-lg p-4 text-sm text-gray-700 bg-gray-50">
+              No tickets found. Support ticket integration will appear here.
+            </div>
+          </section>
+
+          <!-- Contact Requests -->
+          <section class="bg-white rounded-2xl shadow p-6">
+            <h3 class="text-xl font-semibold mb-4">📞 Contact Requests</h3>
+            <p class="text-gray-600 mb-4">Messages sent through your contact forms will show up here.</p>
+            <div class="border border-gray-200 rounded-lg p-4 text-sm text-gray-700 bg-gray-50">
+              No contact messages yet.
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Load sidebar and logic -->
+    <script src="/admin/js/load-sidebar.js" defer></script>
+  </body>
+</html>
