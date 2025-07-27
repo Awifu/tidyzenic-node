@@ -69,6 +69,7 @@ app.get(['/login', '/login.html'], sendPublicFile('login.html'));
 app.get('/reset-password.html', sendPublicFile('reset-password.html'));
 app.get('/verified.html', sendPublicFile('verified.html'));
 app.get('/admin/support.html', sendPublicFile('admin/support.html'));
+app.get('/admin/dashboard.html', sendPublicFile('admin/dashboard.html')); // ✅ Add this
 
 // === 7. 404 Handler ===
 app.use((req, res) => {
