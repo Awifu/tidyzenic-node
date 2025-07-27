@@ -7,29 +7,23 @@
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('sidebarBackdrop');
 
+  // Branding fetch
   try {
     const res = await fetch('/api/business', { credentials: 'include' });
     const data = await res.json();
-
-    if (data.business_name && bizNameEl) {
-      bizNameEl.textContent = data.business_name.toUpperCase();
-    }
-
+    if (data.business_name && bizNameEl) bizNameEl.textContent = data.business_name.toUpperCase();
     if (data.logo_filename && logoEl) {
-      const logoPath = `/uploads/${data.logo_filename}?v=${Date.now()}`;
-      logoEl.src = logoPath;
+      logoEl.src = `/uploads/${data.logo_filename}?v=${Date.now()}`;
       logoEl.onerror = () => {
         logoEl.src = '/assets/logo-placeholder.png';
       };
-    } else if (logoEl) {
-      logoEl.src = '/assets/logo-placeholder.png';
     }
   } catch (err) {
-    console.error('Failed to fetch business info:', err);
     if (bizNameEl) bizNameEl.textContent = 'Your Business';
     if (logoEl) logoEl.src = '/assets/logo-placeholder.png';
   }
 
+  // Mobile toggle
   toggle?.addEventListener('click', () => {
     sidebar?.classList.remove('-translate-x-full');
     backdrop?.classList.remove('hidden');
