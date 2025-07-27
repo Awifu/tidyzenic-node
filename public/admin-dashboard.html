@@ -20,15 +20,16 @@
       </div>
     </header>
 
-    <div class="flex relative min-h-screen">
+    <!-- Layout Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-[18rem_1fr] min-h-screen">
       <!-- Sidebar will be injected here -->
       <div id="sidebar-container"></div>
 
-      <!-- Mobile Backdrop -->
+      <!-- Backdrop for mobile -->
       <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
       <!-- Main Content -->
-      <main class="flex-1 overflow-y-auto p-4 md:p-8 md:ml-72 transition-all duration-300">
+      <main class="overflow-y-auto p-4 md:p-8">
         <div class="max-w-3xl mx-auto">
           <h2 class="text-2xl font-semibold mb-4 text-blue-700">Welcome to your Admin Dashboard</h2>
           <div class="bg-white p-6 rounded-2xl shadow">
@@ -38,7 +39,7 @@
       </main>
     </div>
 
-    <!-- Load Sidebar and Script (CSP-friendly) -->
+    <!-- Load Sidebar and Script -->
     <script src="/admin/js/load-sidebar.js" defer></script>
   </body>
 </html>
