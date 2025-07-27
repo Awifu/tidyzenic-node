@@ -90,14 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('rememberedEmail');
       }
 
-      // ✅ Redirect logic
-      if (result.role === 'superadmin') {
-        window.location.href = '/superadmin-dashboard.html';
-      } else if (result.businessSubdomain) {
-        window.location.href = `https://${result.businessSubdomain}.tidyzenic.com/admin/dashboard.html`;
+      // ✅ Redirect
+      if (result.redirect) {
+        window.location.href = result.redirect;
       } else {
-        showError('Missing business subdomain.');
+        showError('Missing redirect URL.');
       }
+
     } catch (err) {
       console.error('❌ Login request failed:', err);
       showError('Network error. Please try again.');
