@@ -1,6 +1,20 @@
+// routes/business.js
+
+const express = require('express');
+const router = express.Router();
+const pool = require('../db');
+const { LRUCache } = require('lru-cache');
+
+// 🧠 In-memory cache (5 min)
+const cache = new LRUCache({
+  max: 100,
+  ttl: 1000 * 60 * 5
+});
+
 // ✅ GET /api/business/public – Get basic business info via subdomain (no auth)
 router.get('/public', async (req, res) => {
   const subdomain = req.tenant;
+
   if (!subdomain) {
     return res.status(400).json({ error: 'Subdomain is required' });
   }
@@ -13,7 +27,10 @@ router.get('/public', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      'SELECT id, business_name, logo_filename FROM businesses WHERE subdomain = ? AND is_deleted = 0 LIMIT 1',
+      `SELECT id, business_name, logo_filename
+       FROM businesses
+       WHERE subdomain = ? AND is_deleted = 0
+       LIMIT 1`,
       [subdomain]
     );
 
@@ -34,3 +51,5 @@ router.get('/public', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+module.exports = router;
