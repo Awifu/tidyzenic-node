@@ -6,13 +6,13 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const transporter = require('../utils/mailer');
 
-// === Send Verification Email ===
+// === Helper: Send Email Verification ===
 async function sendVerificationEmail(email, token) {
-  const url = `https://${process.env.APP_DOMAIN}/auth/verify?token=${token}`;
+  const link = `https://${process.env.APP_DOMAIN}/auth/verify?token=${token}`;
   const html = `
     <p>Welcome to Tidyzenic!</p>
-    <p>Please verify your email:</p>
-    <a href="${url}">${url}</a>
+    <p>Please verify your email by clicking the link below:</p>
+    <a href="${link}">${link}</a>
   `;
 
   return transporter.sendMail({
@@ -25,14 +25,18 @@ async function sendVerificationEmail(email, token) {
 
 // === POST /auth/register ===
 router.post('/register', async (req, res) => {
-  const { email, password, name, role = 'user', business_id } = req.body;
+  const { email, password, name, business_id, role = 'user' } = req.body;
+
   if (!email || !password || !name || !business_id || password.length < 8) {
-    return res.status(400).json({ error: 'Missing or invalid fields.' });
+    return res.status(400).json({ error: 'Missing or invalid registration fields.' });
   }
 
   try {
-    const [existing] = await pool.query('SELECT id FROM users WHERE email = ? AND is_deleted = 0', [email]);
-    if (existing.length > 0) {
+    const [exists] = await pool.query(
+      'SELECT id FROM users WHERE email = ? AND is_deleted = 0',
+      [email]
+    );
+    if (exists.length > 0) {
       return res.status(409).json({ error: 'Email already in use.' });
     }
 
@@ -48,25 +52,33 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({ message: 'Account created. Please verify your email.' });
   } catch (err) {
-    console.error('❌ Register error:', err);
-    res.status(500).json({ error: 'Server error during registration.' });
+    console.error('❌ Registration error:', err);
+    res.status(500).json({ error: 'Internal server error during registration.' });
   }
 });
 
 // === GET /auth/verify?token=... ===
 router.get('/verify', async (req, res) => {
   const { token } = req.query;
-  if (!token) return res.status(400).send('Invalid verification link.');
+
+  if (!token) return res.status(400).send('Invalid or missing verification token.');
 
   try {
-    const [users] = await pool.query('SELECT id FROM users WHERE verification_token = ?', [token]);
-    if (!users.length) return res.status(400).send('Invalid or expired token.');
+    const [users] = await pool.query(
+      'SELECT id FROM users WHERE verification_token = ?',
+      [token]
+    );
 
-    await pool.query('UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?', [users[0].id]);
+    if (!users.length) return res.status(400).send('Token expired or invalid.');
+
+    await pool.query(
+      'UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?',
+      [users[0].id]
+    );
 
     res.redirect(`https://${process.env.APP_DOMAIN}/verified.html`);
   } catch (err) {
-    console.error('❌ Verification error:', err.message);
+    console.error('❌ Email verification error:', err);
     res.status(500).send('Server error during verification.');
   }
 });
@@ -74,14 +86,20 @@ router.get('/verify', async (req, res) => {
 // === POST /auth/login ===
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email and password required.' });
+
+  if (!email || !password)
+    return res.status(400).json({ error: 'Email and password are required.' });
 
   try {
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ? AND is_deleted = 0', [email]);
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE email = ? AND is_deleted = 0',
+      [email]
+    );
     if (!users.length) return res.status(401).json({ error: 'Invalid credentials.' });
 
     const user = users[0];
-    if (!user.is_verified) return res.status(403).json({ error: 'Verify your account first.' });
+    if (!user.is_verified)
+      return res.status(403).json({ error: 'Please verify your email first.' });
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials.' });
@@ -96,13 +114,22 @@ router.post('/login', async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
-    res.json({ message: 'Login successful', role: user.role });
+    const [biz] = await pool.query(
+      'SELECT subdomain FROM businesses WHERE id = ? LIMIT 1',
+      [user.business_id]
+    );
+
+    if (!biz.length) return res.status(404).json({ error: 'Business not found.' });
+
+    const redirect = `https://${biz[0].subdomain}.tidyzenic.com/admin/dashboard.html`;
+
+    res.json({ message: 'Login successful', redirect });
   } catch (err) {
-    console.error('❌ Login error:', err.message);
-    res.status(500).json({ error: 'Server error during login.' });
+    console.error('❌ Login error:', err);
+    res.status(500).json({ error: 'Internal server error during login.' });
   }
 });
 
