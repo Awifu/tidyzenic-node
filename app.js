@@ -51,7 +51,7 @@ app.use(tenantResolver);
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api', require('./routes/business')); // ✅ Must be BEFORE 404
-
+app.use('/api/support', require('./routes/support'));
 // === 6. Public Page Routes ===
 app.get(['/login', '/login.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));

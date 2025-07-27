@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Support – Admin Panel | Tidyzenic</title>
+    <title>Support – Tidyzenic</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
 
@@ -16,7 +16,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span class="font-bold text-lg text-blue-600">Admin</span>
+        <span class="font-bold text-lg text-blue-600">Support</span>
       </div>
     </header>
 
@@ -25,36 +25,52 @@
       <!-- Sidebar -->
       <div id="sidebar-container" class="w-72 hidden md:block"></div>
 
-      <!-- Backdrop -->
+      <!-- Mobile Backdrop -->
       <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
       <!-- Main Content -->
       <main class="flex-1 overflow-y-auto p-4 md:p-8">
-        <div class="max-w-5xl w-full md:ml-[calc((100vw-288px-1024px)/2)]">
-          <h2 class="text-2xl font-semibold mb-6 text-blue-700">Support Center</h2>
+        <div class="max-w-3xl mx-auto w-full px-4 md:px-0">
+          <h2 class="text-2xl font-semibold mb-4 text-blue-700 text-center">Support Center</h2>
 
-          <!-- Tickets Section -->
-          <section class="bg-white rounded-2xl shadow p-6 mb-8">
-            <h3 class="text-xl font-semibold mb-4">📨 Support Tickets</h3>
-            <p class="text-gray-600 mb-4">View and respond to submitted tickets from your clients.</p>
-            <div class="border border-gray-200 rounded-lg p-4 text-sm text-gray-700 bg-gray-50">
-              No tickets found. Support ticket integration will appear here.
-            </div>
-          </section>
-
-          <!-- Contact Requests -->
-          <section class="bg-white rounded-2xl shadow p-6">
-            <h3 class="text-xl font-semibold mb-4">📞 Contact Requests</h3>
-            <p class="text-gray-600 mb-4">Messages sent through your contact forms will show up here.</p>
-            <div class="border border-gray-200 rounded-lg p-4 text-sm text-gray-700 bg-gray-50">
-              No contact messages yet.
-            </div>
-          </section>
+          <div id="supportTickets" class="space-y-4">
+            <!-- Fetched support tickets will be injected here -->
+          </div>
         </div>
       </main>
     </div>
 
-    <!-- Load sidebar and logic -->
+    <!-- Scripts -->
     <script src="/admin/js/load-sidebar.js" defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', async () => {
+        const container = document.getElementById('supportTickets');
+        try {
+          const res = await fetch('/api/support', { credentials: 'include' });
+          const tickets = await res.json();
+
+          if (!Array.isArray(tickets)) {
+            container.innerHTML = '<p class="text-red-600">Failed to load support tickets.</p>';
+            return;
+          }
+
+          if (tickets.length === 0) {
+            container.innerHTML = '<p>No support tickets yet.</p>';
+            return;
+          }
+
+          container.innerHTML = tickets.map(ticket => `
+            <div class="bg-white p-4 rounded-xl shadow border">
+              <h3 class="font-semibold text-blue-700">${ticket.subject}</h3>
+              <p class="text-sm text-gray-500">${new Date(ticket.created_at).toLocaleString()}</p>
+              <p class="mt-2 text-gray-800">${ticket.message}</p>
+            </div>
+          `).join('');
+        } catch (error) {
+          console.error('❌ Failed to fetch tickets:', error);
+          container.innerHTML = '<p class="text-red-600">Error fetching support data.</p>';
+        }
+      });
+    </script>
   </body>
 </html>
