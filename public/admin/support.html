@@ -60,21 +60,23 @@
     <script src="/admin/js/load-sidebar.js" defer></script>
     <script src="/admin/js/support-page.js" defer></script>
 
-    <!-- Sidebar Toggle -->
     <script>
-      const menuToggle = document.getElementById('menuToggle');
-      const sidebar = document.getElementById('sidebar-container');
-      const backdrop = document.getElementById('sidebarBackdrop');
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar-container');
+  const backdrop = document.getElementById('sidebarBackdrop');
 
-      menuToggle?.addEventListener('click', () => {
-        sidebar.classList.toggle('hidden');
-        backdrop.classList.toggle('hidden');
-      });
+  menuToggle?.addEventListener('click', () => {
+    sidebar.classList.toggle('-translate-x-full');
+    sidebar.classList.toggle('translate-x-0');
+    backdrop.classList.toggle('hidden');
+  });
 
-      backdrop?.addEventListener('click', () => {
-        sidebar.classList.add('hidden');
-        backdrop.classList.add('hidden');
-      });
-    </script>
+  backdrop?.addEventListener('click', () => {
+    sidebar.classList.add('-translate-x-full');
+    sidebar.classList.remove('translate-x-0');
+    backdrop.classList.add('hidden');
+  });
+</script>
+
   </body>
 </html>
