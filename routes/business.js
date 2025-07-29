@@ -3,22 +3,24 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { LRUCache } = require('lru-cache');
 
-// 🧠 In-memory cache (5 min)
+// ✅ Fix for lru-cache v7+ import
+const LRUCache = require('lru-cache').default;
+
+// 🧠 In-memory cache (5 min TTL)
 const cache = new LRUCache({
   max: 100,
   ttl: 1000 * 60 * 5
 });
 
-// ✅ GET /api/business/public – Get basic business info via subdomain (no auth)
+// ✅ GET /api/business/public – Fetch public business info by subdomain
 router.get('/public', async (req, res) => {
   let subdomain = req.tenant;
 
-  // 🛠 Localhost fallback (for dev use only)
+  // 🛠 Dev fallback for localhost testing
   if (!subdomain && process.env.NODE_ENV !== 'production') {
-    subdomain = 'awifu-labs-pro'; // <-- fallback subdomain for localhost
-    console.log('⚠️ Using fallback subdomain for local testing:', subdomain);
+    subdomain = 'awifu-labs-pro';
+    console.warn('⚠️ Using fallback subdomain for local development:', subdomain);
   }
 
   if (!subdomain) {
@@ -44,15 +46,15 @@ router.get('/public', async (req, res) => {
       return res.status(404).json({ error: 'Business not found' });
     }
 
-    const publicData = {
+    const business = {
       id: rows[0].id,
       business_name: rows[0].business_name,
       logo_filename: rows[0].logo_filename
     };
 
-    cache.set(cacheKey, publicData);
+    cache.set(cacheKey, business);
     console.log('📦 Cached business data for:', subdomain);
-    res.json(publicData);
+    res.json(business);
   } catch (err) {
     console.error('❌ Error fetching public business info:', err);
     res.status(500).json({ error: 'Internal server error' });
