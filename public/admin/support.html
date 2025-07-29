@@ -23,21 +23,21 @@
     </header>
 
     <!-- Layout Container -->
-    <div class="flex min-h-screen">
+    <div class="flex min-h-screen relative">
       <!-- Sidebar -->
-      <div id="sidebar-container"></div>
+      <div id="sidebar-container" class="hidden md:block z-40"></div>
 
       <!-- Mobile Backdrop -->
       <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-60 hidden md:hidden"></div>
 
       <!-- Main Content -->
-      <main class="flex-1 overflow-y-auto p-4 md:p-8">
+      <main class="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
         <div class="max-w-5xl mx-auto">
-          <div class="bg-white/10 backdrop-blur border border-white/10 p-6 rounded-2xl shadow-xl mb-12">
+          <div class="bg-white text-gray-900 p-6 rounded-2xl shadow-xl mb-12">
             <div class="flex items-center justify-between mb-6">
               <div>
-                <h1 class="text-3xl font-bold text-blue-400">📨 Support Tickets</h1>
-                <p class="text-sm text-gray-300 mt-1">All incoming support messages from users</p>
+                <h1 class="text-3xl font-bold text-blue-600">📨 Support Tickets</h1>
+                <p class="text-sm text-gray-600 mt-1">All incoming support messages from users</p>
               </div>
               <div class="text-sm bg-blue-800 text-white px-4 py-2 rounded-xl shadow">
                 <span id="adminBadgeName">Admin</span> · <span id="adminBadgeEmail">email@example.com</span>
@@ -45,7 +45,7 @@
             </div>
 
             <div id="supportTickets" class="space-y-6">
-              <p class="text-gray-400 text-center">Loading tickets...</p>
+              <p class="text-gray-600 text-center">Loading tickets...</p>
             </div>
           </div>
         </div>
@@ -57,7 +57,7 @@
     <script src="/admin/js/load-sidebar.js" defer></script>
     <script src="/admin/js/support-page.js" defer></script>
 
-    <!-- Sidebar Toggle Script -->
+    <!-- Sidebar Toggle -->
     <script>
       const menuToggle = document.getElementById('menuToggle');
       const sidebar = document.getElementById('sidebar-container');
