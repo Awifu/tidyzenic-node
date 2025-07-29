@@ -32,9 +32,11 @@ router.get('/', async (req, res) => {
         t.message,
         t.created_at,
         u.name AS user_name,
-        u.email AS user_email
+        u.email AS user_email,
+        b.email AS business_email
       FROM support_tickets t
       JOIN users u ON t.user_id = u.id
+      JOIN businesses b ON t.business_id = b.id
       WHERE t.business_id = ?
       ORDER BY t.created_at DESC
     `, [user.business_id]);

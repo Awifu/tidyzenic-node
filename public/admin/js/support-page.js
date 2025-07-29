@@ -1,55 +1,41 @@
-// public/admin/js/support-page.js
-
 document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('supportTickets');
-  const nameEl = document.getElementById('adminName');
-  const emailEl = document.getElementById('adminEmail');
-  const initialEl = document.getElementById('adminInitial');
+  const badgeEmail = document.getElementById('adminBadgeEmail');
+  const badgeName = document.getElementById('adminBadgeName');
 
   try {
     const res = await fetch('/api/support', { credentials: 'include' });
     if (!res.ok) throw new Error('Failed to fetch tickets');
-
     const tickets = await res.json();
+
     if (!Array.isArray(tickets)) {
-      container.innerHTML = '<p class="text-red-600">Invalid ticket data.</p>';
+      container.innerHTML = '<p class="text-red-600">Invalid response format.</p>';
       return;
     }
 
     if (tickets.length === 0) {
-      container.innerHTML = '<p class="text-center text-gray-500">No support tickets yet.</p>';
+      container.innerHTML = '<p class="text-center text-gray-400">No support tickets yet.</p>';
       return;
     }
 
-    container.innerHTML = tickets.map(ticket => {
-      const date = new Date(ticket.created_at).toLocaleString();
-      const senderName = ticket.user_name || 'Unknown';
-      const senderEmail = ticket.user_email || 'N/A';
+    // Use the first ticket to extract business email
+    if (tickets[0]?.business_email) badgeEmail.textContent = tickets[0].business_email;
+    if (window.currentUser?.name) badgeName.textContent = window.currentUser.name;
 
-      return `
-        <div class="bg-white p-5 rounded-xl border shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-lg font-semibold text-blue-700">${ticket.subject}</h3>
-            <span class="text-xs text-gray-400">${date}</span>
-          </div>
-          <p class="text-sm text-gray-800 mb-2 whitespace-pre-wrap">${ticket.message}</p>
-          <div class="text-xs text-gray-500">
-            From: <span class="font-medium">${senderName}</span> &lt;${senderEmail}&gt;
-          </div>
+    container.innerHTML = tickets.map(ticket => `
+      <div class="bg-white/10 backdrop-blur border border-white/10 p-5 rounded-xl shadow-lg">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-blue-300">${ticket.subject}</h3>
+          <p class="text-sm text-gray-400">${new Date(ticket.created_at).toLocaleString()}</p>
         </div>
-      `;
-    }).join('');
-
+        <p class="mt-2 text-sm text-gray-300">${ticket.message}</p>
+        <div class="mt-3 text-xs text-gray-400">
+          <span>From: ${ticket.user_name} (${ticket.user_email})</span>
+        </div>
+      </div>
+    `).join('');
   } catch (err) {
     console.error('❌ Support fetch error:', err);
     container.innerHTML = '<p class="text-red-600">Could not load support tickets.</p>';
-  }
-
-  // Load current admin user info from global
-  const user = window.currentUser;
-  if (user) {
-    if (nameEl) nameEl.textContent = user.name || 'Admin';
-    if (emailEl) emailEl.textContent = user.email || 'admin@tidyzenic.com';
-    if (initialEl) initialEl.textContent = (user.name || 'A')[0].toUpperCase();
   }
 });
