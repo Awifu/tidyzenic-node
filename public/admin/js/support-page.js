@@ -1,5 +1,3 @@
-// public/admin/js/support-page.js
-
 document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('supportTickets');
   const adminEmailEl = document.getElementById('adminBadgeEmail');
@@ -31,17 +29,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderTickets(allTickets);
 
-    if (searchInput) {
-      searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase();
-        const filtered = allTickets.filter(ticket =>
-          ticket.subject.toLowerCase().includes(query) ||
-          ticket.message.toLowerCase().includes(query) ||
-          ticket.user_email.toLowerCase().includes(query)
-        );
-        renderTickets(filtered);
-      });
-    }
+    searchInput?.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase();
+      const filtered = allTickets.filter(t =>
+        t.subject.toLowerCase().includes(query) ||
+        t.message.toLowerCase().includes(query) ||
+        t.user_email.toLowerCase().includes(query)
+      );
+      renderTickets(filtered);
+    });
 
   } catch (err) {
     console.error('❌ Support fetch error:', err);
@@ -49,13 +45,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderTickets(tickets) {
-    if (tickets.length === 0) {
+    if (!tickets.length) {
       container.innerHTML = '<p class="text-center text-gray-400">No matching tickets.</p>';
       return;
     }
 
     container.innerHTML = tickets.map(ticket => `
-      <div class="bg-blue-50 border border-blue-100 p-6 rounded-2xl shadow-sm transition hover:shadow-md">
+      <div class="ticket bg-blue-50 border border-blue-100 p-6 rounded-2xl shadow-sm hover:shadow-md" data-id="${ticket.id}">
         <div class="flex justify-between items-start mb-4">
           <div>
             <h2 class="text-lg font-semibold text-blue-800">${ticket.subject}</h2>
@@ -73,50 +69,82 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
 
         <div class="flex items-center justify-end space-x-3 text-sm">
-          <button class="px-4 py-1 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition" onclick="openReplyModal('${ticket.id}', '${ticket.subject}', '${ticket.user_email}')">
+          <button class="replyBtn px-4 py-1 rounded-md bg-green-100 text-green-700 hover:bg-green-200"
+                  data-id="${ticket.id}" 
+                  data-subject="${encodeURIComponent(ticket.subject)}"
+                  data-email="${encodeURIComponent(ticket.user_email)}">
             Reply
           </button>
-          <button class="px-4 py-1 rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition" onclick="handleMarkResolved('${ticket.id}')">
+
+          <button class="resolveBtn px-4 py-1 rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                  data-id="${ticket.id}">
             Mark Resolved
           </button>
-          <button class="px-4 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition" onclick="handleDelete('${ticket.id}')">
+
+          <button class="deleteBtn px-4 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+                  data-id="${ticket.id}">
             Delete
           </button>
         </div>
       </div>
     `).join('');
 
-    // In-place editing
+    bindActions();
+    bindInPlaceEditing();
+  }
+
+  function bindActions() {
+    document.querySelectorAll('.replyBtn').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const { id, subject, email } = btn.dataset;
+        openReplyModal(id, decodeURIComponent(subject), decodeURIComponent(email));
+      })
+    );
+
+    document.querySelectorAll('.resolveBtn').forEach(btn =>
+      btn.addEventListener('click', () => handleMarkResolved(btn.dataset.id))
+    );
+
+    document.querySelectorAll('.deleteBtn').forEach(btn =>
+      btn.addEventListener('click', () => handleDelete(btn.dataset.id))
+    );
+  }
+
+  function bindInPlaceEditing() {
     document.querySelectorAll('.editable').forEach(el => {
       el.addEventListener('click', () => {
-        const field = el.dataset.field;
-        const id = el.dataset.id;
+        const { field, id } = el.dataset;
         const oldText = el.textContent;
-        const input = document.createElement('textarea');
-        input.value = oldText;
-        input.className = 'w-full text-sm text-gray-800 p-2 rounded border mt-2';
-        el.replaceWith(input);
-        input.focus();
+        const textarea = document.createElement('textarea');
 
-        input.addEventListener('blur', () => {
-          const newText = input.value;
+        textarea.value = oldText;
+        textarea.className = 'w-full text-sm text-gray-800 p-2 rounded border mt-2';
+        el.replaceWith(textarea);
+        textarea.focus();
+
+        textarea.addEventListener('blur', async () => {
+          const newText = textarea.value;
+          const updatedEl = document.createElement('p');
+
+          updatedEl.className = el.className;
+          updatedEl.dataset.id = id;
+          updatedEl.dataset.field = field;
+          updatedEl.textContent = newText;
+
+          textarea.replaceWith(updatedEl);
+          bindInPlaceEditing();
+
           if (newText !== oldText) {
-            console.log(`Saving ${field} for ticket ${id}:`, newText);
-            // TODO: Send to backend with PATCH to /api/support/:id
+            console.log(`📝 Updating ${field} for ticket ${id}...`);
+            // Optional: Send to backend here
           }
-          const newP = document.createElement('p');
-          newP.className = el.className;
-          newP.dataset.id = id;
-          newP.dataset.field = field;
-          newP.textContent = newText;
-          input.replaceWith(newP);
         });
       });
     });
   }
 });
 
-// Reply modal handling
+// Modal & Button Handling
 let currentReplyTicketId = null;
 
 function openReplyModal(id, subject, email) {
@@ -132,57 +160,55 @@ function closeReplyModal() {
 
 async function submitReply() {
   const message = document.getElementById('replyMessage').value.trim();
-  if (!message) {
-    alert('Reply message cannot be empty.');
-    return;
-  }
+  if (!message) return alert('Reply message cannot be empty.');
 
   try {
     const res = await fetch(`/api/support/${currentReplyTicketId}/reply`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message }),
     });
 
-    if (!res.ok) throw new Error('Failed to send reply');
-    alert('✅ Reply sent successfully.');
+    if (!res.ok) throw new Error();
+    alert('✅ Reply sent');
     closeReplyModal();
     location.reload();
-  } catch (err) {
-    console.error(err);
-    alert('❌ Failed to send reply.');
+  } catch {
+    alert('❌ Failed to send reply');
   }
 }
 
 async function handleMarkResolved(id) {
-  if (!confirm("Mark this ticket as resolved?")) return;
+  if (!confirm('Mark this ticket as resolved?')) return;
   try {
     const res = await fetch(`/api/support/${id}/resolve`, {
       method: 'PATCH',
-      credentials: 'include'
+      credentials: 'include',
     });
     if (!res.ok) throw new Error();
-    alert('✅ Ticket marked as resolved.');
+    alert('✅ Ticket marked as resolved');
     location.reload();
   } catch {
-    alert('❌ Failed to update ticket.');
+    alert('❌ Failed to resolve ticket');
   }
 }
 
 async function handleDelete(id) {
-  if (!confirm("Delete this ticket permanently?")) return;
+  if (!confirm('Delete this ticket permanently?')) return;
   try {
     const res = await fetch(`/api/support/${id}`, {
       method: 'DELETE',
-      credentials: 'include'
+      credentials: 'include',
     });
     if (!res.ok) throw new Error();
-    alert('🗑️ Ticket deleted.');
+    alert('🗑️ Ticket deleted');
     location.reload();
   } catch {
-    alert('❌ Failed to delete ticket.');
+    alert('❌ Failed to delete ticket');
   }
 }
+
+// Bind modal buttons safely
+document.getElementById('closeReplyBtn')?.addEventListener('click', closeReplyModal);
+document.getElementById('submitReplyBtn')?.addEventListener('click', submitReply);
