@@ -104,26 +104,29 @@
 
 <script>
   (async () => {
-    try {
-      const res = await fetch('/auth/me', {
-        credentials: 'include'
-      });
+  try {
+    const res = await fetch('/auth/me', {
+      credentials: 'include'
+    });
 
-      if (res.ok) {
-        const { user } = await res.json();
-        const subdomain = window.location.hostname.split('.')[0];
+    if (res.ok) {
+      const { user } = await res.json();
+      const subdomain = window.location.hostname.split('.')[0];
 
-        // If logged in, redirect to their subdomain dashboard
-        if (subdomain && subdomain !== 'www' && subdomain !== 'tidyzenic') {
-          window.location.href = `https://${subdomain}.tidyzenic.com/admin/dashboard.html`;
-        } else {
-          window.location.href = `/admin/dashboard.html`;
-        }
+      if (subdomain && subdomain !== 'www' && subdomain !== 'tidyzenic') {
+        window.location.href = `https://${subdomain}.tidyzenic.com/admin/dashboard.html`;
+      } else {
+        window.location.href = `/admin/dashboard.html`;
       }
-    } catch (err) {
-      console.warn('Not logged in:', err);
     }
-  })();
+  } catch (err) {
+    if (err.response && err.response.status !== 401) {
+      console.warn('Error checking auth status:', err);
+    }
+    // Otherwise, 401 is expected
+  }
+})();
+
 </script>
 
 
