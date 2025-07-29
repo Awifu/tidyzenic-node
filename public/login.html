@@ -101,6 +101,33 @@
 
   <!-- Login Script -->
   <script src="/js/login.js" defer></script>
+
+<script>
+  (async () => {
+    try {
+      const res = await fetch('/auth/me', {
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        const { user } = await res.json();
+        const subdomain = window.location.hostname.split('.')[0];
+
+        // If logged in, redirect to their subdomain dashboard
+        if (subdomain && subdomain !== 'www' && subdomain !== 'tidyzenic') {
+          window.location.href = `https://${subdomain}.tidyzenic.com/admin/dashboard.html`;
+        } else {
+          window.location.href = `/admin/dashboard.html`;
+        }
+      }
+    } catch (err) {
+      console.warn('Not logged in:', err);
+    }
+  })();
+</script>
+
+
+
 </body>
 
 </html>

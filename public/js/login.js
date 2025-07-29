@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const API_BASE = 'https://auth.tidyzenic.com'; // adjust as needed
+const API_BASE = '';
 
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');

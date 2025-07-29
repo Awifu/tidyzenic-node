@@ -1,7 +1,7 @@
 // public/js/auth-check.js
 
 (async () => {
-  const API_BASE = window.location.origin; // ✅ Use current subdomain for cookie-based auth
+const API_BASE = 'https://auth.tidyzenic.com';
 
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
