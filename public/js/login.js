@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-const API_BASE = '';
+  const API_BASE = 'https://tidyzenic.com'; // 🔒 Always use main domain
 
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
@@ -95,15 +95,12 @@ const API_BASE = '';
       }
 
       if (result.redirect) {
+        // 🛑 Prevent redirect loop to login again
+        if (result.redirect.includes('/login.html')) {
+          showError('Something went wrong. Try again.');
+          return;
+        }
         window.location.href = result.redirect;
-// Prevent redirecting to a subdomain's login.html
-if (result.redirect.includes('/login.html')) {
-  console.warn('❌ Redirected to login again — stopping');
-  showError('Something went wrong: redirected back to login.');
-  return;
-}
-
-
       } else {
         showError('Missing redirect URL.');
       }
