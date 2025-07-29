@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const API_BASE = 'https://auth.tidyzenic.com'; // 👈 adjust if needed
+
   const form = document.getElementById('registerForm');
   const submitBtn = document.getElementById('submitBtn');
 
-  // Form fields
   const inputs = {
     businessName: document.getElementById('business_name'),
     email: document.getElementById('email'),
@@ -39,19 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setFeedback(field, message, isSuccess = false) {
     if (feedback[field]) {
-feedback[field].innerHTML = message;
+      feedback[field].innerHTML = message;
       feedback[field].className = isSuccess ? 'text-green-600 text-sm' : 'text-red-600 text-sm';
     }
   }
 
-  // Email validation
   inputs.email.addEventListener('input', () => {
     const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputs.email.value.trim());
     setFeedback('email', valid ? '✅ Valid email.' : '❌ Invalid email format.', valid);
     loginHint.innerHTML = '';
   });
 
-  // Auto-generate subdomain
   inputs.businessName.addEventListener('input', () => {
     const sub = inputs.businessName.value.trim().toLowerCase().replace(/\s+/g, '-');
     inputs.subdomain.value = sub;
@@ -59,7 +58,6 @@ feedback[field].innerHTML = message;
     debounceSubdomainCheck(sub);
   });
 
-  // Debounced subdomain availability check
   let debounceTimeout;
   function debounceSubdomainCheck(subdomain) {
     clearTimeout(debounceTimeout);
@@ -69,10 +67,11 @@ feedback[field].innerHTML = message;
   async function checkSubdomain(sub) {
     if (!sub) return;
     try {
-      const res = await fetch('/register/check-subdomain', {
+      const res = await fetch(`${API_BASE}/register/check-subdomain`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subdomain: sub })
+        // credentials: 'include', // Only needed if auth required
       });
       const data = await res.json();
       setFeedback('subdomain', data.exists ? '❌ Subdomain is already taken.' : '✅ Subdomain is available.', !data.exists);
@@ -82,13 +81,11 @@ feedback[field].innerHTML = message;
     }
   }
 
-  // Password confirmation
   inputs.confirmPassword.addEventListener('input', () => {
     const match = inputs.password.value === inputs.confirmPassword.value;
     setFeedback('confirmPassword', match ? '✅ Passwords match.' : '❌ Passwords do not match.', match);
   });
 
-  // Submit handler
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearFeedback();
@@ -127,13 +124,20 @@ feedback[field].innerHTML = message;
     submitBtn.disabled = true;
 
     try {
-      const res = await fetch('/register', {
+      const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
+        // credentials: 'include', // Uncomment if cookie/session needs to persist
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        alert('❌ Unexpected server response.');
+        return;
+      }
 
       if (res.ok) {
         alert(data.message || '✅ Registration successful!');
