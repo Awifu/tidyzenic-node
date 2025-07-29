@@ -17,24 +17,24 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Helper to extract user from JWT cookie
+// Helper: Decode user from JWT
 function getUserFromToken(req) {
   try {
     const token = req.cookies.token;
     if (!token) return null;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded;
+    return jwt.verify(token, process.env.JWT_SECRET);
   } catch {
     return null;
   }
 }
 
-// POST /api/support — Submit support ticket
+// === POST /api/support ===
+// Submit a support ticket
 router.post('/', async (req, res) => {
   const { subject, message } = req.body;
   const user = getUserFromToken(req);
 
-  if (!user || !user.id || !user.business_id) {
+  if (!user?.id || !user?.business_id) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -43,21 +43,25 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Save to DB
     await pool.query(`
       INSERT INTO support_tickets (user_id, business_id, subject, message)
       VALUES (?, ?, ?, ?)
     `, [user.id, user.business_id, subject, message]);
 
-    // Send notification email
-    const userRow = await pool.query('SELECT email FROM users WHERE id = ?', [user.id]);
-    const email = userRow[0][0]?.email || 'Unknown';
+    const [[userInfo]] = await pool.query(
+      'SELECT email FROM users WHERE id = ?',
+      [user.id]
+    );
 
     await transporter.sendMail({
-      from: `"${email}" <${process.env.EMAIL_USER}>`,
+      from: `"${userInfo?.email || 'Unknown'}" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
       subject: `🆘 Support: ${subject}`,
-      html: `<p><strong>User ID:</strong> ${user.id}</p><p><strong>Business ID:</strong> ${user.business_id}</p><p>${message.replace(/\n/g, '<br>')}</p>`
+      html: `
+        <p><strong>User ID:</strong> ${user.id}</p>
+        <p><strong>Business ID:</strong> ${user.business_id}</p>
+        <p>${message.replace(/\n/g, '<br>')}</p>
+      `
     });
 
     res.status(200).json({ message: '✅ Support ticket submitted.' });
@@ -67,24 +71,26 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /api/support — Fetch tickets for logged-in user
+// === GET /api/support ===
+// Fetch tickets for the current user
 router.get('/', async (req, res) => {
+  console.log('📥 GET /api/support hit');
   const user = getUserFromToken(req);
 
-  if (!user || !user.id || !user.business_id) {
+  if (!user?.id || !user?.business_id) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    const [rows] = await pool.query(
+    const [tickets] = await pool.query(
       `SELECT subject, message, created_at
        FROM support_tickets
-       WHERE business_id = ? AND user_id = ?
+       WHERE user_id = ? AND business_id = ?
        ORDER BY created_at DESC`,
-      [user.business_id, user.id]
+      [user.id, user.business_id]
     );
 
-    res.json(rows);
+    res.json(tickets);
   } catch (err) {
     console.error('❌ Support fetch error:', err);
     res.status(500).json({ error: '❌ Failed to load support tickets' });
