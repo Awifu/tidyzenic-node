@@ -110,7 +110,6 @@ app.get('/admin-dashboard.html', (req, res) => {
   res.redirect('/admin/dashboard.html');
 });
 
-app.get(['/admin/dashboard.html'], sendFile('admin/dashboard.html'));
 app.get('/admin/support.html', sendFile('admin/support.html'));
 
 // ==============================
