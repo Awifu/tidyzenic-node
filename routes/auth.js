@@ -36,6 +36,7 @@ router.post('/register', async (req, res) => {
       'SELECT id FROM users WHERE email = ? AND is_deleted = 0',
       [email]
     );
+
     if (exists.length > 0) {
       return res.status(409).json({ error: 'Email already in use.' });
     }
@@ -87,19 +88,23 @@ router.get('/verify', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password)
+  if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
+  }
 
   try {
     const [users] = await pool.query(
       'SELECT * FROM users WHERE email = ? AND is_deleted = 0',
       [email]
     );
+
     if (!users.length) return res.status(401).json({ error: 'Invalid credentials.' });
 
     const user = users[0];
-    if (!user.is_verified)
+
+    if (!user.is_verified) {
       return res.status(403).json({ error: 'Please verify your email first.' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials.' });
@@ -110,14 +115,14 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-res.cookie('token', token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  domain: '.tidyzenic.com' // ✅ Allow across all subdomains
-});
-
+    // === Set cookie for subdomain-wide authentication ===
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,                // Always use secure for 'SameSite: None'
+      sameSite: 'None',            // Required for cross-subdomain cookies
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      domain: '.tidyzenic.com'     // Makes it available to all subdomains
+    });
 
     const [biz] = await pool.query(
       'SELECT subdomain FROM businesses WHERE id = ? LIMIT 1',
