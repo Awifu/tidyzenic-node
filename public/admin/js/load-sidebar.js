@@ -12,32 +12,50 @@ fetch('/admin/sidebar.html')
 
     console.log('✅ Sidebar injected');
 
-    // ⏳ Wait for currentUser from auth-check.js
+    // Wait until currentUser is ready from auth-check.js
     const waitForUser = setInterval(() => {
-      if (window.currentUser) {
-        clearInterval(waitForUser);
-        const user = window.currentUser;
+      if (!window.currentUser) return;
+      clearInterval(waitForUser);
 
-        // 👤 Greet user
-        const nameEl = document.getElementById('sidebarUserName');
-        if (nameEl) nameEl.textContent = user.name;
+      const user = window.currentUser;
 
-        // 🔐 Hide admin-only links if not admin
-        if (user.role !== 'admin') {
-          document.querySelectorAll('[data-role="admin"]').forEach(el => el.remove());
-        }
+      // 👤 Display user name
+      const userNameEl = document.getElementById('sidebarUserName');
+      if (userNameEl) userNameEl.textContent = user.name;
 
-        // 🚪 Logout button
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-          logoutBtn.addEventListener('click', () => {
-            document.cookie =
-              'token=; path=/; domain=.tidyzenic.com; expires=Thu, 01 Jan 1970 00:00:00 UTC; secure; sameSite=None';
-            window.location.href = '/login.html';
-          });
-        }
+      // 🔐 Hide admin-only links
+      if (user.role !== 'admin') {
+        document.querySelectorAll('[data-role="admin"]').forEach(el => el.remove());
       }
-    }, 100); // Check every 100ms
+
+      // 🚪 Logout handler
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          document.cookie =
+            'token=; path=/; domain=.tidyzenic.com; expires=Thu, 01 Jan 1970 00:00:00 UTC; secure; sameSite=None';
+          window.location.href = '/login.html';
+        });
+      }
+
+      // 🧠 Fetch business name/logo from /api/business/public
+      fetch('/api/business/public')
+        .then((res) => res.json())
+        .then((biz) => {
+          const nameEl = document.getElementById('bizName');
+          const logoEl = document.getElementById('logo');
+
+          if (nameEl && biz.business_name) {
+            nameEl.textContent = biz.business_name;
+          }
+          if (logoEl && biz.logo_filename) {
+            logoEl.src = `/uploads/logos/${biz.logo_filename}`;
+          }
+        })
+        .catch((err) => {
+          console.warn('⚠️ Failed to fetch business info:', err);
+        });
+    }, 100); // Poll every 100ms
   })
   .catch((err) => {
     console.error('❌ Sidebar load error:', err);
