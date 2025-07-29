@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const API_BASE = 'https://auth.tidyzenic.com'; // adjust as needed
+
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const rememberMe = document.getElementById('rememberMe');
@@ -6,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const switchDot = document.getElementById('switchDot');
   const loginForm = document.getElementById('loginForm');
 
-  // === UI Helpers ===
   const errorBox = document.createElement('div');
   errorBox.id = 'loginError';
   errorBox.className = 'text-sm text-red-600 mt-2 hidden';
@@ -35,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
     switchDot.classList.toggle('translate-x-5', isChecked);
   };
 
-  // === Remembered Email ===
   const savedEmail = localStorage.getItem('rememberedEmail');
   if (savedEmail) {
     emailInput.value = savedEmail;
@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSwitchUI(rememberMe.checked);
   });
 
-  // === Form Submit ===
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorBox.classList.add('hidden');
@@ -64,14 +63,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const response = await fetch('/auth/login', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ email, password })
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        showError('Unexpected server response.');
+        return;
+      }
 
       if (!response.ok) {
         if (response.status === 403 && result.error?.includes('verify')) {
@@ -82,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // ✅ Remember email
       if (rememberMe.checked) {
         localStorage.setItem('rememberedEmail', email);
         showToast();
@@ -90,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('rememberedEmail');
       }
 
-      // ✅ Redirect
       if (result.redirect) {
         window.location.href = result.redirect;
       } else {
@@ -103,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // === Resend Verification ===
   function showUnverifiedPrompt(email) {
     showError('Please verify your account first.');
 
@@ -117,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
       resendLink.textContent = 'Sending...';
 
       try {
-        const res = await fetch('/auth/resend-verification', {
+        const res = await fetch(`${API_BASE}/auth/resend-verification`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
