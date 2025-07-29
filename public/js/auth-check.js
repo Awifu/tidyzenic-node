@@ -1,7 +1,8 @@
 // public/js/auth-check.js
 
 (async () => {
-const API_BASE = 'https://auth.tidyzenic.com';
+  const API_BASE = 'https://auth.tidyzenic.com';
+  const isLoginPage = window.location.pathname.includes('/login');
 
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
@@ -9,8 +10,10 @@ const API_BASE = 'https://auth.tidyzenic.com';
     });
 
     if (!res.ok) {
-      // Not authenticated — redirect to login
-      window.location.href = '/login.html';
+      if (!isLoginPage) {
+        // Not authenticated and not on login page → redirect to login
+        window.location.href = '/login.html';
+      }
       return;
     }
 
@@ -18,6 +21,12 @@ const API_BASE = 'https://auth.tidyzenic.com';
 
     // ✅ Store user info globally (optional)
     window.currentUser = user;
+
+    // ✅ If on login page and already logged in, redirect to dashboard
+    if (isLoginPage) {
+      window.location.href = '/admin/dashboard.html';
+      return;
+    }
 
     // ✅ Show user's name in UI if element exists
     const nameEl = document.getElementById('userName');
@@ -32,6 +41,8 @@ const API_BASE = 'https://auth.tidyzenic.com';
 
   } catch (err) {
     console.error('❌ Auth check failed:', err);
-    window.location.href = '/login.html';
+    if (!isLoginPage) {
+      window.location.href = '/login.html';
+    }
   }
 })();
