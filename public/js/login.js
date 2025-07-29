@@ -96,6 +96,14 @@ const API_BASE = '';
 
       if (result.redirect) {
         window.location.href = result.redirect;
+// Prevent redirecting to a subdomain's login.html
+if (result.redirect.includes('/login.html')) {
+  console.warn('❌ Redirected to login again — stopping');
+  showError('Something went wrong: redirected back to login.');
+  return;
+}
+
+
       } else {
         showError('Missing redirect URL.');
       }

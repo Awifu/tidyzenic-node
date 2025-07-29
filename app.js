@@ -94,6 +94,7 @@ app.get(['/login', '/login.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+
 app.get('/reset-password.html', sendFile('reset-password.html'));
 app.get('/verified.html', sendFile('verified.html'));
 

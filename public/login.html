@@ -103,7 +103,14 @@
   <script src="/js/login.js" defer></script>
 
 <script>
-  (async () => {
+(async () => {
+  const hostname = window.location.hostname;
+  if (hostname !== 'tidyzenic.com' && hostname !== 'www.tidyzenic.com') {
+    // Don't run auth check on subdomains — prevent redirect loop
+    window.location.href = 'https://tidyzenic.com/login.html';
+    return;
+  }
+
   try {
     const res = await fetch('/auth/me', {
       credentials: 'include'
@@ -111,22 +118,14 @@
 
     if (res.ok) {
       const { user } = await res.json();
-      const subdomain = window.location.hostname.split('.')[0];
-
-      if (subdomain && subdomain !== 'www' && subdomain !== 'tidyzenic') {
-        window.location.href = `https://${subdomain}.tidyzenic.com/admin/dashboard.html`;
-      } else {
-        window.location.href = `/admin/dashboard.html`;
-      }
+      window.location.href = `/admin/dashboard.html`;
     }
   } catch (err) {
     if (err.response && err.response.status !== 401) {
       console.warn('Error checking auth status:', err);
     }
-    // Otherwise, 401 is expected
   }
 })();
-
 </script>
 
 
