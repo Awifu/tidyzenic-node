@@ -17,6 +17,8 @@
           </svg>
         </button>
         <span class="font-bold text-lg text-blue-600">Admin</span>
+        <!-- 👤 Show logged-in user -->
+        <span id="userName" class="ml-4 text-sm text-gray-600"></span>
       </div>
     </header>
 
@@ -34,12 +36,14 @@
           <h2 class="text-2xl font-semibold mb-4 text-blue-700">Welcome to your Admin Dashboard</h2>
           <div class="bg-white p-6 rounded-2xl shadow">
             <p>Manage your services, bookings, clients and more. Use the sidebar to navigate your admin tools.</p>
+            <p class="mt-2 text-sm text-gray-600">Logged in as: <span id="userName"></span></p>
           </div>
         </div>
       </main>
     </div>
 
-    <!-- Load Sidebar HTML and JS -->
+    <!-- JS -->
     <script src="/admin/js/load-sidebar.js" defer></script>
+    <script src="/js/auth-check.js" defer></script>
   </body>
 </html>

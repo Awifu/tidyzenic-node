@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Test Business Info</title>
+</head>
+<body>
+  <h1 id="bizName">Business Name: ...</h1>
+  <img id="bizLogo" src="" alt="Business Logo" style="max-height: 100px;" />
+
+  <script>
+    fetch('/api/business/public')
+      .then((res) => res.json())
+      .then((biz) => {
+        console.log('📦 Business API response:', biz);
+
+        document.getElementById('bizName').textContent = `Business Name: ${biz.business_name}`;
+        
+        if (biz.logo_filename) {
+          document.getElementById('bizLogo').src = `/uploads/logos/${biz.logo_filename}`;
+        } else {
+          document.getElementById('bizLogo').alt = 'No logo available';
+        }
+      })
+      .catch((err) => {
+        console.error('❌ Failed to fetch business info:', err);
+      });
+  </script>
+</body>
+</html>

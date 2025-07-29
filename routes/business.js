@@ -13,7 +13,13 @@ const cache = new LRUCache({
 
 // ✅ GET /api/business/public – Get basic business info via subdomain (no auth)
 router.get('/public', async (req, res) => {
-  const subdomain = req.tenant;
+  let subdomain = req.tenant;
+
+  // 🛠 Localhost fallback (for dev use only)
+  if (!subdomain && process.env.NODE_ENV !== 'production') {
+    subdomain = 'awifu-labs-pro'; // <-- fallback subdomain for localhost
+    console.log('⚠️ Using fallback subdomain for local testing:', subdomain);
+  }
 
   if (!subdomain) {
     return res.status(400).json({ error: 'Subdomain is required' });
@@ -45,6 +51,7 @@ router.get('/public', async (req, res) => {
     };
 
     cache.set(cacheKey, publicData);
+    console.log('📦 Cached business data for:', subdomain);
     res.json(publicData);
   } catch (err) {
     console.error('❌ Error fetching public business info:', err);
