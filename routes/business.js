@@ -1,19 +1,24 @@
+// routes/business.js
+
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const LRU = require('lru-cache'); // ✅ Correct import for v7 in CommonJS
+const LRUCache = require('lru-cache');
 
-const cache = new LRU({
+// 🧠 In-memory cache (5 min)
+const cache = new LRUCache({
   max: 100,
-  ttl: 1000 * 60 * 5
+  ttl: 1000 * 60 * 5 // 5 minutes
 });
 
+// ✅ GET /api/business/public – Basic business info by subdomain (no auth)
 router.get('/public', async (req, res) => {
   let subdomain = req.tenant;
 
+  // 🛠 Local fallback for dev environments (e.g., localhost)
   if (!subdomain && process.env.NODE_ENV !== 'production') {
     subdomain = 'awifu-labs-pro';
-    console.warn('⚠️ Using fallback subdomain for local testing:', subdomain);
+    console.log('⚠️ Using fallback subdomain for local testing:', subdomain);
   }
 
   if (!subdomain) {
@@ -22,14 +27,18 @@ router.get('/public', async (req, res) => {
 
   const cacheKey = `public-business:${subdomain}`;
   const cached = cache.get(cacheKey);
-  if (cached) return res.json(cached);
+  if (cached) {
+    return res.json(cached);
+  }
 
   try {
     const [rows] = await pool.query(
-      `SELECT id, business_name, logo_filename
-       FROM businesses
-       WHERE subdomain = ? AND is_deleted = 0
-       LIMIT 1`,
+      `
+      SELECT id, business_name, logo_filename
+      FROM businesses
+      WHERE subdomain = ? AND is_deleted = 0
+      LIMIT 1
+      `,
       [subdomain]
     );
 
@@ -37,17 +46,18 @@ router.get('/public', async (req, res) => {
       return res.status(404).json({ error: 'Business not found' });
     }
 
-    const data = {
+    const publicData = {
       id: rows[0].id,
       business_name: rows[0].business_name,
       logo_filename: rows[0].logo_filename
     };
 
-    cache.set(cacheKey, data);
+    cache.set(cacheKey, publicData);
     console.log('📦 Cached business data for:', subdomain);
-    res.json(data);
+
+    res.json(publicData);
   } catch (err) {
-    console.error('❌ Error fetching public business info:', err);
+    console.error('❌ Error fetching business info:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
