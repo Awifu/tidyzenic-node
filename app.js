@@ -42,12 +42,12 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://tidyzenic.com',
   'https://www.tidyzenic.com',
-  /^https:\/\/([a-z0-9-]+)\.tidyzenic\.com$/i // ✅ Allow wildcard subdomains
+  /^https:\/\/([a-z0-9-]+)\.tidyzenic\.com$/i
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.some((entry) =>
+    if (!origin || allowedOrigins.some(entry =>
       entry instanceof RegExp ? entry.test(origin) : entry === origin
     )) {
       return callback(null, true);
@@ -66,7 +66,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // ==============================
-// 5. Tenant Resolver (Subdomain logic)
+// 5. Tenant Resolver
 // ==============================
 const tenantResolver = require('./middleware/tenantResolver');
 app.use(tenantResolver);
@@ -80,16 +80,28 @@ app.use('/api/business', require('./routes/business'));
 app.use('/api/support', require('./routes/support'));
 
 // ==============================
-// 7. HTML Public Routes
+// 7. HTML Routes
 // ==============================
 const sendFile = (file) => (req, res) =>
   res.sendFile(path.join(__dirname, 'public', file));
 
-app.get(['/login', '/login.html'], sendFile('login.html'));
+// 🚫 Restrict login page to root domain only
+app.get(['/login', '/login.html'], (req, res) => {
+  const host = req.hostname;
+  if (host !== 'tidyzenic.com' && host !== 'www.tidyzenic.com') {
+    return res.redirect('https://tidyzenic.com/login.html');
+  }
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
 app.get('/reset-password.html', sendFile('reset-password.html'));
 app.get('/verified.html', sendFile('verified.html'));
 
-// Serve default tenant dashboard
+// ➕ Redirect old dashboard URL to correct nested route
+app.get('/admin-dashboard.html', (req, res) => {
+  res.redirect('/admin/dashboard.html');
+});
+
 app.get(['/admin/dashboard.html'], sendFile('admin-dashboard.html'));
 app.get('/admin/support.html', sendFile('admin/support.html'));
 
@@ -105,14 +117,22 @@ app.use((req, res) => {
 // ==============================
 app.use((err, req, res, next) => {
   console.error('🔥 Unhandled Error:', err.stack || err.message);
-  res.status(500).json({ error: 'Internal server error' });
+
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+
+  res.status(500).json({ error: err.message || 'Unexpected server error' });
 });
 
 // ==============================
 // 10. Server Launch
 // ==============================
 const server = app.listen(PORT, () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
+  const envUrl = process.env.NODE_ENV === 'production'
+    ? `https://tidyzenic.com`
+    : `http://localhost:${PORT}`;
+  console.log(`✅ Server is running at ${envUrl}`);
 });
 
 // ==============================
