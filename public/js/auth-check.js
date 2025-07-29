@@ -1,5 +1,7 @@
+// public/js/auth-check.js
+
 (async () => {
-  const API_BASE = 'https://auth.tidyzenic.com';
+  const API_BASE = window.location.origin; // ✅ Use current subdomain for cookie-based auth
 
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
@@ -23,14 +25,13 @@
       nameEl.textContent = user.name;
     }
 
-    // ✅ Role-based access
+    // ✅ Role-based access: remove admin-only elements for non-admins
     if (user.role !== 'admin') {
-      const adminOnly = document.querySelectorAll('[data-role="admin"]');
-      adminOnly.forEach(el => el.remove());
+      document.querySelectorAll('[data-role="admin"]').forEach(el => el.remove());
     }
 
   } catch (err) {
-    console.error('Auth check failed:', err);
+    console.error('❌ Auth check failed:', err);
     window.location.href = '/login.html';
   }
 })();
