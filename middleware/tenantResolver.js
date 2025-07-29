@@ -1,23 +1,29 @@
 module.exports = (req, res, next) => {
-  const host = req.headers.host; // ✅ More reliable in prod than req.hostname
-  const parts = host.split('.'); // e.g., client1.tidyzenic.com
-
+  const host = req.headers.host; // 🔐 e.g. awifu-labs-pro.tidyzenic.com
   let subdomain = null;
 
-  if (parts.length >= 3) {
-    // Remove port if any (e.g., client1.tidyzenic.com:443)
+  if (host) {
+    const parts = host.split('.');
+
+    // Handle potential port number (e.g., :3000 or :443)
     parts[0] = parts[0].split(':')[0];
-    subdomain = parts[0];
+
+    if (parts.length >= 3) {
+      subdomain = parts[0];
+    }
+
+    // Ignore main domain and www
+    if (['www', 'tidyzenic'].includes(subdomain)) {
+      subdomain = null;
+    }
   }
 
-  if (subdomain && subdomain !== 'www' && subdomain !== 'tidyzenic') {
-    req.tenant = subdomain;
-  } else {
-    req.tenant = null;
-  }
+  req.tenant = subdomain;
 
-  // Optional: log for debug
-  console.log(`🔎 Host: ${host} | Subdomain: ${req.tenant}`);
+  // ✅ Log only in development
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`🔎 Tenant resolved: ${req.tenant || '(none)'}`);
+  }
 
   next();
 };
