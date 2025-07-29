@@ -133,7 +133,7 @@ router.post('/login', async (req, res) => {
 
     if (!biz.length) return res.status(404).json({ error: 'Business not found.' });
 
-    const redirect = `https://${biz[0].subdomain}.tidyzenic.com/admin/dashboard.html`;
+const redirect = `https://${biz[0].subdomain}.tidyzenic.com/admin/admin-dashboard.html`;
 
     res.json({ message: 'Login successful', redirect });
   } catch (err) {
