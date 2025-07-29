@@ -10,14 +10,11 @@
 </head>
 <body class="min-h-screen font-inter bg-gradient-to-br from-blue-900 via-gray-900 to-black">
 
-  <!-- Sidebar -->
-  <div id="sidebar" class="md:w-64 fixed top-0 left-0 h-full z-40 hidden md:block transition-transform transform -translate-x-full md:translate-x-0 bg-white/5 backdrop-blur"></div>
-
-  <!-- Sidebar injection wrapper -->
-  <div id="sidebar-container"></div>
+  <!-- Sidebar injected into this container -->
+  <div id="sidebar-container" class="md:w-64 fixed top-0 left-0 h-full z-40"></div>
 
   <!-- Overlay for mobile -->
-  <div id="sidebarBackdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden"></div>
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden md:hidden"></div>
 
   <!-- Hamburger for mobile -->
   <button id="menuToggle" class="md:hidden fixed top-4 left-4 z-50 text-white">
