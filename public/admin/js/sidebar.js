@@ -9,7 +9,7 @@
 
   // Load branding
   try {
-    const res = await fetch('/api/business', { credentials: 'include' });
+const res = await fetch('/api/business/public');
     const data = await res.json();
     if (data.business_name && bizNameEl) bizNameEl.textContent = data.business_name.toUpperCase();
     if (data.logo_filename && logoEl) {
