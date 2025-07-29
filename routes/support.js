@@ -42,3 +42,4 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: '❌ Failed to load support tickets' });
   }
 });
+module.exports = router;
