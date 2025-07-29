@@ -8,15 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
-<body class="min-h-screen font-inter flex flex-col bg-gradient-to-br from-blue-900 via-gray-900 to-black">
+<body class="min-h-screen font-inter bg-gradient-to-br from-blue-900 via-gray-900 to-black">
 
-  <!-- Sidebar injected here -->
-  <div id="sidebar-container" class="md:w-64 fixed z-40 top-0 left-0 h-full hidden md:block"></div>
+  <!-- Sidebar -->
+  <div id="sidebar" class="md:w-64 fixed top-0 left-0 h-full z-40 hidden md:block transition-transform transform -translate-x-full md:translate-x-0 bg-white/5 backdrop-blur"></div>
 
-  <!-- Overlay backdrop for mobile -->
-  <div id="sidebarBackdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden md:hidden"></div>
+  <!-- Sidebar injection wrapper -->
+  <div id="sidebar-container"></div>
 
-  <!-- Hamburger menu -->
+  <!-- Overlay for mobile -->
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden"></div>
+
+  <!-- Hamburger for mobile -->
   <button id="menuToggle" class="md:hidden fixed top-4 left-4 z-50 text-white">
     <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2"
          viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -24,9 +27,10 @@
     </svg>
   </button>
 
-  <main class="md:ml-64 flex-1 p-6 pt-24 md:pt-10">
+  <!-- Main Content -->
+  <main class="md:ml-64 flex-1 p-6 pt-24 md:pt-10 relative z-10">
     <div class="max-w-5xl mx-auto">
-      <div class="bg-white/10 backdrop-blur border border-white/10 p-6 rounded-2xl shadow-xl">
+      <div class="bg-white/10 backdrop-blur border border-white/10 p-6 rounded-2xl shadow-xl mb-12">
         <div class="flex items-center justify-between mb-6">
           <div>
             <h1 class="text-3xl font-bold text-blue-400">📨 Support Tickets</h1>
@@ -44,7 +48,8 @@
     </div>
   </main>
 
-<script src="/js/auth-check.js"></script>
+  <!-- Scripts -->
+  <script src="/js/auth-check.js"></script>
   <script src="/admin/js/load-sidebar.js"></script>
   <script src="/admin/js/support-page.js"></script>
 </body>
