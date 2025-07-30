@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="flex items-center justify-end space-x-3 text-sm">
           <button class="replyBtn px-4 py-1 rounded-md bg-green-100 text-green-700 hover:bg-green-200"
                   data-id="${ticket.id}" 
-                  data-subject="${encodeURIComponent(ticket.subject)}"
-                  data-email="${encodeURIComponent(ticket.user_email)}">
+                  data-subject='${encodeURIComponent(ticket.subject)}'
+                  data-email='${encodeURIComponent(ticket.user_email)}'>
             Reply
           </button>
 
@@ -143,72 +143,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
-
-// Modal & Button Handling
-let currentReplyTicketId = null;
-
-function openReplyModal(id, subject, email) {
-  currentReplyTicketId = id;
-  document.getElementById('replyModalSubject').textContent = `Subject: ${subject} | To: ${email}`;
-  document.getElementById('replyMessage').value = '';
-  document.getElementById('replyModal').classList.remove('hidden');
-}
-
-function closeReplyModal() {
-  document.getElementById('replyModal').classList.add('hidden');
-}
-
-async function submitReply() {
-  const message = document.getElementById('replyMessage').value.trim();
-  if (!message) return alert('Reply message cannot be empty.');
-
-  try {
-    const res = await fetch(`/api/support/${currentReplyTicketId}/reply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ message }),
-    });
-
-    if (!res.ok) throw new Error();
-    alert('✅ Reply sent');
-    closeReplyModal();
-    location.reload();
-  } catch {
-    alert('❌ Failed to send reply');
-  }
-}
-
-async function handleMarkResolved(id) {
-  if (!confirm('Mark this ticket as resolved?')) return;
-  try {
-    const res = await fetch(`/api/support/${id}/resolve`, {
-      method: 'PATCH',
-      credentials: 'include',
-    });
-    if (!res.ok) throw new Error();
-    alert('✅ Ticket marked as resolved');
-    location.reload();
-  } catch {
-    alert('❌ Failed to resolve ticket');
-  }
-}
-
-async function handleDelete(id) {
-  if (!confirm('Delete this ticket permanently?')) return;
-  try {
-    const res = await fetch(`/api/support/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (!res.ok) throw new Error();
-    alert('🗑️ Ticket deleted');
-    location.reload();
-  } catch {
-    alert('❌ Failed to delete ticket');
-  }
-}
-
-// Bind modal buttons safely
-document.getElementById('closeReplyBtn')?.addEventListener('click', closeReplyModal);
-document.getElementById('submitReplyBtn')?.addEventListener('click', submitReply);
