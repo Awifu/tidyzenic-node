@@ -124,39 +124,67 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function bindInPlaceEditing() {
-    document.querySelectorAll('.editable').forEach(el => {
-      el.addEventListener('click', () => {
-        const { field, id } = el.dataset;
-        const oldText = el.textContent;
-        const textarea = document.createElement('textarea');
-        textarea.value = oldText;
-        textarea.className = 'w-full text-sm text-gray-800 p-3 rounded border mt-2';
-        el.replaceWith(textarea);
-        textarea.focus();
+  document.querySelectorAll('.editable').forEach(el => {
+    el.addEventListener('click', () => {
+      if (el.classList.contains('editing')) return;
+      el.classList.add('editing');
 
-        textarea.addEventListener('blur', async () => {
-          const newText = textarea.value;
+      const { field, id } = el.dataset;
+      const oldText = el.textContent.trim();
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'space-y-2';
+
+      const textarea = document.createElement('textarea');
+      textarea.value = oldText;
+      textarea.className = 'w-full text-sm text-gray-800 p-3 rounded-lg border focus:ring-2 focus:ring-blue-300';
+
+      const updateBtn = document.createElement('button');
+      updateBtn.textContent = '💾 Update';
+      updateBtn.className = 'bg-green-600 text-white text-sm px-4 py-1 rounded hover:bg-green-700';
+
+      wrapper.appendChild(textarea);
+      wrapper.appendChild(updateBtn);
+      el.replaceWith(wrapper);
+      textarea.focus();
+
+      updateBtn.addEventListener('click', async () => {
+        const newText = textarea.value.trim();
+        if (!newText || newText === oldText) {
+          wrapper.replaceWith(el);
+          bindInPlaceEditing();
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/support/${id}/edit`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ field, value: newText }),
+          });
+
+          if (!res.ok) throw new Error();
+
           const updatedEl = document.createElement('p');
           updatedEl.className = el.className;
           updatedEl.dataset.id = id;
           updatedEl.dataset.field = field;
           updatedEl.textContent = newText;
 
-          textarea.replaceWith(updatedEl);
+          wrapper.replaceWith(updatedEl);
           bindInPlaceEditing();
-
-          if (newText !== oldText) {
-            await fetch(`/api/support/${id}/edit`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ field, value: newText })
-            }).then(() => showToast('✏️ Message updated'));
-          }
-        });
+          showToast('✅ Message updated');
+        } catch {
+          showToast('❌ Failed to update message', 'error');
+          wrapper.replaceWith(el);
+          bindInPlaceEditing();
+        }
       });
     });
-  }
+  });
+}
+
 
   function openReplyModal(id, subject, email) {
     currentReplyTicketId = id;
