@@ -1,6 +1,6 @@
 <!-- public/admin/sidebar.html -->
 <aside
-  id="sidebar-container"
+  id="sidebar"
   class="fixed md:relative inset-y-0 left-0 z-40 w-72 bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col pt-32"
 >
   <!-- Logo & Business Name -->
@@ -8,7 +8,7 @@
     <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow-md" />
     <div>
       <h1 id="bizName" class="text-lg font-bold uppercase truncate text-blue-600">Business</h1>
-      <p id="sidebarUserName" class="text-sm text-gray-500"></p>
+      <p id="sidebarUserName" class="text-sm text-gray-500"></p> <!-- 👤 Username placeholder -->
     </div>
   </div>
 
@@ -29,7 +29,7 @@
     <a href="/admin/discounts.html" class="block px-4 py-2 rounded hover:bg-blue-50">🏷️ Discounts</a>
     <a href="/admin/settings.html" class="block px-4 py-2 rounded hover:bg-blue-50">⚙️ Settings</a>
     <a href="/admin/billing.html" class="block px-4 py-2 rounded hover:bg-blue-50">🧾 Billing</a>
-    <a href="/admin/reports.html" class="block px-4 py-2 rounded hover:bg-blue-50" data-role="admin">📊 Reports</a>
+    <a href="/admin/reports.html" class="block px-4 py-2 rounded hover:bg-blue-50" data-role="admin">📊 Reports</a> <!-- Admin-only -->
     <a href="/admin/support.html" class="block px-4 py-2 rounded hover:bg-blue-50">🆘 Support</a>
     <a href="/admin/zapier.html" class="block px-4 py-2 rounded hover:bg-blue-50">⚡ Automations</a>
     <a href="/admin/ai-assistant.html" class="block px-4 py-2 rounded hover:bg-blue-50">🤖 AI Assistant</a>
