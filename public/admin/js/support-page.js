@@ -34,27 +34,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     container.innerHTML = list.map(t => `
-      <div class="ticket bg-white border p-6 rounded-xl shadow-sm mb-6" data-id="${t.id}">
-        <div class="flex justify-between mb-2">
+      <div class="ticket" data-id="${t.id}">
+        <div class="ticket-header">
           <div>
-            <h2 class="editable font-semibold text-blue-800 text-lg cursor-pointer" data-id="${t.id}" data-field="subject">${t.subject}</h2>
+            <h2 class="editable" data-id="${t.id}" data-field="subject">${t.subject}</h2>
             <p class="text-xs text-gray-500">${new Date(t.created_at).toLocaleString()}</p>
           </div>
-          <span class="editable text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 cursor-pointer" data-id="${t.id}" data-field="status">
+          <span class="editable status" data-id="${t.id}" data-field="status">
             ${t.status || 'Open'}
           </span>
         </div>
 
-        <p class="editable text-sm text-gray-800 p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer mt-2" data-id="${t.id}" data-field="message">
-          ${t.message}
-        </p>
+        <p class="editable message" data-id="${t.id}" data-field="message">${t.message}</p>
 
         <p class="text-xs text-gray-600 mt-3">👤 ${t.user_name || 'Unknown'} &lt;${t.user_email}&gt;</p>
 
-        <div class="flex gap-3 justify-end mt-4 text-sm">
-          <button class="replyBtn bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full" data-id="${t.id}" data-subject="${encodeURIComponent(t.subject)}" data-email="${encodeURIComponent(t.user_email)}">✉️ Reply</button>
-          <button class="resolveBtn bg-green-100 text-green-800 px-4 py-1.5 rounded-full" data-id="${t.id}">✅ Resolve</button>
-          <button class="deleteBtn bg-red-100 text-red-700 px-4 py-1.5 rounded-full" data-id="${t.id}">🗑 Delete</button>
+        <div class="action-buttons">
+          <button class="replyBtn" data-id="${t.id}" data-subject="${encodeURIComponent(t.subject)}" data-email="${encodeURIComponent(t.user_email)}">✉️ Reply</button>
+          <button class="resolveBtn" data-id="${t.id}">✅ Resolve</button>
+          <button class="deleteBtn" data-id="${t.id}">🗑 Delete</button>
         </div>
       </div>
     `).join('');
@@ -104,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
           input.value = oldText;
         }
 
-        input.className = 'w-full text-sm p-3 border rounded-md';
+        input.className = 'inline-edit-input';
 
         const btn = document.createElement('button');
         btn.textContent = '💾 Save';
