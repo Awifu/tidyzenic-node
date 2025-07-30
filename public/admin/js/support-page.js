@@ -138,23 +138,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       const textarea = document.createElement('textarea');
       textarea.value = oldText;
       textarea.className = 'w-full text-sm text-gray-800 p-3 rounded-lg border focus:ring-2 focus:ring-blue-300';
-
-      const updateBtn = document.createElement('button');
-      updateBtn.textContent = '💾 Update';
-      updateBtn.className = 'bg-green-600 text-white text-sm px-4 py-1 rounded hover:bg-green-700';
-
       wrapper.appendChild(textarea);
-      wrapper.appendChild(updateBtn);
+
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = '💾 Update';
+      saveBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1 rounded-lg shadow transition';
+      wrapper.appendChild(saveBtn);
+
       el.replaceWith(wrapper);
       textarea.focus();
 
-      updateBtn.addEventListener('click', async () => {
+      const revert = () => {
+        const original = document.createElement('p');
+        original.className = el.className;
+        original.dataset.id = id;
+        original.dataset.field = field;
+        original.textContent = oldText;
+        wrapper.replaceWith(original);
+        bindInPlaceEditing();
+      };
+
+      saveBtn.addEventListener('click', async () => {
         const newText = textarea.value.trim();
-        if (!newText || newText === oldText) {
-          wrapper.replaceWith(el);
-          bindInPlaceEditing();
-          return;
-        }
+        if (!newText || newText === oldText) return revert();
 
         try {
           const res = await fetch(`/api/support/${id}/edit`, {
@@ -164,7 +170,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             body: JSON.stringify({ field, value: newText }),
           });
 
-          if (!res.ok) throw new Error();
+          if (!res.ok) throw new Error('Update failed');
 
           const updatedEl = document.createElement('p');
           updatedEl.className = el.className;
@@ -174,12 +180,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           wrapper.replaceWith(updatedEl);
           bindInPlaceEditing();
-          showToast('✅ Message updated');
-        } catch {
+          showToast('✅ Ticket updated successfully', 'success');
+        } catch (err) {
+          console.error(err);
           showToast('❌ Failed to update message', 'error');
-          wrapper.replaceWith(el);
-          bindInPlaceEditing();
+          revert();
         }
+      });
+
+      // Optional: Save on blur
+      textarea.addEventListener('blur', () => {
+        setTimeout(() => {
+          if (document.activeElement !== saveBtn) {
+            saveBtn.click();
+          }
+        }, 100);
+      });
+
+      // ESC to cancel
+      textarea.addEventListener('keydown', e => {
+        if (e.key === 'Escape') revert();
       });
     });
   });
