@@ -67,18 +67,43 @@
     </main>
   </div>
 
-  <!-- Reply Modal -->
-  <div id="replyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Reply to Ticket</h3>
-      <p id="replyModalSubject" class="text-sm text-gray-500 mb-4"></p>
-      <textarea id="replyMessage" rows="5" class="w-full border rounded-lg p-2 text-sm text-gray-700 mb-4" placeholder="Type your reply..."></textarea>
-      <div class="flex justify-end space-x-2">
-        <button id="closeReplyBtn" class="px-4 py-2 text-gray-600 hover:underline">Cancel</button>
-        <button id="submitReplyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Send Reply</button>
-      </div>
+  <!-- Modal Backdrop -->
+<div id="replyModal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+  <!-- Modal Card -->
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative animate-fade-in">
+    
+    <!-- Close Button -->
+    <button id="closeReplyBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">
+      &times;
+    </button>
+
+    <!-- Modal Title -->
+    <h2 class="text-lg font-semibold text-blue-800 mb-2 flex items-center gap-2">
+      ✉️ <span id="replyModalSubject">Reply to:</span>
+    </h2>
+
+    <!-- Textarea -->
+    <textarea id="replyMessage" class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-300 focus:outline-none" rows="5" placeholder="Type your response..."></textarea>
+
+    <!-- Buttons -->
+    <div class="mt-4 flex justify-end gap-2">
+      <button id="submitReplyBtn" class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition">
+        Send Reply
+      </button>
     </div>
   </div>
+</div>
+<style>
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+</styele>
 
   <!-- Scripts -->
   <script src="/js/auth-check.js" defer></script>
