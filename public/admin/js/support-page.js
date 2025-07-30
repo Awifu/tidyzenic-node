@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         el.classList.add('editing');
         const wrapper = document.createElement('div');
-        wrapper.className = 'space-y-3 mt-1';
+        wrapper.className = 'inline-edit-wrapper';
 
         let input;
         if (field === 'status') {
@@ -104,12 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
           input.value = oldText;
         }
 
-        input.className = 'w-full p-3 text-sm border rounded-md';
+        input.className = 'w-full text-sm p-3 border rounded-md';
 
         const btn = document.createElement('button');
         btn.textContent = '💾 Save';
-        btn.className = 'block w-fit ml-auto bg-blue-600 text-white px-5 py-2 text-sm rounded shadow hover:bg-blue-700 transition';
-
+        btn.className = 'inline-edit-save';
         wrapper.append(input, btn);
         el.replaceWith(wrapper);
         input.focus();
