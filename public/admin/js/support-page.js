@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let tickets = [];
   let replyingTo = null;
 
-  const STATUS_OPTIONS = ['Open', 'Pending', 'Resolved'];
+  const STATUS_OPTIONS = ['Open', 'In Progress', 'Replied', 'Resolved'];
 
   const fetchTickets = async () => {
     try {
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const renderTickets = (list) => {
     if (!list.length) {
-      container.innerHTML = `<p class="text-center text-gray-400">No tickets found.</p>`;
+      container.innerHTML = `<p class="text-center text-gray-400">No support tickets found.</p>`;
       return;
     }
 
@@ -37,30 +37,22 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="ticket bg-white border p-6 rounded-xl shadow-sm mb-6" data-id="${t.id}">
         <div class="flex justify-between mb-2">
           <div>
-            <h2 class="editable font-semibold text-blue-800 text-lg cursor-pointer" data-id="${t.id}" data-field="subject">
-              ${t.subject}
-            </h2>
+            <h2 class="editable font-semibold text-blue-800 text-lg cursor-pointer" data-id="${t.id}" data-field="subject">${t.subject}</h2>
             <p class="text-xs text-gray-500">${new Date(t.created_at).toLocaleString()}</p>
           </div>
-          <span class="editable bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full cursor-pointer"
-                data-id="${t.id}" data-field="status">
+          <span class="editable text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 cursor-pointer" data-id="${t.id}" data-field="status">
             ${t.status || 'Open'}
           </span>
         </div>
 
-        <p class="editable text-sm text-gray-800 p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer mt-2"
-           data-id="${t.id}" data-field="message">
+        <p class="editable text-sm text-gray-800 p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer mt-2" data-id="${t.id}" data-field="message">
           ${t.message}
         </p>
 
-        <p class="text-xs text-gray-600 mt-3">
-          👤 ${t.user_name || 'Unknown'} &lt;${t.user_email}&gt;
-        </p>
+        <p class="text-xs text-gray-600 mt-3">👤 ${t.user_name || 'Unknown'} &lt;${t.user_email}&gt;</p>
 
         <div class="flex gap-3 justify-end mt-4 text-sm">
-          <button class="replyBtn bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full" data-id="${t.id}"
-                  data-subject="${encodeURIComponent(t.subject)}"
-                  data-email="${encodeURIComponent(t.user_email)}">✉️ Reply</button>
+          <button class="replyBtn bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full" data-id="${t.id}" data-subject="${encodeURIComponent(t.subject)}" data-email="${encodeURIComponent(t.user_email)}">✉️ Reply</button>
           <button class="resolveBtn bg-green-100 text-green-800 px-4 py-1.5 rounded-full" data-id="${t.id}">✅ Resolve</button>
           <button class="deleteBtn bg-red-100 text-red-700 px-4 py-1.5 rounded-full" data-id="${t.id}">🗑 Delete</button>
         </div>
@@ -89,13 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.editable').forEach(el => {
       el.addEventListener('click', () => {
         if (el.classList.contains('editing')) return;
-        el.classList.add('editing');
 
         const { id, field } = el.dataset;
         const oldText = el.textContent.trim();
 
+        el.classList.add('editing');
         const wrapper = document.createElement('div');
-        wrapper.className = 'space-y-2';
+        wrapper.className = 'space-y-3 mt-1';
 
         let input;
         if (field === 'status') {
@@ -112,11 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
           input.value = oldText;
         }
 
-        input.className = 'w-full text-sm p-3 border rounded-md';
+        input.className = 'w-full p-3 text-sm border rounded-md';
 
         const btn = document.createElement('button');
         btn.textContent = '💾 Save';
-        btn.className = 'bg-blue-600 text-white px-4 py-1 text-sm rounded shadow';
+        btn.className = 'block w-fit ml-auto bg-blue-600 text-white px-5 py-2 text-sm rounded shadow hover:bg-blue-700 transition';
 
         wrapper.append(input, btn);
         el.replaceWith(wrapper);
