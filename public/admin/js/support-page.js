@@ -299,35 +299,3 @@ updatedEl.classList.add('highlight-success');
 setTimeout(() => {
   updatedEl.classList.remove('highlight-success');
 }, 1200);
-saveBtn.disabled = true;
-saveBtn.textContent = 'Saving...';
-
-try {
-  const res = await fetch(`/api/support/${id}/edit`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ field, value: newText }),
-  });
-
-  if (!res.ok) throw new Error('Failed');
-
-  const updatedEl = document.createElement('p');
-  updatedEl.className = el.className;
-  updatedEl.dataset.id = id;
-  updatedEl.dataset.field = field;
-  updatedEl.textContent = newText;
-
-  wrapper.replaceWith(updatedEl);
-  bindInPlaceEditing();
-  updatedEl.classList.add('highlight-success');
-  setTimeout(() => updatedEl.classList.remove('highlight-success'), 1200);
-
-  showToast('✅ Ticket updated successfully.', 'success');
-} catch (err) {
-  showToast('❌ Failed to update ticket.', 'error');
-  revert();
-} finally {
-  saveBtn.disabled = false;
-  saveBtn.textContent = '💾 Save';
-}
