@@ -1,17 +1,15 @@
-// public/js/auth-check.js
-
 (async () => {
   const API_BASE = 'https://auth.tidyzenic.com';
   const isLoginPage = window.location.pathname.includes('/login');
 
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
-      credentials: 'include'
+      credentials: 'include',
     });
 
     if (!res.ok) {
+      // Not logged in
       if (!isLoginPage) {
-        // Not authenticated and not on login page → redirect to login
         window.location.href = '/login.html';
       }
       return;
@@ -19,22 +17,30 @@
 
     const { user } = await res.json();
 
-    // ✅ Store user info globally (optional)
-    window.currentUser = user;
-
-    // ✅ If on login page and already logged in, redirect to dashboard
-    if (isLoginPage) {
-      window.location.href = '/admin/dashboard.html';
+    if (!user || !user.id) {
+      // Malformed user object
+      if (!isLoginPage) {
+        window.location.href = '/login.html';
+      }
       return;
     }
 
-    // ✅ Show user's name in UI if element exists
+    // ✅ Set globally
+    window.currentUser = user;
+
+    // ✅ Already logged in, redirect from login page
+    if (isLoginPage) {
+      window.location.href = '/admin/admin-dashboard.html';
+      return;
+    }
+
+    // ✅ Populate UI if available
     const nameEl = document.getElementById('userName');
     if (nameEl) {
       nameEl.textContent = user.name;
     }
 
-    // ✅ Role-based access: remove admin-only elements for non-admins
+    // ✅ Hide admin-only sections for non-admins
     if (user.role !== 'admin') {
       document.querySelectorAll('[data-role="admin"]').forEach(el => el.remove());
     }
