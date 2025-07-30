@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Support – Admin View</title>
 
-  <!-- Fonts & Tailwind -->
+  <!-- Fonts and Styles -->
   <link rel="stylesheet" href="/styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -40,7 +40,7 @@
   <!-- Mobile Header -->
   <header class="md:hidden flex items-center justify-between p-4 bg-white shadow sticky top-0 z-50">
     <div class="flex items-center space-x-2">
-      <button id="menuToggle" class="text-gray-700 focus:outline-none" aria-label="Toggle menu">
+      <button id="menuToggle" class="text-gray-700 focus:outline-none">
         <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
@@ -49,12 +49,12 @@
     </div>
   </header>
 
-  <!-- Layout -->
+  <!-- Page Layout -->
   <div class="flex min-h-screen relative">
-    <!-- Sidebar -->
+    <!-- Sidebar container -->
     <div id="sidebar-container"></div>
 
-    <!-- Mobile backdrop -->
+    <!-- Mobile overlay -->
     <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
     <!-- Main Content -->
@@ -82,23 +82,28 @@
     </main>
   </div>
 
-  <!-- Modal -->
+  <!-- Modal: Reply to Ticket -->
   <div id="replyModal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative animate-fade-in" role="dialog" aria-modal="true">
-      <button id="closeReplyBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg" aria-label="Close modal">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative animate-fade-in">
+      <!-- Close -->
+      <button id="closeReplyBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">
         &times;
       </button>
 
+      <!-- Title -->
       <h2 class="text-lg font-semibold text-blue-800 mb-2 flex items-center gap-2">
         ✉️ <span id="replyModalSubject">Reply to:</span>
       </h2>
 
+      <!-- Textarea -->
       <textarea id="replyMessage"
         class="w-full p-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-300 focus:outline-none"
         rows="5" placeholder="Type your response..."></textarea>
 
-      <p id="replyError" class="text-red-500 text-sm mt-2 hidden" role="alert"></p>
+      <!-- Inline error -->
+      <p id="replyError" class="text-red-500 text-sm mt-2 hidden"></p>
 
+      <!-- Buttons -->
       <div class="mt-4 flex justify-end gap-2">
         <button id="submitReplyBtn"
           class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition">
@@ -108,10 +113,9 @@
     </div>
   </div>
 
-  <!-- Toast -->
+  <!-- Toast Notification -->
   <div id="toast"
-    class="fixed bottom-6 right-6 bg-green-600 text-white text-sm px-4 py-2 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50"
-    role="status" aria-live="polite">
+    class="fixed bottom-6 right-6 bg-green-600 text-white text-sm px-4 py-2 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50">
     Toast placeholder
   </div>
 
@@ -119,14 +123,5 @@
   <script src="/js/auth-check.js" defer></script>
   <script src="/admin/js/load-sidebar.js" defer></script>
   <script src="/admin/js/support-page.min.js" defer></script>
-
-  <!-- ESC key modal close -->
-  <script>
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        document.getElementById('replyModal')?.classList.add('hidden');
-      }
-    });
-  </script>
 </body>
 </html>
