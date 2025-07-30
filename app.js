@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ==============================
-// 1. Middleware (Body, Cookie, Logging)
+// 1. Middleware: JSON, URL, Cookies, Logging
 // ==============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -20,14 +20,16 @@ app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ==============================
-// 2. CSP Nonce + Headers
+// 2. CSP Nonce Generation
 // ==============================
 app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
 });
 
-// Use helmet for base security headers
+// ==============================
+// 3. Helmet + CSP (uses nonce)
+// ==============================
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -47,7 +49,7 @@ app.use(
 );
 
 // ==============================
-// 3. CORS
+// 4. CORS
 // ==============================
 const allowedOrigins = [
   'http://localhost:3000',
@@ -69,13 +71,13 @@ app.use(cors({
 }));
 
 // ==============================
-// 4. Tenant Resolver
+// 5. Tenant Resolver
 // ==============================
 const tenantResolver = require('./middleware/tenantResolver');
 app.use(tenantResolver);
 
 // ==============================
-// 5. Static Files
+// 6. Static Files
 // ==============================
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
@@ -83,7 +85,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // ==============================
-// 6. API Routes
+// 7. API Routes
 // ==============================
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
@@ -91,7 +93,7 @@ app.use('/api/business', require('./routes/business'));
 app.use('/api/support', require('./routes/support'));
 
 // ==============================
-// 7. HTML Page Routes
+// 8. HTML Page Routes
 // ==============================
 const sendFile = (file) => (req, res) =>
   res.sendFile(path.join(__dirname, 'public', file));
@@ -110,14 +112,14 @@ app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin/dashboard.ht
 app.get('/admin/support.html', sendFile('admin/support.html'));
 
 // ==============================
-// 8. 404 Not Found
+// 9. 404 Not Found
 // ==============================
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
 // ==============================
-// 9. Global Error Handler
+// 10. Global Error Handler
 // ==============================
 app.use((err, req, res, next) => {
   console.error('🔥 Unhandled Error:', err.stack || err.message);
@@ -129,7 +131,7 @@ app.use((err, req, res, next) => {
 });
 
 // ==============================
-// 10. Start Server
+// 11. Start Server
 // ==============================
 const server = app.listen(PORT, () => {
   const url = process.env.NODE_ENV === 'production'
@@ -139,7 +141,7 @@ const server = app.listen(PORT, () => {
 });
 
 // ==============================
-// 11. Graceful Shutdown
+// 12. Graceful Shutdown
 // ==============================
 process.on('SIGINT', () => {
   console.log('🛑 Gracefully shutting down...');
