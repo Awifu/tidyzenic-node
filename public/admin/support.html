@@ -79,30 +79,14 @@
       </div>
     </div>
   </div>
-<script>
-  function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.className = `fixed bottom-6 right-6 z-50 px-4 py-2 rounded-lg shadow-lg text-sm ${
-      type === 'success' ? 'bg-green-600' : 'bg-red-600'
-    } text-white opacity-0 pointer-events-none transition-opacity duration-300`;
-
-    toast.classList.remove('hidden');
-    requestAnimationFrame(() => toast.classList.add('opacity-100'));
-
-    setTimeout(() => {
-      toast.classList.remove('opacity-100');
-      setTimeout(() => toast.classList.add('hidden'), 300);
-    }, 3000);
-  }
-</script>
 <!-- Toast Notification -->
 <div id="toast" class="fixed bottom-6 right-6 z-50 hidden px-4 py-2 rounded-lg text-white shadow-lg text-sm transition-opacity duration-300"></div>
 
   <!-- Scripts -->
   <script src="/js/auth-check.js" defer></script>
   <script src="/admin/js/load-sidebar.js" defer></script>
-  <script src="/admin/js/support-page.min.js" defer></script>
+<script src="/admin/js/toast.js" defer></script>
+<script src="/admin/js/support-page.min.js" defer></script>
 
 
 </body>
