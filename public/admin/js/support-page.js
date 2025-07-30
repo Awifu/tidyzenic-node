@@ -10,277 +10,188 @@ document.addEventListener('DOMContentLoaded', async () => {
   const replyError = document.getElementById('replyError');
   const toast = document.getElementById('toast');
 
-  let allTickets = [];
-  let currentReplyTicketId = null;
+  let tickets = [];
+  let replyingTo = null;
 
-  container.innerHTML = `<p class="text-gray-500 text-center">Loading tickets...</p>`;
+  async function fetchTickets() {
+    try {
+      const res = await fetch('/api/support', { credentials: 'include' });
+      if (!res.ok) throw new Error();
+      tickets = await res.json();
+      if (!Array.isArray(tickets)) throw new Error();
+      if (tickets[0]?.business_email) adminEmailEl.textContent = tickets[0].business_email;
+      renderTickets(tickets);
+    } catch {
+      container.innerHTML = `<p class="text-red-600 text-center">❌ Failed to load tickets</p>`;
+    }
+  }
 
-  try {
-    const res = await fetch('/api/support', { credentials: 'include' });
-    if (!res.ok) throw new Error('Failed to fetch tickets');
-    const tickets = await res.json();
-
-    if (!Array.isArray(tickets)) {
-      container.innerHTML = '<p class="text-red-600 text-center">❌ Invalid response format.</p>';
+  function renderTickets(list) {
+    if (!list.length) {
+      container.innerHTML = `<p class="text-center text-gray-400">No support tickets found.</p>`;
       return;
     }
 
-    if (tickets.length === 0) {
-      container.innerHTML = '<p class="text-center text-gray-500">No support tickets found.</p>';
-      return;
-    }
-
-    allTickets = tickets;
-
-    if (tickets[0].business_email && adminEmailEl) {
-      adminEmailEl.textContent = tickets[0].business_email;
-    }
-
-    renderTickets(allTickets);
-
-    searchInput?.addEventListener('input', () => {
-      const query = searchInput.value.toLowerCase();
-      const filtered = allTickets.filter(t =>
-        t.subject.toLowerCase().includes(query) ||
-        t.message.toLowerCase().includes(query) ||
-        t.user_email.toLowerCase().includes(query)
-      );
-      renderTickets(filtered);
-    });
-  } catch (err) {
-    console.error('❌ Support fetch error:', err);
-    container.innerHTML = '<p class="text-red-600 text-center">❌ Could not load support tickets.</p>';
-  }
-
-  function renderTickets(tickets) {
-  if (!tickets.length) {
-    container.innerHTML = '<p class="text-center text-gray-400">No matching tickets.</p>';
-    return;
-  }
-
-  container.innerHTML = tickets.map(ticket => `
-    <div class="ticket bg-white/80 border border-gray-200 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all mb-6 backdrop-blur-sm" data-id="${ticket.id}">
-      
-      <div class="flex justify-between items-start mb-4">
-        <div>
-          <h2 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
-            <span class="text-xl">📬</span> ${ticket.subject}
-          </h2>
-          <p class="text-xs text-gray-500 mt-1">${new Date(ticket.created_at).toLocaleString()}</p>
+    container.innerHTML = list.map(t => `
+      <div class="ticket bg-white border p-6 rounded-xl shadow-md mb-6" data-id="${t.id}">
+        <div class="flex justify-between mb-2">
+          <div>
+            <h2 class="font-semibold text-blue-800 text-lg flex items-center gap-1">
+              📬 ${t.subject}
+            </h2>
+            <p class="text-xs text-gray-500">${new Date(t.created_at).toLocaleString()}</p>
+          </div>
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">${t.status || 'Open'}</span>
         </div>
-        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-          ${ticket.status || 'Open'}
-        </span>
+
+        <p class="editable text-sm text-gray-700 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer relative"
+           data-id="${t.id}" data-field="message">
+          ${t.message}
+          <span class="edit-icon absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">✏️</span>
+        </p>
+
+        <p class="text-xs text-gray-500 mt-2">
+          <strong>👤</strong> ${t.user_name || 'Unknown'} &lt;${t.user_email}&gt;
+        </p>
+
+        <div class="flex gap-3 justify-end mt-4 text-sm">
+          <button class="replyBtn bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full" data-id="${t.id}" data-subject="${encodeURIComponent(t.subject)}" data-email="${encodeURIComponent(t.user_email)}">✉️ Reply</button>
+          <button class="resolveBtn bg-green-100 text-green-800 px-4 py-1.5 rounded-full" data-id="${t.id}">✅ Resolve</button>
+          <button class="deleteBtn bg-red-100 text-red-700 px-4 py-1.5 rounded-full" data-id="${t.id}">🗑 Delete</button>
+        </div>
       </div>
+    `).join('');
 
-      <p class="text-sm text-gray-800 mb-4 editable leading-relaxed bg-gray-50 p-3 rounded-lg hover:bg-gray-100 cursor-pointer" 
-         data-id="${ticket.id}" data-field="message">
-        ${ticket.message}
-      </p>
-
-      <div class="text-xs text-gray-600 mb-4">
-        <strong>👤 User:</strong> ${ticket.user_name || 'Unknown'} &lt;${ticket.user_email || 'N/A'}&gt;
-      </div>
-
-      <div class="flex items-center justify-end flex-wrap gap-3 text-sm">
-        <button class="px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition shadow-sm replyBtn"
-                data-id="${ticket.id}" 
-                data-subject='${encodeURIComponent(ticket.subject)}'
-                data-email='${encodeURIComponent(ticket.user_email)}'>
-          ✉️ Reply
-        </button>
-
-        <button class="px-4 py-1.5 rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition shadow-sm resolveBtn"
-                data-id="${ticket.id}">
-          ✅ Mark Resolved
-        </button>
-
-        <button class="px-4 py-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition shadow-sm deleteBtn"
-                data-id="${ticket.id}">
-          🗑 Delete
-        </button>
-      </div>
-    </div>
-  `).join('');
-
-  bindActions();
-  bindInPlaceEditing();
-}
-
-
-  function bindActions() {
-    document.querySelectorAll('.replyBtn').forEach(btn =>
-      btn.addEventListener('click', () => {
-        const { id, subject, email } = btn.dataset;
-        openReplyModal(id, decodeURIComponent(subject), decodeURIComponent(email));
-      })
-    );
-    document.querySelectorAll('.resolveBtn').forEach(btn =>
-      btn.addEventListener('click', () => handleMarkResolved(btn.dataset.id))
-    );
-    document.querySelectorAll('.deleteBtn').forEach(btn =>
-      btn.addEventListener('click', () => handleDelete(btn.dataset.id))
-    );
+    bindEvents();
   }
 
-  function bindInPlaceEditing() {
-  document.querySelectorAll('.editable').forEach(el => {
-    el.addEventListener('click', () => {
-      if (el.classList.contains('editing')) return;
-      el.classList.add('editing');
+  function bindEvents() {
+    document.querySelectorAll('.replyBtn').forEach(btn =>
+      btn.addEventListener('click', () =>
+        openReplyModal(btn.dataset.id, decodeURIComponent(btn.dataset.subject), decodeURIComponent(btn.dataset.email)))
+    );
 
-      const { field, id } = el.dataset;
-      const oldText = el.textContent.trim();
+    document.querySelectorAll('.resolveBtn').forEach(btn =>
+      btn.addEventListener('click', () => handleAction(`/api/support/${btn.dataset.id}/resolve`, 'PATCH', '✅ Ticket resolved')));
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'space-y-2';
+    document.querySelectorAll('.deleteBtn').forEach(btn =>
+      btn.addEventListener('click', () =>
+        confirm('Delete this ticket?') && handleAction(`/api/support/${btn.dataset.id}`, 'DELETE', '🗑️ Ticket deleted'))
+    );
 
-      const textarea = document.createElement('textarea');
-      textarea.value = oldText;
-      textarea.className = 'w-full text-sm text-gray-800 p-3 rounded-lg border focus:ring-2 focus:ring-blue-300';
-      wrapper.appendChild(textarea);
+    document.querySelectorAll('.editable').forEach(p => {
+      p.addEventListener('click', () => {
+        if (p.classList.contains('editing')) return;
 
-      const saveBtn = document.createElement('button');
-      saveBtn.textContent = '💾 Update';
-      saveBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1 rounded-lg shadow transition';
-      wrapper.appendChild(saveBtn);
+        const { id, field } = p.dataset;
+        const oldText = p.textContent.trim();
 
-      el.replaceWith(wrapper);
-      textarea.focus();
+        const wrapper = document.createElement('div');
+        wrapper.className = 'space-y-2';
 
-      const revert = () => {
-        const original = document.createElement('p');
-        original.className = el.className;
-        original.dataset.id = id;
-        original.dataset.field = field;
-        original.textContent = oldText;
-        wrapper.replaceWith(original);
-        bindInPlaceEditing();
-      };
+        const textarea = document.createElement('textarea');
+        textarea.className = 'w-full p-3 border rounded-lg text-sm';
+        textarea.value = oldText;
 
-      saveBtn.addEventListener('click', async () => {
-        const newText = textarea.value.trim();
-        if (!newText || newText === oldText) return revert();
+        const btn = document.createElement('button');
+        btn.className = 'bg-blue-600 text-white px-4 py-1 text-sm rounded-lg';
+        btn.textContent = '💾 Save';
 
-        try {
-          const res = await fetch(`/api/support/${id}/edit`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ field, value: newText }),
-          });
+        wrapper.append(textarea, btn);
+        p.replaceWith(wrapper);
+        textarea.focus();
 
-          if (!res.ok) throw new Error('Update failed');
+        const revert = () => {
+          wrapper.replaceWith(p);
+          bindEvents();
+        };
 
-          const updatedEl = document.createElement('p');
-          updatedEl.className = el.className;
-          updatedEl.dataset.id = id;
-          updatedEl.dataset.field = field;
-          updatedEl.textContent = newText;
+        btn.addEventListener('click', async () => {
+          const value = textarea.value.trim();
+          if (!value || value === oldText) return revert();
 
-          wrapper.replaceWith(updatedEl);
-          bindInPlaceEditing();
-          showToast('✅ Ticket updated successfully', 'success');
-        } catch (err) {
-          console.error(err);
-          showToast('❌ Failed to update message', 'error');
-          revert();
-        }
-      });
+          btn.disabled = true;
+          btn.textContent = 'Saving...';
 
-      // Optional: Save on blur
-      textarea.addEventListener('blur', () => {
-        setTimeout(() => {
-          if (document.activeElement !== saveBtn) {
-            saveBtn.click();
+          try {
+            const res = await fetch(`/api/support/${id}/edit`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ field, value }),
+            });
+            if (!res.ok) throw new Error();
+
+            const newEl = document.createElement('p');
+            newEl.className = p.className;
+            newEl.dataset.id = id;
+            newEl.dataset.field = field;
+            newEl.textContent = value;
+            newEl.classList.add('highlight-success');
+
+            wrapper.replaceWith(newEl);
+            bindEvents();
+            setTimeout(() => newEl.classList.remove('highlight-success'), 1200);
+            showToast('✅ Ticket updated');
+          } catch {
+            showToast('❌ Failed to update');
+            revert();
           }
-        }, 100);
-      });
+        });
 
-      // ESC to cancel
-      textarea.addEventListener('keydown', e => {
-        if (e.key === 'Escape') revert();
+        textarea.addEventListener('keydown', e => {
+          if (e.key === 'Escape') revert();
+        });
       });
     });
-  });
-}
-
+  }
 
   function openReplyModal(id, subject, email) {
-    currentReplyTicketId = id;
-    replyModalSubject.textContent = `Subject: ${subject} | To: ${email}`;
-    replyMessage.value = '';
+    replyingTo = id;
     replyModal.classList.remove('hidden');
-    replyError.classList.add('hidden');
-    replyMessage.classList.remove('border-red-500', 'ring-1', 'ring-red-300');
+    replyMessage.value = '';
+    replyModalSubject.textContent = `Subject: ${subject} | To: ${email}`;
   }
 
   function closeReplyModal() {
     replyModal.classList.add('hidden');
+    replyingTo = null;
   }
 
   async function submitReply() {
     const message = replyMessage.value.trim();
-    if (!message) {
-      replyError.textContent = 'Reply message cannot be empty.';
-      replyError.classList.remove('hidden');
-      replyMessage.classList.add('border-red-500', 'ring-1', 'ring-red-300');
-      return;
-    }
-
-    replyError.classList.add('hidden');
-    replyMessage.classList.remove('border-red-500', 'ring-1', 'ring-red-300');
+    if (!message) return showToast('❌ Message required');
 
     try {
-      const res = await fetch(`/api/support/${currentReplyTicketId}/reply`, {
+      const res = await fetch(`/api/support/${replyingTo}/reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ message }),
       });
-
       if (!res.ok) throw new Error();
-      showToast('✅ Reply sent');
       closeReplyModal();
-      setTimeout(() => location.reload(), 1500);
+      showToast('✅ Reply sent');
+      await fetchTickets();
     } catch {
       showToast('❌ Failed to send reply');
     }
   }
 
-  async function handleMarkResolved(id) {
-    if (!confirm('Mark this ticket as resolved?')) return;
+  async function handleAction(url, method, successMsg) {
     try {
-      const res = await fetch(`/api/support/${id}/resolve`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
+      const res = await fetch(url, { method, credentials: 'include' });
       if (!res.ok) throw new Error();
-      showToast('✅ Ticket marked as resolved');
-      setTimeout(() => location.reload(), 1000);
+      showToast(successMsg);
+      await fetchTickets();
     } catch {
-      showToast('❌ Failed to mark as resolved');
+      showToast('❌ Action failed');
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Delete this ticket permanently?')) return;
-    try {
-      const res = await fetch(`/api/support/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error();
-      showToast('🗑️ Ticket deleted');
-      setTimeout(() => location.reload(), 1000);
-    } catch {
-      showToast('❌ Failed to delete ticket');
-    }
-  }
-
-  function showToast(message = 'Done') {
+  function showToast(msg) {
     if (!toast) return;
-    toast.textContent = message;
+    toast.textContent = msg;
     toast.classList.remove('opacity-0');
     toast.classList.add('opacity-100');
     setTimeout(() => {
@@ -291,4 +202,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   closeReplyBtn?.addEventListener('click', closeReplyModal);
   submitReplyBtn?.addEventListener('click', submitReply);
+
+  searchInput?.addEventListener('input', () => {
+    const q = searchInput.value.toLowerCase();
+    const filtered = tickets.filter(t =>
+      t.subject.toLowerCase().includes(q) ||
+      t.message.toLowerCase().includes(q) ||
+      t.user_email.toLowerCase().includes(q)
+    );
+    renderTickets(filtered);
+  });
+
+  fetchTickets();
 });
