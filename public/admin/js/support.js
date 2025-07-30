@@ -32,5 +32,31 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to create support ticket' });
   }
 });
+// PATCH /api/support/:id/edit - Update a reply message inline
+router.patch('/:id/edit', async (req, res) => {
+  const { id } = req.params;
+  const { field, value } = req.body;
+
+  // Only allow updating the "message" field of a support reply
+  if (field !== 'message') {
+    return res.status(400).json({ error: 'Invalid field' });
+  }
+
+  try {
+    const [result] = await pool.query(
+      'UPDATE support_replies SET message = ? WHERE id = ?',
+      [value, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Reply not found' });
+    }
+
+    res.json({ success: true, message: 'Reply updated successfully' });
+  } catch (err) {
+    console.error('❌ Error updating support reply:', err);
+    res.status(500).json({ error: 'Failed to update support reply' });
+  }
+});
 
 module.exports = router;

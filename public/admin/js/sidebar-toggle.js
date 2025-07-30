@@ -4,12 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const backdrop = document.getElementById('sidebarBackdrop');
 
   menuToggle?.addEventListener('click', () => {
-    sidebar.classList.remove('-translate-x-full');
-    backdrop.classList.remove('hidden');
+    sidebar.classList.remove('-translate-x-full'); // show sidebar
+    backdrop.classList.remove('hidden');           // show backdrop
   });
 
   backdrop?.addEventListener('click', () => {
-    sidebar.classList.add('-translate-x-full');
-    backdrop.classList.add('hidden');
+    sidebar.classList.add('-translate-x-full');    // hide sidebar
+    backdrop.classList.add('hidden');              // hide backdrop
   });
 });
