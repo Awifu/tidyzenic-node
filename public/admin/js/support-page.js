@@ -57,39 +57,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     container.innerHTML = tickets.map(ticket => `
-      <div class="ticket bg-blue-50 border border-blue-100 p-6 rounded-2xl shadow-sm hover:shadow-md" data-id="${ticket.id}">
-        <div class="flex justify-between items-start mb-4">
+      <div class="ticket bg-blue-50 border border-blue-200 p-6 rounded-2xl shadow hover:shadow-md transition-all" data-id="${ticket.id}">
+        <div class="flex justify-between items-start mb-3">
           <div>
-            <h2 class="text-lg font-semibold text-blue-800">${ticket.subject}</h2>
+            <h2 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
+              📨 ${ticket.subject}
+            </h2>
             <p class="text-xs text-gray-500 mt-1">${new Date(ticket.created_at).toLocaleString()}</p>
           </div>
-          <span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+          <span class="inline-block bg-blue-200 text-blue-800 text-xs font-medium px-3 py-1 rounded-full shadow">
             ${ticket.status || 'Open'}
           </span>
         </div>
 
-        <p class="text-sm text-gray-700 mb-4 editable" data-id="${ticket.id}" data-field="message">${ticket.message}</p>
+        <p class="text-sm text-gray-700 mb-4 editable" data-id="${ticket.id}" data-field="message">
+          ${ticket.message}
+        </p>
 
         <div class="text-xs text-gray-600 mb-4">
           <strong>From:</strong> ${ticket.user_name || 'Unknown'} (${ticket.user_email || 'N/A'})
         </div>
 
-        <div class="flex items-center justify-end space-x-3 text-sm">
-          <button class="replyBtn px-4 py-1 rounded-md bg-green-100 text-green-700 hover:bg-green-200"
+        <div class="flex items-center justify-end flex-wrap gap-2 text-sm">
+          <button class="replyBtn px-4 py-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 shadow-sm"
                   data-id="${ticket.id}" 
                   data-subject='${encodeURIComponent(ticket.subject)}'
                   data-email='${encodeURIComponent(ticket.user_email)}'>
-            Reply
+            ✉️ Reply
           </button>
 
-          <button class="resolveBtn px-4 py-1 rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+          <button class="resolveBtn px-4 py-1 rounded-full bg-green-100 text-green-700 hover:bg-green-200 shadow-sm"
                   data-id="${ticket.id}">
-            Mark Resolved
+            ✅ Mark Resolved
           </button>
 
-          <button class="deleteBtn px-4 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+          <button class="deleteBtn px-4 py-1 rounded-full bg-red-100 text-red-700 hover:bg-red-200 shadow-sm"
                   data-id="${ticket.id}">
-            Delete
+            ❌ Delete
           </button>
         </div>
       </div>
@@ -211,7 +215,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Bind modal buttons
   closeReplyBtn?.addEventListener('click', closeReplyModal);
   submitReplyBtn?.addEventListener('click', submitReply);
 });
