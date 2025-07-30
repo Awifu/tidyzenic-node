@@ -32,6 +32,30 @@
     .animate-fade-in {
       animation: fade-in 0.2s ease-out;
     }
+
+    .btn-pill {
+      @apply px-5 py-2 rounded-full text-sm font-medium shadow-md transition;
+    }
+
+    .btn-reply {
+      @apply bg-blue-100 text-blue-800 hover:bg-blue-200;
+    }
+
+    .btn-resolve {
+      @apply bg-green-100 text-green-800 hover:bg-green-200;
+    }
+
+    .btn-delete {
+      @apply bg-red-100 text-red-700 hover:bg-red-200;
+    }
+
+    .glass-card {
+      @apply bg-white/70 backdrop-blur-md border border-gray-200 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-200 ease-in-out;
+    }
+
+    .badge {
+      @apply inline-block bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200;
+    }
   </style>
 </head>
 
@@ -53,26 +77,24 @@
   <div class="flex min-h-screen relative">
     <!-- Sidebar -->
     <div id="sidebar-container"></div>
-
-    <!-- Mobile backdrop -->
     <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
     <!-- Main Content -->
     <main class="flex-1 overflow-y-auto p-4 md:p-8 z-10 relative">
       <div class="max-w-5xl mx-auto">
-        <section class="bg-white p-6 rounded-2xl shadow-xl mb-12">
+        <section class="glass-card mb-12">
           <div class="flex items-center justify-between mb-6">
             <div>
               <h1 class="text-3xl font-bold text-blue-700">📨 Support Tickets</h1>
               <p class="text-sm text-gray-600 mt-1">All incoming support messages from users</p>
             </div>
-            <div class="text-sm bg-blue-100 text-blue-800 px-4 py-2 rounded-xl shadow">
+            <div class="text-sm bg-blue-100 text-blue-800 px-4 py-2 rounded-full shadow-sm">
               <span id="adminBadgeName">Admin</span> · <span id="adminBadgeEmail">email@example.com</span>
             </div>
           </div>
 
           <input id="ticketSearch" type="text" placeholder="Search tickets..."
-            class="w-full md:w-1/3 mb-6 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+            class="w-full md:w-1/3 mb-6 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
 
           <div id="supportTickets" class="space-y-6">
             <p class="text-gray-600 text-center">Loading tickets...</p>
@@ -101,7 +123,7 @@
 
       <div class="mt-4 flex justify-end gap-2">
         <button id="submitReplyBtn"
-          class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition">
+          class="btn-pill bg-blue-600 text-white hover:bg-blue-700">
           Send Reply
         </button>
       </div>
@@ -120,7 +142,6 @@
   <script src="/admin/js/load-sidebar.js" defer></script>
   <script src="/admin/js/support-page.min.js" defer></script>
 
-  <!-- ESC key modal close -->
   <script>
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
