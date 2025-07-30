@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let tickets = [];
   let replyingTo = null;
 
+  const STATUS_OPTIONS = ['Open', 'Pending', 'Resolved'];
+
   const fetchTickets = async () => {
     try {
       const res = await fetch('/api/support', { credentials: 'include' });
@@ -36,19 +38,19 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="flex justify-between mb-2">
           <div>
             <h2 class="editable font-semibold text-blue-800 text-lg cursor-pointer" data-id="${t.id}" data-field="subject">
-              ${t.subject} <span class="edit-icon">✏️</span>
+              ${t.subject}
             </h2>
             <p class="text-xs text-gray-500">${new Date(t.created_at).toLocaleString()}</p>
           </div>
-          <span class="editable bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full cursor-pointer" data-id="${t.id}" data-field="status">
-            ${t.status || 'Open'} <span class="edit-icon">✏️</span>
+          <span class="editable bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full cursor-pointer"
+                data-id="${t.id}" data-field="status">
+            ${t.status || 'Open'}
           </span>
         </div>
 
-        <p class="editable text-sm text-gray-800 p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer mt-2 relative"
+        <p class="editable text-sm text-gray-800 p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer mt-2"
            data-id="${t.id}" data-field="message">
           ${t.message}
-          <span class="edit-icon absolute right-2 top-2 opacity-0 group-hover:opacity-100">✏️</span>
         </p>
 
         <p class="text-xs text-gray-600 mt-3">
@@ -56,7 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </p>
 
         <div class="flex gap-3 justify-end mt-4 text-sm">
-          <button class="replyBtn bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full" data-id="${t.id}" data-subject="${encodeURIComponent(t.subject)}" data-email="${encodeURIComponent(t.user_email)}">✉️ Reply</button>
+          <button class="replyBtn bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full" data-id="${t.id}"
+                  data-subject="${encodeURIComponent(t.subject)}"
+                  data-email="${encodeURIComponent(t.user_email)}">✉️ Reply</button>
           <button class="resolveBtn bg-green-100 text-green-800 px-4 py-1.5 rounded-full" data-id="${t.id}">✅ Resolve</button>
           <button class="deleteBtn bg-red-100 text-red-700 px-4 py-1.5 rounded-full" data-id="${t.id}">🗑 Delete</button>
         </div>
@@ -93,15 +97,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.createElement('div');
         wrapper.className = 'space-y-2';
 
-        const input = document.createElement(field === 'message' ? 'textarea' : 'input');
-        input.value = oldText;
+        let input;
+        if (field === 'status') {
+          input = document.createElement('select');
+          STATUS_OPTIONS.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt;
+            o.textContent = opt;
+            if (opt === oldText) o.selected = true;
+            input.appendChild(o);
+          });
+        } else {
+          input = document.createElement(field === 'message' ? 'textarea' : 'input');
+          input.value = oldText;
+        }
+
         input.className = 'w-full text-sm p-3 border rounded-md';
 
         const btn = document.createElement('button');
         btn.textContent = '💾 Save';
         btn.className = 'bg-blue-600 text-white px-4 py-1 text-sm rounded shadow';
-        wrapper.append(input, btn);
 
+        wrapper.append(input, btn);
         el.replaceWith(wrapper);
         input.focus();
 
@@ -127,11 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!res.ok) throw new Error();
+
             const newEl = document.createElement(el.tagName.toLowerCase());
             newEl.className = el.className;
             newEl.dataset.id = id;
             newEl.dataset.field = field;
-            newEl.innerHTML = value + ' <span class="edit-icon">✏️</span>';
+            newEl.textContent = value;
             newEl.classList.add('highlight-success');
 
             wrapper.replaceWith(newEl);
