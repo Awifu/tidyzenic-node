@@ -120,5 +120,37 @@ router.post('/:id/reply', supportLimiter, async (req, res) => {
     res.status(500).json({ message: 'Failed to send reply' });
   }
 });
+// ✅ PATCH /api/support/:id/edit – Inline edit a ticket field
+router.patch('/:id/edit', supportLimiter, async (req, res) => {
+  const { id } = req.params;
+  const { field, value } = req.body;
+  const user = getUserFromToken(req);
+
+  if (!user || user.role !== 'admin') {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const allowedFields = ['message', 'subject', 'status'];
+  if (!allowedFields.includes(field)) {
+    return res.status(400).json({ error: 'Invalid field' });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE support_tickets SET \`${field}\` = ? WHERE id = ?`,
+      [value, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    console.log(`✅ Updated ticket ${id}: ${field} = ${value}`);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Failed to update ticket:', err.message);
+    res.status(500).json({ error: 'Failed to update ticket' });
+  }
+});
 
 module.exports = router;
