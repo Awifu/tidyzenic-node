@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Login to manage your agency with Tidyzenic in the cloud." />
   <meta name="robots" content="noindex, nofollow" />
   <title>Login – Tidyzenic</title>
 
-  <!-- Tailwind CSS -->
-  <link rel="stylesheet" href="/styles.css" />
-
-  <!-- Font -->
+  <!-- Fonts & Styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 
 <body class="bg-gray-100 text-gray-800 font-sans">
@@ -21,61 +19,36 @@
   <section class="min-h-screen flex items-center justify-center px-4">
     <div class="w-full max-w-md bg-white shadow-xl rounded-2xl px-8 py-10">
 
-      <!-- Header -->
       <h1 class="text-3xl font-bold text-center text-blue-700 mb-2">Welcome Back</h1>
       <p class="text-center text-gray-500 mb-8 text-sm">Login to manage your agency in the cloud</p>
 
-      <!-- Error message -->
       <div id="loginError" class="hidden text-sm text-red-600 mb-4 text-center"></div>
 
-      <!-- Login Form -->
       <form id="loginForm" class="space-y-5" autocomplete="on" novalidate>
-        
-        <!-- Email -->
         <div>
           <label for="email" class="block text-sm font-medium mb-1">
             Email <span class="text-red-600">*</span>
           </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            required
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="you@example.com"
-            autocomplete="email"
-          />
+          <input type="email" id="email" name="email" required
+                 class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="you@example.com" autocomplete="email" />
         </div>
 
-        <!-- Password -->
         <div>
           <label for="password" class="block text-sm font-medium mb-1">
             Password <span class="text-red-600">*</span>
           </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            required
-            minlength="8"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="••••••••"
-            autocomplete="current-password"
-          />
+          <input type="password" id="password" name="password" required minlength="8"
+                 class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 placeholder="••••••••" autocomplete="current-password" />
         </div>
 
-        <!-- Toggle + Forgot Password -->
         <div class="flex items-center justify-between">
           <label for="rememberMe" class="flex items-center gap-3 cursor-pointer select-none">
             <div class="relative">
               <input type="checkbox" id="rememberMe" name="rememberMe" class="sr-only" />
-              <div
-                id="switchTrack"
-                class="w-10 h-5 bg-gray-300 rounded-full transition-colors duration-300">
-                <div
-                  id="switchDot"
-                  class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300">
-                </div>
+              <div id="switchTrack" class="w-10 h-5 bg-gray-300 rounded-full transition-colors duration-300">
+                <div id="switchDot" class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300"></div>
               </div>
             </div>
             <span class="text-sm">Remember me</span>
@@ -83,15 +56,12 @@
           <a href="/forgot-password.html" class="text-sm text-blue-600 hover:underline">Forgot password?</a>
         </div>
 
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition duration-200">
+        <button type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition duration-200">
           Login
         </button>
       </form>
 
-      <!-- Registration Link -->
       <p class="text-center text-sm text-gray-600 mt-6">
         Don’t have an account?
         <a href="/register.html" class="text-blue-600 hover:underline">Register here</a>
@@ -99,37 +69,9 @@
     </div>
   </section>
 
-  <!-- Login Script -->
+  <!-- External Scripts -->
+  <script src="/js/redirect-if-authenticated.js" defer></script>
   <script src="/js/login.js" defer></script>
 
-<script>
-(async () => {
-  const hostname = window.location.hostname;
-  if (hostname !== 'tidyzenic.com' && hostname !== 'www.tidyzenic.com') {
-    // Don't run auth check on subdomains — prevent redirect loop
-    window.location.href = 'https://tidyzenic.com/login.html';
-    return;
-  }
-
-  try {
-    const res = await fetch('/auth/me', {
-      credentials: 'include'
-    });
-
-    if (res.ok) {
-      const { user } = await res.json();
-      window.location.href = `/admin/dashboard.html`;
-    }
-  } catch (err) {
-    if (err.response && err.response.status !== 401) {
-      console.warn('Error checking auth status:', err);
-    }
-  }
-})();
-</script>
-
-
-
 </body>
-
 </html>

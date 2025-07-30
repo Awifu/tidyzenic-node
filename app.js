@@ -6,12 +6,13 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const crypto = require('crypto');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ==============================
-// 1. Middleware
+// 1. Middleware (Body, Cookie, Logging)
 // ==============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,39 +20,47 @@ app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // ==============================
-// 2. CSP Nonce & Headers
+// 2. CSP Nonce + Headers
 // ==============================
 app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
 });
 
-app.use((req, res, next) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    `default-src 'self'; script-src 'self' 'nonce-${res.locals.nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.tidyzenic.com;`
-  );
-  next();
-});
+// Use helmet for base security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        connectSrc: ["'self'", 'https://tidyzenic.com', 'https://*.tidyzenic.com'],
+        imgSrc: ["'self'", 'data:', 'https:'],
+      }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  })
+);
 
 // ==============================
-// 3. CORS Configuration
+// 3. CORS
 // ==============================
 const allowedOrigins = [
   'http://localhost:3000',
   'https://tidyzenic.com',
   'https://www.tidyzenic.com',
-  /^https:\/\/([a-z0-9-]+)\.tidyzenic\.com$/i,
+  /^https:\/\/([a-z0-9-]+)\.tidyzenic\.com$/i
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (
-      !origin ||
-      allowedOrigins.some(entry =>
-        entry instanceof RegExp ? entry.test(origin) : entry === origin
-      )
-    ) {
+    if (!origin || allowedOrigins.some(entry =>
+      entry instanceof RegExp ? entry.test(origin) : entry === origin
+    )) {
       return callback(null, true);
     }
     return callback(new Error(`❌ CORS rejected: ${origin}`));
@@ -101,7 +110,7 @@ app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin/dashboard.ht
 app.get('/admin/support.html', sendFile('admin/support.html'));
 
 // ==============================
-// 8. 404 Handler
+// 8. 404 Not Found
 // ==============================
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
@@ -113,7 +122,9 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error('🔥 Unhandled Error:', err.stack || err.message);
   res.status(500).json({
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+    error: process.env.NODE_ENV === 'production'
+      ? 'Internal server error'
+      : err.message
   });
 });
 
