@@ -2,7 +2,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('supportTickets');
   const adminEmailEl = document.getElementById('adminBadgeEmail');
   const searchInput = document.getElementById('ticketSearch');
+  const closeReplyBtn = document.getElementById('closeReplyBtn');
+  const submitReplyBtn = document.getElementById('submitReplyBtn');
+  const replyModal = document.getElementById('replyModal');
+  const replyModalSubject = document.getElementById('replyModalSubject');
+  const replyMessage = document.getElementById('replyMessage');
+
   let allTickets = [];
+  let currentReplyTicketId = null;
 
   container.innerHTML = `<p class="text-gray-500 text-center">Loading tickets...</p>`;
 
@@ -38,7 +45,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       );
       renderTickets(filtered);
     });
-
   } catch (err) {
     console.error('❌ Support fetch error:', err);
     container.innerHTML = '<p class="text-red-600 text-center">❌ Could not load support tickets.</p>';
@@ -142,4 +148,70 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
   }
+
+  function openReplyModal(id, subject, email) {
+    currentReplyTicketId = id;
+    replyModalSubject.textContent = `Subject: ${subject} | To: ${email}`;
+    replyMessage.value = '';
+    replyModal.classList.remove('hidden');
+  }
+
+  function closeReplyModal() {
+    replyModal.classList.add('hidden');
+  }
+
+  async function submitReply() {
+    const message = replyMessage.value.trim();
+    if (!message) return alert('Reply message cannot be empty.');
+
+    try {
+      const res = await fetch(`/api/support/${currentReplyTicketId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ message }),
+      });
+
+      if (!res.ok) throw new Error();
+      alert('✅ Reply sent');
+      closeReplyModal();
+      location.reload();
+    } catch {
+      alert('❌ Failed to send reply');
+    }
+  }
+
+  async function handleMarkResolved(id) {
+    if (!confirm('Mark this ticket as resolved?')) return;
+    try {
+      const res = await fetch(`/api/support/${id}/resolve`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error();
+      alert('✅ Ticket marked as resolved');
+      location.reload();
+    } catch {
+      alert('❌ Failed to resolve ticket');
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!confirm('Delete this ticket permanently?')) return;
+    try {
+      const res = await fetch(`/api/support/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error();
+      alert('🗑️ Ticket deleted');
+      location.reload();
+    } catch {
+      alert('❌ Failed to delete ticket');
+    }
+  }
+
+  // Bind modal buttons
+  closeReplyBtn?.addEventListener('click', closeReplyModal);
+  submitReplyBtn?.addEventListener('click', submitReply);
 });
