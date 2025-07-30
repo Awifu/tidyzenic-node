@@ -1,15 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Account Verified</title>
-  <link rel="stylesheet" href="/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Your Tidyzenic account has been verified." />
+  <title>Account Verified – Tidyzenic</title>
+
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" href="/styles.css" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- CSP Fallback Meta -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.tidyzenic.com;">
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen text-center bg-gray-100">
+
+<body class="flex flex-col items-center justify-center min-h-screen text-center bg-gray-100 font-inter">
+
   <div class="bg-white p-8 rounded-lg shadow-md max-w-md">
     <h1 class="text-2xl font-bold text-green-600 mb-4">✅ Email Verified!</h1>
     <p class="text-gray-700 mb-6">Your account has been successfully verified. You may now log in.</p>
-    <a href="/login.html" class="text-blue-600 hover:underline">Go to Login</a>
+    <a href="/login.html" class="text-blue-600 hover:underline font-medium">Go to Login</a>
   </div>
+
 </body>
 </html>
