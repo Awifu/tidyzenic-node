@@ -53,53 +53,60 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderTickets(tickets) {
-    if (!tickets.length) {
-      container.innerHTML = '<p class="text-center text-gray-400">No matching tickets.</p>';
-      return;
-    }
-
-    container.innerHTML = tickets.map(ticket => `
-      <div class="ticket glass-card" data-id="${ticket.id}">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <h2 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
-              <span class="text-xl">📬</span> ${ticket.subject}
-            </h2>
-            <p class="text-xs text-gray-500 mt-1">${new Date(ticket.created_at).toLocaleString()}</p>
-          </div>
-          <span class="badge">${ticket.status || 'Open'}</span>
-        </div>
-
-        <p class="text-sm text-gray-800 mb-4 editable leading-relaxed bg-gray-50 p-3 rounded-lg hover:bg-gray-100 cursor-pointer" 
-           data-id="${ticket.id}" data-field="message">
-          ${ticket.message}
-        </p>
-
-        <div class="text-xs text-gray-600 mb-4">
-          <strong>👤 User:</strong> ${ticket.user_name || 'Unknown'} &lt;${ticket.user_email || 'N/A'}&gt;
-        </div>
-
-        <div class="flex items-center justify-end flex-wrap gap-3 text-sm">
-          <button class="btn-pill btn-reply replyBtn" data-id="${ticket.id}" 
-                  data-subject='${encodeURIComponent(ticket.subject)}'
-                  data-email='${encodeURIComponent(ticket.user_email)}'>
-            ✉️ Reply
-          </button>
-
-          <button class="btn-pill btn-resolve resolveBtn" data-id="${ticket.id}">
-            ✅ Mark Resolved
-          </button>
-
-          <button class="btn-pill btn-delete deleteBtn" data-id="${ticket.id}">
-            🗑 Delete
-          </button>
-        </div>
-      </div>
-    `).join('');
-
-    bindActions();
-    bindInPlaceEditing();
+  if (!tickets.length) {
+    container.innerHTML = '<p class="text-center text-gray-400">No matching tickets.</p>';
+    return;
   }
+
+  container.innerHTML = tickets.map(ticket => `
+    <div class="ticket bg-white/80 border border-gray-200 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all mb-6 backdrop-blur-sm" data-id="${ticket.id}">
+      
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
+            <span class="text-xl">📬</span> ${ticket.subject}
+          </h2>
+          <p class="text-xs text-gray-500 mt-1">${new Date(ticket.created_at).toLocaleString()}</p>
+        </div>
+        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+          ${ticket.status || 'Open'}
+        </span>
+      </div>
+
+      <p class="text-sm text-gray-800 mb-4 editable leading-relaxed bg-gray-50 p-3 rounded-lg hover:bg-gray-100 cursor-pointer" 
+         data-id="${ticket.id}" data-field="message">
+        ${ticket.message}
+      </p>
+
+      <div class="text-xs text-gray-600 mb-4">
+        <strong>👤 User:</strong> ${ticket.user_name || 'Unknown'} &lt;${ticket.user_email || 'N/A'}&gt;
+      </div>
+
+      <div class="flex items-center justify-end flex-wrap gap-3 text-sm">
+        <button class="px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition shadow-sm replyBtn"
+                data-id="${ticket.id}" 
+                data-subject='${encodeURIComponent(ticket.subject)}'
+                data-email='${encodeURIComponent(ticket.user_email)}'>
+          ✉️ Reply
+        </button>
+
+        <button class="px-4 py-1.5 rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition shadow-sm resolveBtn"
+                data-id="${ticket.id}">
+          ✅ Mark Resolved
+        </button>
+
+        <button class="px-4 py-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition shadow-sm deleteBtn"
+                data-id="${ticket.id}">
+          🗑 Delete
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  bindActions();
+  bindInPlaceEditing();
+}
+
 
   function bindActions() {
     document.querySelectorAll('.replyBtn').forEach(btn =>
