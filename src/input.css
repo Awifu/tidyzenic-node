@@ -7,25 +7,32 @@
 body {
   @apply bg-gray-50 text-gray-800 leading-relaxed;
 }
-/* Optional Tailwind extensions */
-.badge {
-  @apply inline-block bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.btn-pill {
-  @apply px-4 py-1.5 rounded-full shadow-sm transition text-sm font-medium;
-}
+@layer components {
+  .glass-card {
+    @apply bg-white bg-opacity-80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 p-6 transition-all;
+  }
 
-.btn-reply {
-  @apply bg-blue-100 text-blue-800 hover:bg-blue-200;
-}
-.btn-resolve {
-  @apply bg-green-100 text-green-800 hover:bg-green-200;
-}
-.btn-delete {
-  @apply bg-red-100 text-red-700 hover:bg-red-200;
-}
+  .btn-pill {
+    @apply px-4 py-2 rounded-full font-medium shadow-sm transition-colors;
+  }
 
-.glass-card {
-  @apply bg-white/80 backdrop-blur border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition;
+  .btn-reply {
+    @apply text-blue-600 bg-blue-50 hover:bg-blue-100;
+  }
+
+  .btn-resolve {
+    @apply text-green-700 bg-green-100 hover:bg-green-200;
+  }
+
+  .btn-delete {
+    @apply text-red-600 bg-red-100 hover:bg-red-200;
+  }
+
+  .badge {
+    @apply inline-block px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-800;
+  }
 }
