@@ -58,50 +58,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  container.innerHTML = tickets.map(ticket => `
-    <div class="ticket bg-white/80 border border-gray-200 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all mb-6 backdrop-blur-sm" data-id="${ticket.id}">
-      
-      <div class="flex justify-between items-start mb-4">
+  container.innerHTML = tickets.map(ticket => {
+    const createdAt = new Date(ticket.created_at).toLocaleString();
+    const statusColor = ticket.status === 'Resolved'
+      ? 'bg-green-100 text-green-700 border-green-300'
+      : 'bg-yellow-100 text-yellow-800 border-yellow-300';
+
+    return `
+    <div class="ticket bg-white border border-gray-300 p-6 rounded-2xl shadow hover:shadow-lg mb-6 transition-all" data-id="${ticket.id}">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-4">
         <div>
-          <h2 class="text-lg font-semibold text-blue-800 flex items-center gap-2">
-            <span class="text-xl">📬</span> ${ticket.subject}
+          <h2 class="text-xl font-bold text-blue-800 flex items-center gap-2">
+            📬 ${ticket.subject}
           </h2>
-          <p class="text-xs text-gray-500 mt-1">${new Date(ticket.created_at).toLocaleString()}</p>
+          <p class="text-xs text-gray-500 mt-1">Created: ${createdAt}</p>
         </div>
-        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+        <span class="text-xs px-3 py-1 rounded-full font-semibold border ${statusColor}">
           ${ticket.status || 'Open'}
         </span>
       </div>
 
-      <p class="text-sm text-gray-800 mb-4 editable leading-relaxed bg-gray-50 p-3 rounded-lg hover:bg-gray-100 cursor-pointer" 
-         data-id="${ticket.id}" data-field="message">
-        ${ticket.message}
-      </p>
+      <!-- Meta Info -->
+      <div class="grid grid-cols-2 gap-4 text-sm text-gray-700 mb-4">
+        <div><strong>Ticket ID:</strong> ${ticket.id}</div>
+        <div><strong>User ID:</strong> ${ticket.user_id}</div>
+        <div><strong>Business ID:</strong> ${ticket.business_id}</div>
+        <div><strong>Deleted:</strong> ${ticket.is_deleted ? 'Yes' : 'No'}</div>
+      </div>
 
-      <div class="text-xs text-gray-600 mb-4">
+      <!-- Message -->
+      <div class="mb-4">
+        <p class="text-sm text-gray-800 leading-relaxed bg-gray-50 p-4 rounded-lg border editable hover:bg-gray-100 cursor-pointer"
+           data-id="${ticket.id}" data-field="message">
+          ${ticket.message}
+        </p>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="text-sm text-gray-600 mb-4">
         <strong>👤 User:</strong> ${ticket.user_name || 'Unknown'} &lt;${ticket.user_email || 'N/A'}&gt;
       </div>
 
-      <div class="flex items-center justify-end flex-wrap gap-3 text-sm">
-        <button class="px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition shadow-sm replyBtn"
-                data-id="${ticket.id}" 
+      <!-- Actions -->
+      <div class="flex flex-wrap gap-2 justify-end text-sm">
+        <button class="px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition shadow replyBtn"
+                data-id="${ticket.id}"
                 data-subject='${encodeURIComponent(ticket.subject)}'
                 data-email='${encodeURIComponent(ticket.user_email)}'>
           ✉️ Reply
         </button>
 
-        <button class="px-4 py-1.5 rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition shadow-sm resolveBtn"
+        <button class="px-4 py-1.5 rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition shadow resolveBtn"
                 data-id="${ticket.id}">
           ✅ Mark Resolved
         </button>
 
-        <button class="px-4 py-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition shadow-sm deleteBtn"
+        <button class="px-4 py-1.5 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition shadow deleteBtn"
                 data-id="${ticket.id}">
           🗑 Delete
         </button>
       </div>
-    </div>
-  `).join('');
+
+    </div>`;
+  }).join('');
 
   bindActions();
   bindInPlaceEditing();
