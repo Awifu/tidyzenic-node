@@ -1,6 +1,7 @@
 // public/admin/js/tickets.js
 
 document.addEventListener('DOMContentLoaded', () => {
+  // DOM Elements
   const ticketList = document.getElementById('ticketList');
   const emptyState = document.getElementById('emptyState');
   const searchInput = document.getElementById('ticketSearch');
@@ -10,40 +11,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalTextarea = document.getElementById('modalTextarea');
   const modalThread = document.getElementById('modalThread');
   const modalTitle = document.getElementById('modalTitle');
-
-  const notifCountEl = document.getElementById('notifCount');
   const notifBtn = document.getElementById('notifBtn');
+  const notifCountEl = document.getElementById('notifCount');
 
+  // State
   let currentTicketId = null;
   let allTickets = [];
   let newTicketCount = 0;
 
+  // Create Ticket Card
   const createCard = (ticket) => {
     const card = document.createElement('div');
     card.className = 'bg-white rounded-xl shadow-md border p-6 space-y-3';
 
-    const subject = `<h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>`;
-    const message = `<p class="text-sm text-gray-700">${ticket.message}</p>`;
-    const status = `<p class="text-xs text-gray-500">Status: <span class="font-medium">${ticket.status}</span></p>`;
-    const business = `<p class="text-xs text-gray-400">From: <span class="font-medium">${ticket.business_name}</span></p>`;
-
-    const replyButton = `<button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>`;
-    const resolveButton = `<button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>`;
-    const deleteButton = `<button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>`;
-    const threadButton = `<button class="px-3 py-1 text-sm text-indigo-600 border border-indigo-600 hover:bg-indigo-50 rounded" data-action="thread">📄 Show Thread</button>`;
-
-    const actionBar = `<div class="flex flex-wrap gap-2 mt-4">${replyButton}${threadButton}${resolveButton}${deleteButton}</div>`;
-
-    card.innerHTML = `${subject}${business}${message}${status}${actionBar}`;
+    card.innerHTML = `
+      <h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>
+      <p class="text-xs text-gray-400">From: <span class="font-medium">${ticket.business_name}</span></p>
+      <p class="text-sm text-gray-700">${ticket.message}</p>
+      <p class="text-xs text-gray-500">Status: <span class="font-medium">${ticket.status}</span></p>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>
+        <button class="px-3 py-1 text-sm text-indigo-600 border border-indigo-600 hover:bg-indigo-50 rounded" data-action="thread">📄 Show Thread</button>
+        <button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>
+        <button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>
+      </div>
+    `;
 
     card.querySelector('[data-action="reply"]').addEventListener('click', () => openReplyModal(ticket.id));
+    card.querySelector('[data-action="thread"]').addEventListener('click', () => openThreadModal(ticket));
     card.querySelector('[data-action="resolve"]').addEventListener('click', () => markResolved(ticket.id));
     card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteTicket(ticket.id));
-    card.querySelector('[data-action="thread"]').addEventListener('click', () => openThreadModal(ticket));
 
     return card;
   };
 
+  // Modal: Open Reply
   const openReplyModal = (ticketId) => {
     currentTicketId = ticketId;
     modalTitle.textContent = 'Reply to Ticket';
@@ -52,16 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.remove('hidden');
   };
 
+  // Modal: Open Thread
   const openThreadModal = async (ticket) => {
     currentTicketId = ticket.id;
     modalTitle.textContent = `Thread: ${ticket.subject}`;
+    modalTextarea.value = '';
     modalThread.innerHTML = `
       <div class="mb-4 bg-gray-50 p-3 rounded border">
         <div class="text-sm text-gray-500 mb-1">Business: <strong>${ticket.business_name}</strong></div>
         <div class="text-gray-700">${ticket.message}</div>
       </div>
     `;
-    modalTextarea.value = '';
 
     try {
       const res = await fetch(`/api/tickets/${ticket.id}/replies`);
@@ -69,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
       (data.replies || []).forEach(reply => {
         const div = document.createElement('div');
         div.className = 'bg-gray-100 px-3 py-2 rounded';
-        div.innerHTML = `<span class='font-semibold text-sm text-blue-600'>${reply.admin_name || 'Admin'}:</span> ${reply.message}`;
+        div.innerHTML = `<span class="font-semibold text-sm text-blue-600">${reply.admin_name || 'Admin'}:</span> ${reply.message}`;
         modalThread.appendChild(div);
       });
     } catch (err) {
@@ -79,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.remove('hidden');
   };
 
+  // Modal: Close
   const closeModal = () => {
     modal.classList.add('hidden');
     currentTicketId = null;
@@ -86,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalThread.innerHTML = '';
   };
 
+  // Render All Tickets
   const renderTickets = (tickets) => {
     ticketList.innerHTML = '';
     if (!tickets.length) {
@@ -96,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tickets.forEach(ticket => ticketList.appendChild(createCard(ticket)));
   };
 
+  // Filter Tickets
   const filterTickets = (term) => {
     const filtered = allTickets.filter(ticket =>
       ticket.subject.toLowerCase().includes(term) ||
@@ -104,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTickets(filtered);
   };
 
+  // Load Tickets from Server
   const fetchTickets = async () => {
     try {
       const res = await fetch('/api/tickets');
@@ -115,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Resolve Ticket
   const markResolved = async (ticketId) => {
     try {
       await fetch(`/api/tickets/${ticketId}/resolve`, { method: 'POST' });
@@ -124,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Delete Ticket
   const deleteTicket = async (ticketId) => {
     if (!confirm('Are you sure you want to delete this ticket?')) return;
     try {
@@ -134,12 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Update Notification Badge
   const updateNotificationCount = () => {
     newTicketCount++;
     notifCountEl.textContent = newTicketCount;
     notifCountEl.classList.remove('hidden');
   };
 
+  // Submit Reply
   modalSubmit.addEventListener('click', async () => {
     const message = modalTextarea.value.trim();
     if (!message || !currentTicketId) return;
@@ -156,7 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Event Listeners
   modalClose.addEventListener('click', closeModal);
+  searchInput.addEventListener('input', (e) => filterTickets(e.target.value.toLowerCase()));
 
   notifBtn.addEventListener('click', () => {
     newTicketCount = 0;
@@ -164,8 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     notifCountEl.classList.add('hidden');
   });
 
-  searchInput.addEventListener('input', (e) => filterTickets(e.target.value.toLowerCase()));
-
+  // Real-time Updates
   const socket = io();
   socket.on('new_ticket', (ticket) => {
     allTickets.unshift(ticket);
@@ -173,5 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNotificationCount();
   });
 
+  // Initial Load
   fetchTickets();
 });
