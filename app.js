@@ -146,3 +146,4 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
+// Force rebuild to remove stale static file from Render
