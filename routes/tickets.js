@@ -2,29 +2,28 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// ===================
-// GET all active tickets (with business info)
-// ===================
+// ===============================
+// GET: All Active Support Tickets
+// ===============================
 router.get('/', async (req, res) => {
   try {
     const [tickets] = await db.execute(`
-      SELECT t.*, b.business_name 
+      SELECT t.*, b.business_name
       FROM support_tickets t
       JOIN businesses b ON t.business_id = b.id
       WHERE t.is_deleted = 0
       ORDER BY t.created_at DESC
     `);
-
     res.json({ tickets });
   } catch (err) {
-    console.error('Error fetching tickets:', err);
+    console.error('❌ Error fetching tickets:', err);
     res.status(500).json({ error: 'Failed to fetch tickets' });
   }
 });
 
-// ===================
-// POST a new support ticket
-// ===================
+// ===============================
+// POST: Create a New Support Ticket
+// ===============================
 router.post('/', async (req, res) => {
   const { user_id, business_id, subject, message } = req.body;
 
@@ -53,23 +52,34 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(newTicket);
   } catch (err) {
-    console.error('Error creating ticket:', err);
+    console.error('❌ Error creating ticket:', err);
     res.status(500).json({ error: 'Failed to create ticket' });
   }
 });
 
-// ===================
-// POST a reply to a ticket
-// ===================
+// ===============================
+// POST: Add a Reply to a Ticket
+// ===============================
 router.post('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
   const { admin_id, message } = req.body;
 
   if (!admin_id || !message) {
-    return res.status(400).json({ error: 'Missing admin_id or message' });
+    return res.status(400).json({ error: 'admin_id and message are required' });
   }
 
   try {
+    // Optional validation
+    const [ticketCheck] = await db.execute(`SELECT id FROM support_tickets WHERE id = ?`, [ticketId]);
+    if (!ticketCheck.length) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    const [adminCheck] = await db.execute(`SELECT id FROM admins WHERE id = ?`, [admin_id]);
+    if (!adminCheck.length) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
     await db.execute(`
       INSERT INTO support_replies (ticket_id, admin_id, message, created_at)
       VALUES (?, ?, ?, NOW())
@@ -77,14 +87,14 @@ router.post('/:id/replies', async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Reply submitted' });
   } catch (err) {
-    console.error('Error posting reply:', err);
+    console.error('❌ Error posting reply:', err);
     res.status(500).json({ error: 'Failed to post reply' });
   }
 });
 
-// ===================
-// GET all replies for a specific ticket
-// ===================
+// ===============================
+// GET: Replies for a Specific Ticket
+// ===============================
 router.get('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
 
@@ -99,14 +109,14 @@ router.get('/:id/replies', async (req, res) => {
 
     res.json({ replies });
   } catch (err) {
-    console.error('Error fetching replies:', err);
+    console.error('❌ Error fetching replies:', err);
     res.status(500).json({ error: 'Failed to fetch replies' });
   }
 });
 
-// ===================
-// Mark a ticket as resolved
-// ===================
+// ===============================
+// POST: Mark Ticket as Resolved
+// ===============================
 router.post('/:id/resolve', async (req, res) => {
   const ticketId = req.params.id;
 
@@ -117,14 +127,14 @@ router.post('/:id/resolve', async (req, res) => {
 
     res.json({ success: true, message: 'Ticket marked as resolved' });
   } catch (err) {
-    console.error('Error resolving ticket:', err);
+    console.error('❌ Error resolving ticket:', err);
     res.status(500).json({ error: 'Failed to resolve ticket' });
   }
 });
 
-// ===================
-// Soft-delete a ticket
-// ===================
+// ===============================
+// DELETE (Soft): Mark Ticket as Deleted
+// ===============================
 router.delete('/:id', async (req, res) => {
   const ticketId = req.params.id;
 
@@ -135,7 +145,7 @@ router.delete('/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Ticket deleted' });
   } catch (err) {
-    console.error('Error deleting ticket:', err);
+    console.error('❌ Error deleting ticket:', err);
     res.status(500).json({ error: 'Failed to delete ticket' });
   }
 });
