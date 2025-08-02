@@ -9,40 +9,87 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalThread = document.getElementById('modalThread');
   const modalTitle = document.getElementById('modalTitle');
 
+  const pagination = document.getElementById('pagination');
+  const prevPageBtn = document.getElementById('prevPage');
+  const nextPageBtn = document.getElementById('nextPage');
+  const pageIndicator = document.getElementById('pageIndicator');
+
   let currentTicketId = null;
   let allTickets = [];
+  let currentPage = 1;
+  const ticketsPerPage = 4;
 
   const createCard = (ticket) => {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl shadow-md border p-6 space-y-3 relative';
+    card.className = 'bg-white rounded-xl shadow-md border p-6 space-y-3';
 
-    const subject = `<h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>`;
-    const message = `<p class="text-sm text-gray-700">${ticket.message}</p>`;
-    const status = `<p class="text-xs text-gray-500">Status: <span class="font-medium">${ticket.status}</span></p>`;
-    const business = `<p class="text-xs text-gray-400">From: <span class="font-medium">${ticket.business_name}</span></p>`;
-
-    const replyButton = `<button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>`;
-    const resolveButton = `<button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>`;
-    const deleteButton = `<button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>`;
-    const threadButton = `<button class="px-3 py-1 text-sm text-indigo-600 border border-indigo-600 hover:bg-indigo-50 rounded" data-action="thread">📄 Show Thread</button>`;
-
-    const actionBar = `<div class="flex flex-wrap gap-2 mt-4">${replyButton}${threadButton}${resolveButton}${deleteButton}</div>`;
-
-    card.innerHTML = `${subject}${business}${message}${status}${actionBar}`;
+    card.innerHTML = `
+      <h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>
+      <p class="text-xs text-gray-400">From: <span class="font-medium">${ticket.business_name}</span></p>
+      <p class="text-sm text-gray-700">${ticket.message}</p>
+      <p class="text-xs text-gray-500">Status: <span class="font-medium">${ticket.status}</span></p>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>
+        <button class="px-3 py-1 text-sm text-indigo-600 border border-indigo-600 hover:bg-indigo-50 rounded" data-action="thread">📄 Show Thread</button>
+        <button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>
+        <button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>
+      </div>
+    `;
 
     card.querySelector('[data-action="reply"]').addEventListener('click', () => openReplyModal(ticket.id));
+    card.querySelector('[data-action="thread"]').addEventListener('click', () => openThreadModal(ticket));
     card.querySelector('[data-action="resolve"]').addEventListener('click', () => markResolved(ticket.id));
     card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteTicket(ticket.id));
-    card.querySelector('[data-action="thread"]').addEventListener('click', () => openThreadModal(ticket));
 
     return card;
+  };
+
+  const renderTickets = (ticketsToRender = allTickets) => {
+    const start = (currentPage - 1) * ticketsPerPage;
+    const paginated = ticketsToRender.slice(start, start + ticketsPerPage);
+
+    ticketList.innerHTML = '';
+    if (!ticketsToRender.length) {
+      emptyState.classList.remove('hidden');
+      pagination.classList.add('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    paginated.forEach(ticket => ticketList.appendChild(createCard(ticket)));
+
+    const totalPages = Math.ceil(ticketsToRender.length / ticketsPerPage);
+    pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    pagination.classList.toggle('hidden', totalPages <= 1);
+    prevPageBtn.disabled = currentPage === 1;
+    nextPageBtn.disabled = currentPage === totalPages;
+  };
+
+  const filterTickets = (term) => {
+    const filtered = allTickets.filter(ticket =>
+      ticket.subject.toLowerCase().includes(term) ||
+      ticket.message.toLowerCase().includes(term)
+    );
+    currentPage = 1;
+    renderTickets(filtered);
+  };
+
+  const fetchTickets = async () => {
+    try {
+      const res = await fetch('/api/tickets');
+      const data = await res.json();
+      allTickets = Array.isArray(data.tickets) ? data.tickets : [];
+      renderTickets();
+    } catch (err) {
+      console.error('Error loading tickets:', err);
+    }
   };
 
   const openReplyModal = (ticketId) => {
     currentTicketId = ticketId;
     modalTitle.textContent = 'Reply to Ticket';
-    modalThread.innerHTML = '';
     modalTextarea.value = '';
+    modalThread.innerHTML = '';
     modal.classList.remove('hidden');
   };
 
@@ -63,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
       (data.replies || []).forEach(reply => {
         const div = document.createElement('div');
         div.className = 'bg-gray-100 px-3 py-2 rounded';
-        div.innerHTML = `<span class="font-semibold text-sm text-blue-600">${reply.admin_name || 'Admin'}:</span> ${reply.message}`;
+        div.innerHTML = `<span class='font-semibold text-sm text-blue-600'>${reply.admin_name || 'Admin'}:</span> ${reply.message}`;
         modalThread.appendChild(div);
       });
     } catch (err) {
@@ -80,41 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
     modalThread.innerHTML = '';
   };
 
-  const renderTickets = (tickets) => {
-    ticketList.innerHTML = '';
-    if (!tickets.length) {
-      emptyState.classList.remove('hidden');
-      return;
-    }
-    emptyState.classList.add('hidden');
-    tickets.forEach(ticket => ticketList.appendChild(createCard(ticket)));
-  };
-
-  const filterTickets = (term) => {
-    const filtered = allTickets.filter(ticket =>
-      ticket.subject.toLowerCase().includes(term) ||
-      ticket.message.toLowerCase().includes(term)
-    );
-    renderTickets(filtered);
-  };
-
-  const fetchTickets = async () => {
-    try {
-      const res = await fetch('/api/tickets');
-      const data = await res.json();
-      allTickets = Array.isArray(data.tickets) ? data.tickets : [];
-      renderTickets(allTickets);
-    } catch (err) {
-      console.error('Error loading tickets:', err);
-    }
-  };
-
   const markResolved = async (ticketId) => {
     try {
       await fetch(`/api/tickets/${ticketId}/resolve`, { method: 'POST' });
       fetchTickets();
     } catch (err) {
-      console.error('Failed to mark ticket resolved:', err);
+      console.error('Failed to resolve ticket:', err);
     }
   };
 
@@ -144,13 +162,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  modalClose.addEventListener('click', closeModal);
   searchInput.addEventListener('input', (e) => filterTickets(e.target.value.toLowerCase()));
+  modalClose.addEventListener('click', closeModal);
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTickets();
+    }
+  });
+
+  nextPageBtn.addEventListener('click', () => {
+    const totalPages = Math.ceil(allTickets.length / ticketsPerPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTickets();
+    }
+  });
 
   const socket = io();
   socket.on('new_ticket', (ticket) => {
     allTickets.unshift(ticket);
-    renderTickets(allTickets);
+    currentPage = 1;
+    renderTickets();
   });
 
   fetchTickets();
