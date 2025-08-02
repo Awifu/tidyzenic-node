@@ -44,25 +44,33 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'some time ago';
   };
 
-  const createCard = (ticket) => {
-    const card = document.createElement('div');
-    card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-5 transition hover:shadow-lg';
+const createCard = (ticket) => {
+  const card = document.createElement('div');
+  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md px-6 py-5 space-y-4';
 
-    card.innerHTML = `
-      <h3 class="text-lg font-semibold text-blue-700">${ticket.subject}</h3>
-      <p class="text-gray-700 mt-1">${ticket.message}</p>
-      <p class="text-sm text-gray-500 mt-2">From: <strong>${ticket.business_name}</strong></p>
-      <p class="text-xs text-gray-400">Status: <span class="font-medium">${ticket.status}</span></p>
-      <p class="text-xs text-gray-400">Created: ${formatRelativeTime(ticket.created_at)}</p>
-      <div class="flex flex-wrap gap-2 mt-4">
-        <button class="reply-btn bg-blue-600 text-white px-4 py-1 rounded shadow hover:bg-blue-700" data-id="${ticket.id}">💬 Reply</button>
-        <button class="thread-btn border border-indigo-500 text-indigo-600 px-4 py-1 rounded hover:bg-indigo-50" data-id="${ticket.id}">📄 Show Thread</button>
-        <button class="resolve-btn border border-green-500 text-green-600 px-4 py-1 rounded hover:bg-green-50" data-id="${ticket.id}">✔ Mark Resolved</button>
-        <button class="delete-btn border border-red-500 text-red-600 px-4 py-1 rounded hover:bg-red-50" data-id="${ticket.id}">🗑 Delete</button>
+  card.innerHTML = `
+    <div>
+      <h3 class="text-xl font-semibold text-indigo-700 leading-tight">${ticket.subject}</h3>
+      <p class="text-sm text-gray-800 mt-1">${ticket.message}</p>
+
+      <div class="text-sm text-gray-600 mt-3 space-y-1">
+        <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
+        <p><span class="font-medium text-gray-800">Status:</span> <span class="text-${ticket.status === 'Resolved' ? 'green-600' : 'gray-500'}">${ticket.status}</span></p>
+        <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
       </div>
-    `;
-    return card;
-  };
+    </div>
+
+    <div class="flex flex-wrap gap-2 pt-2">
+      <button class="reply-btn bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-1.5 rounded shadow" data-id="${ticket.id}">💬 Reply</button>
+      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-4 py-1.5 rounded" data-id="${ticket.id}">📄 Show Thread</button>
+      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-4 py-1.5 rounded" data-id="${ticket.id}">✔ Mark Resolved</button>
+      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-4 py-1.5 rounded" data-id="${ticket.id}">🗑 Delete</button>
+    </div>
+  `;
+
+  return card;
+};
+
 
   const renderPagination = () => {
     const totalPages = Math.ceil(filteredTickets.length / TICKETS_PER_PAGE);
