@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Support Tickets – Tidyzenic Admin</title>
 
-    <!-- Local Tailwind build -->
+    <!-- Local Tailwind Build -->
     <link rel="stylesheet" href="/styles.css" />
 
     <!-- Scripts -->
@@ -13,6 +13,16 @@
     <script defer src="/admin/js/tickets.js"></script>
     <script defer src="/admin/js/load-sidebar.js"></script>
     <script defer src="/js/auth-check.js"></script>
+
+    <style>
+      @keyframes fade-in {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.2s ease-out;
+      }
+    </style>
   </head>
 
   <body class="min-h-screen overflow-auto">
@@ -77,12 +87,12 @@
 
     <!-- Modal -->
     <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-      <div class="bg-white w-full max-w-lg p-6 rounded shadow-lg relative">
-        <button id="modalClose" class="absolute top-2 right-2 text-gray-500 hover:text-black text-xl">&times;</button>
-        <h2 id="modalTitle" class="text-xl font-semibold mb-4">Reply to Ticket</h2>
-        <textarea id="modalTextarea" rows="5" class="w-full p-3 border rounded resize-none focus:outline-none focus:ring"></textarea>
+      <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative animate-fade-in">
+        <button id="modalClose" class="absolute top-3 right-3 text-gray-400 hover:text-gray-900 text-2xl font-bold">&times;</button>
+        <h2 id="modalTitle" class="text-xl font-semibold mb-4 text-blue-700">Reply to Ticket</h2>
+        <textarea id="modalTextarea" rows="5" class="w-full p-3 border rounded shadow-sm focus:outline-none focus:ring resize-none" placeholder="Write your reply..."></textarea>
         <div class="mt-4 text-right">
-          <button id="modalSubmit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit</button>
+          <button id="modalSubmit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded shadow">Send Reply</button>
         </div>
       </div>
     </div>
