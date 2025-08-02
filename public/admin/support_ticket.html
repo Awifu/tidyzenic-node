@@ -35,14 +35,12 @@
     </header>
 
     <div class="flex flex-1">
-      <!-- Sidebar -->
       <div id="sidebar-container"></div>
       <div id="sidebarBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-30 md:hidden"></div>
 
       <!-- Main Content -->
       <main class="flex-1 p-6 md:p-10">
         <div class="max-w-5xl mx-auto space-y-6">
-          <!-- Header -->
           <div class="flex items-center justify-between">
             <h1 class="text-3xl font-semibold text-blue-700">Support Tickets</h1>
             <div class="relative">
@@ -56,7 +54,7 @@
             </div>
           </div>
 
-          <!-- Search -->
+          <!-- Search Bar -->
           <div>
             <input
               id="ticketSearch"
@@ -66,10 +64,10 @@
             />
           </div>
 
-          <!-- Tickets -->
+          <!-- Tickets Container -->
           <div id="ticketList" class="space-y-5"></div>
 
-          <!-- Empty -->
+          <!-- Empty State -->
           <div id="emptyState" class="hidden text-center text-gray-400 mt-10">
             <p>No support tickets found.</p>
           </div>
@@ -96,7 +94,7 @@
       </div>
     </div>
 
-    <!-- Thread Template (Injected per Ticket) -->
+    <!-- Template for Threads (Optional, used if injecting from JS) -->
     <template id="ticketThreadTemplate">
       <div class="border border-gray-200 rounded-xl shadow p-4 bg-white">
         <div class="flex justify-between items-start">
@@ -111,7 +109,7 @@
           </div>
         </div>
         <div class="replies mt-4 hidden">
-          <!-- Replies will be dynamically inserted here -->
+          <!-- Replies inserted dynamically -->
         </div>
       </div>
     </template>
