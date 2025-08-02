@@ -11,6 +11,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentTicketId = null;
   let allTickets = [];
 
+  const renderReplies = (replies) => {
+    if (!replies || !replies.length) return '';
+    return `
+      <div class="mt-3 space-y-2 border-t pt-2">
+        ${replies.map(r => `
+          <div class="text-sm bg-gray-50 p-2 rounded border">
+            <strong class="text-blue-600">Admin:</strong> ${r.message}<br>
+            <span class="text-xs text-gray-500">${new Date(r.created_at).toLocaleString()}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  };
+
   const renderTickets = (tickets) => {
     ticketList.innerHTML = '';
 
@@ -23,23 +37,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tickets.forEach(ticket => {
       const card = document.createElement('div');
-      card.className = 'bg-white rounded-xl p-4 shadow border flex justify-between items-start';
+      card.className = 'bg-white rounded-xl p-5 shadow-md border animate-fade-in';
+
+      const repliesHtml = renderReplies(ticket.replies);
 
       const content = `
-        <div>
-          <h3 class="text-lg font-semibold text-blue-600">${ticket.subject}</h3>
-          <p class="text-sm text-gray-700 mt-1">${ticket.message}</p>
-          <p class="text-xs text-gray-500 mt-2">Status: <span class="font-medium">${ticket.status || 'Open'}</span></p>
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>
+            <p class="text-gray-700 mt-1">${ticket.message}</p>
+            <p class="text-xs text-gray-500 mt-2">Status: <span class="font-semibold">${ticket.status}</span></p>
+            ${repliesHtml}
+          </div>
+          <div class="space-y-2 text-right">
+            <button class="replyBtn text-sm text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700" data-id="${ticket.id}">💬 Reply</button>
+            <button class="resolveBtn text-sm text-green-700 border border-green-600 px-3 py-1 rounded hover:bg-green-600 hover:text-white" data-id="${ticket.id}">✅ Resolved</button>
+            <button class="deleteBtn text-sm text-red-600 border border-red-500 px-3 py-1 rounded hover:bg-red-600 hover:text-white" data-id="${ticket.id}">🗑 Delete</button>
+          </div>
         </div>
-        <button 
-          class="ml-4 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200" 
-          data-ticket-id="${ticket.id}">
-          💬 Reply
-        </button>
       `;
 
       card.innerHTML = content;
-      card.querySelector('button').addEventListener('click', () => openReplyModal(ticket.id));
+
+      card.querySelector('.replyBtn').addEventListener('click', () => openReplyModal(ticket.id));
+      card.querySelector('.resolveBtn').addEventListener('click', () => markResolved(ticket.id));
+      card.querySelector('.deleteBtn').addEventListener('click', () => deleteTicket(ticket.id));
+
       ticketList.appendChild(card);
     });
   };
@@ -55,14 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
     currentTicketId = null;
   };
 
-  const filterTickets = (searchTerm) => {
-    const filtered = allTickets.filter(ticket =>
-      ticket.subject.toLowerCase().includes(searchTerm) ||
-      ticket.message.toLowerCase().includes(searchTerm)
-    );
-    renderTickets(filtered);
-  };
-
   const fetchTickets = async () => {
     try {
       const res = await fetch('/api/tickets');
@@ -72,6 +87,33 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Error loading tickets:', err);
     }
+  };
+
+  const markResolved = async (ticketId) => {
+    try {
+      await fetch(`/api/tickets/${ticketId}/resolve`, { method: 'PUT' });
+      fetchTickets();
+    } catch (err) {
+      console.error('Failed to mark resolved:', err);
+    }
+  };
+
+  const deleteTicket = async (ticketId) => {
+    if (!confirm('Delete this ticket?')) return;
+    try {
+      await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
+      fetchTickets();
+    } catch (err) {
+      console.error('Failed to delete ticket:', err);
+    }
+  };
+
+  const filterTickets = (searchTerm) => {
+    const filtered = allTickets.filter(ticket =>
+      ticket.subject.toLowerCase().includes(searchTerm) ||
+      ticket.message.toLowerCase().includes(searchTerm)
+    );
+    renderTickets(filtered);
   };
 
   modalSubmit.addEventListener('click', async () => {
@@ -85,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ admin_id: 1, message })
       });
       closeModal();
+      fetchTickets();
     } catch (err) {
       console.error('Failed to send reply:', err);
     }
