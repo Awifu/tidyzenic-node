@@ -21,29 +21,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Create Ticket Card
   const createCard = (ticket) => {
-    const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl shadow-md border p-6 space-y-3';
+  const card = document.createElement('div');
+  card.className = 'bg-white rounded-xl shadow-md border p-6 space-y-3 relative';
 
-    card.innerHTML = `
-      <h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>
-      <p class="text-xs text-gray-400">From: <span class="font-medium">${ticket.business_name}</span></p>
-      <p class="text-sm text-gray-700">${ticket.message}</p>
-      <p class="text-xs text-gray-500">Status: <span class="font-medium">${ticket.status}</span></p>
-      <div class="flex flex-wrap gap-2 mt-4">
-        <button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>
-        <button class="px-3 py-1 text-sm text-indigo-600 border border-indigo-600 hover:bg-indigo-50 rounded" data-action="thread">📄 Show Thread</button>
-        <button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>
-        <button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>
-      </div>
-    `;
+  // 🔔 Add NEW badge if ticket._isNew is true
+  const newBadge = ticket._isNew
+    ? `<span class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">NEW</span>`
+    : '';
 
-    card.querySelector('[data-action="reply"]').addEventListener('click', () => openReplyModal(ticket.id));
-    card.querySelector('[data-action="thread"]').addEventListener('click', () => openThreadModal(ticket));
-    card.querySelector('[data-action="resolve"]').addEventListener('click', () => markResolved(ticket.id));
-    card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteTicket(ticket.id));
+  const subject = `<h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>`;
+  const message = `<p class="text-sm text-gray-700">${ticket.message}</p>`;
+  const status = `<p class="text-xs text-gray-500">Status: <span class="font-medium">${ticket.status}</span></p>`;
+  const business = `<p class="text-xs text-gray-400">From: <span class="font-medium">${ticket.business_name}</span></p>`;
 
-    return card;
-  };
+  const replyButton = `<button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>`;
+  const resolveButton = `<button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>`;
+  const deleteButton = `<button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>`;
+  const threadButton = `<button class="px-3 py-1 text-sm text-indigo-600 border border-indigo-600 hover:bg-indigo-50 rounded" data-action="thread">📄 Show Thread</button>`;
+
+  const actionBar = `<div class="flex flex-wrap gap-2 mt-4">${replyButton}${threadButton}${resolveButton}${deleteButton}</div>`;
+
+  card.innerHTML = `${newBadge}${subject}${business}${message}${status}${actionBar}`;
+
+  // ... your existing event listeners
+  return card;
+};
+
 
   // Modal: Open Reply
   const openReplyModal = (ticketId) => {
@@ -180,10 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Real-time Updates
   const socket = io();
   socket.on('new_ticket', (ticket) => {
-    allTickets.unshift(ticket);
-    renderTickets(allTickets);
-    updateNotificationCount();
-  });
+  ticket._isNew = true;                // 🟢 Mark as new (custom flag)
+  allTickets.unshift(ticket);
+  renderTickets(allTickets);
+  updateNotificationCount();
+});
+
 
   // Initial Load
   fetchTickets();
