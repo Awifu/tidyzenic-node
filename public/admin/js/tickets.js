@@ -13,26 +13,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const prevPageBtn = document.getElementById('prevPage');
   const nextPageBtn = document.getElementById('nextPage');
 
+  const TICKETS_PER_PAGE = 4;
   let allTickets = [];
   let filteredTickets = [];
   let currentTicketId = null;
   let businessId = null;
-
-  const TICKETS_PER_PAGE = 4;
   let currentPage = 1;
 
-  // Fetch business ID
-  async function fetchBusinessId() {
-    try {
-      const res = await fetch('/api/business/public');
-      const data = await res.json();
-      businessId = data.id;
-    } catch (err) {
-      console.error('❌ Failed to fetch business info:', err);
-    }
-  }
+  const formatRelativeTime = (isoString) => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000); // in seconds
 
-  // Card creator
+    const times = [
+      { limit: 60, value: 1, unit: 'second' },
+      { limit: 3600, value: 60, unit: 'minute' },
+      { limit: 86400, value: 3600, unit: 'hour' },
+      { limit: 604800, value: 86400, unit: 'day' },
+      { limit: 2592000, value: 604800, unit: 'week' },
+      { limit: 31536000, value: 2592000, unit: 'month' },
+      { limit: Infinity, value: 31536000, unit: 'year' },
+    ];
+
+    for (let { limit, value, unit } of times) {
+      if (diff < limit) {
+        const relative = Math.floor(diff / value);
+        return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(-relative, unit);
+      }
+    }
+    return 'some time ago';
+  };
+
   const createCard = (ticket) => {
     const card = document.createElement('div');
     card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-5 transition hover:shadow-lg';
@@ -42,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p class="text-gray-700 mt-1">${ticket.message}</p>
       <p class="text-sm text-gray-500 mt-2">From: <strong>${ticket.business_name}</strong></p>
       <p class="text-xs text-gray-400">Status: <span class="font-medium">${ticket.status}</span></p>
+      <p class="text-xs text-gray-400">Created: ${formatRelativeTime(ticket.created_at)}</p>
       <div class="flex flex-wrap gap-2 mt-4">
         <button class="reply-btn bg-blue-600 text-white px-4 py-1 rounded shadow hover:bg-blue-700" data-id="${ticket.id}">💬 Reply</button>
         <button class="thread-btn border border-indigo-500 text-indigo-600 px-4 py-1 rounded hover:bg-indigo-50" data-id="${ticket.id}">📄 Show Thread</button>
@@ -54,10 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const renderPagination = () => {
     const totalPages = Math.ceil(filteredTickets.length / TICKETS_PER_PAGE);
-
     pageIndicator.textContent = `Page ${currentPage}`;
     pagination.classList.toggle('hidden', totalPages <= 1);
-
     prevPageBtn.disabled = currentPage === 1;
     nextPageBtn.disabled = currentPage === totalPages;
   };
@@ -71,34 +81,40 @@ document.addEventListener('DOMContentLoaded', () => {
     emptyState.classList.toggle('hidden', visibleTickets.length > 0);
 
     visibleTickets.forEach(ticket => {
-      const card = createCard(ticket);
-      ticketList.appendChild(card);
+      ticketList.appendChild(createCard(ticket));
     });
 
     renderPagination();
   };
 
-const fetchTickets = async () => {
-  try {
-    const res = await fetch('/api/tickets');
-    const data = await res.json();
-    allTickets = data.tickets || [];
-    filteredTickets = [...allTickets]; // <-- keep a filtered copy
-    currentPage = 1;
-    renderTickets();
-  } catch (err) {
-    console.error('❌ Error loading tickets:', err);
-  }
-};
+  const fetchBusinessId = async () => {
+    try {
+      const res = await fetch('/api/business/public');
+      const data = await res.json();
+      businessId = data.id;
+    } catch (err) {
+      console.error('❌ Failed to fetch business info:', err);
+    }
+  };
 
+  const fetchTickets = async () => {
+    try {
+      const res = await fetch('/api/tickets');
+      const data = await res.json();
+      allTickets = data.tickets || [];
+      filteredTickets = [...allTickets];
+      currentPage = 1;
+      renderTickets();
+    } catch (err) {
+      console.error('❌ Error loading tickets:', err);
+    }
+  };
 
-  // Thread Modal
   const openThread = async (ticketId) => {
     try {
       const res = await fetch(`/api/tickets/${ticketId}/replies`);
       const data = await res.json();
       const replies = data.replies || [];
-
       const ticket = allTickets.find(t => t.id == ticketId);
       if (!ticket) return;
 
@@ -106,16 +122,22 @@ const fetchTickets = async () => {
       modalTitle.textContent = `Thread: ${ticket.subject}`;
       modalTextarea.value = '';
       modalThread.innerHTML = `
-        <div class="mb-3 bg-gray-100 p-3 rounded border">
-          <strong>${ticket.business_name}</strong><br/>
+        <div class="mb-3 bg-gray-100 p-3 rounded border text-sm">
+          <strong>${ticket.business_name}</strong> <span class="text-xs text-gray-500">(${formatRelativeTime(ticket.created_at)})</span><br/>
           ${ticket.message}
         </div>
       `;
 
       replies.forEach(reply => {
         const div = document.createElement('div');
-        div.className = 'bg-blue-50 p-2 mb-2 rounded';
-        div.innerHTML = `<strong>${reply.business_name}</strong>: ${reply.message}`;
+        div.className = 'bg-blue-50 p-2 mb-2 rounded text-sm';
+        div.innerHTML = `
+          <div class="flex justify-between">
+            <strong>${reply.business_name}</strong>
+            <span class="text-xs text-gray-500">${formatRelativeTime(reply.created_at)}</span>
+          </div>
+          <div>${reply.message}</div>
+        `;
         modalThread.appendChild(div);
       });
 
@@ -125,7 +147,6 @@ const fetchTickets = async () => {
     }
   };
 
-  // Event: actions inside ticket list
   ticketList.addEventListener('click', async (e) => {
     const btn = e.target;
     const id = btn.dataset.id;
@@ -139,7 +160,9 @@ const fetchTickets = async () => {
       modal.classList.remove('hidden');
     }
 
-    if (btn.classList.contains('thread-btn')) await openThread(id);
+    if (btn.classList.contains('thread-btn')) {
+      await openThread(id);
+    }
 
     if (btn.classList.contains('resolve-btn')) {
       await fetch(`/api/tickets/${id}/resolve`, { method: 'POST' });
@@ -154,7 +177,6 @@ const fetchTickets = async () => {
     }
   });
 
-  // Modal actions
   modalClose.addEventListener('click', () => {
     modal.classList.add('hidden');
     currentTicketId = null;
@@ -177,7 +199,6 @@ const fetchTickets = async () => {
     }
   });
 
-  // Pagination
   prevPageBtn.addEventListener('click', () => {
     if (currentPage > 1) {
       currentPage--;
@@ -193,20 +214,17 @@ const fetchTickets = async () => {
     }
   });
 
-searchInput.addEventListener('input', () => {
-  const term = searchInput.value.toLowerCase().trim();
+  searchInput.addEventListener('input', () => {
+    const term = searchInput.value.toLowerCase().trim();
+    filteredTickets = term
+      ? allTickets.filter(t =>
+          t.subject.toLowerCase().includes(term) ||
+          t.message.toLowerCase().includes(term)
+        )
+      : [...allTickets];
+    currentPage = 1;
+    renderTickets();
+  });
 
-  filteredTickets = term
-    ? allTickets.filter(t =>
-        t.subject.toLowerCase().includes(term) ||
-        t.message.toLowerCase().includes(term)
-      )
-    : [...allTickets]; // <-- restore full list when empty
-
-  currentPage = 1;
-  renderTickets();
-});
-
-  // Init
   fetchBusinessId().then(fetchTickets);
 });
