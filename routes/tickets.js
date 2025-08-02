@@ -1,19 +1,22 @@
+// routes/tickets.js
+
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// ===============================
-// GET: All Active Support Tickets
-// ===============================
+// ==========================
+// GET all active tickets (with business info)
+// ==========================
 router.get('/', async (req, res) => {
   try {
     const [tickets] = await db.execute(`
-      SELECT t.*, b.business_name
+      SELECT t.*, b.business_name 
       FROM support_tickets t
       JOIN businesses b ON t.business_id = b.id
       WHERE t.is_deleted = 0
       ORDER BY t.created_at DESC
     `);
+
     res.json({ tickets });
   } catch (err) {
     console.error('❌ Error fetching tickets:', err);
@@ -21,9 +24,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ===============================
-// POST: Create a New Support Ticket
-// ===============================
+// ==========================
+// POST a new support ticket
+// ==========================
 router.post('/', async (req, res) => {
   const { user_id, business_id, subject, message } = req.body;
 
@@ -57,33 +60,22 @@ router.post('/', async (req, res) => {
   }
 });
 
-// ===============================
-// POST: Add a Reply to a Ticket
-// ===============================
+// ==========================
+// POST a reply to a ticket (using business_id)
+// ==========================
 router.post('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
-  const { admin_id, message } = req.body;
+  const { business_id, message } = req.body;
 
-  if (!admin_id || !message) {
-    return res.status(400).json({ error: 'admin_id and message are required' });
+  if (!business_id || !message) {
+    return res.status(400).json({ error: 'Missing business_id or message' });
   }
 
   try {
-    // Optional validation
-    const [ticketCheck] = await db.execute(`SELECT id FROM support_tickets WHERE id = ?`, [ticketId]);
-    if (!ticketCheck.length) {
-      return res.status(404).json({ error: 'Ticket not found' });
-    }
-
-    const [adminCheck] = await db.execute(`SELECT id FROM admins WHERE id = ?`, [admin_id]);
-    if (!adminCheck.length) {
-      return res.status(404).json({ error: 'Admin not found' });
-    }
-
     await db.execute(`
-      INSERT INTO support_replies (ticket_id, admin_id, message, created_at)
+      INSERT INTO support_replies (ticket_id, business_id, message, created_at)
       VALUES (?, ?, ?, NOW())
-    `, [ticketId, admin_id, message]);
+    `, [ticketId, business_id, message]);
 
     res.status(201).json({ success: true, message: 'Reply submitted' });
   } catch (err) {
@@ -92,17 +84,17 @@ router.post('/:id/replies', async (req, res) => {
   }
 });
 
-// ===============================
-// GET: Replies for a Specific Ticket
-// ===============================
+// ==========================
+// GET all replies for a specific ticket
+// ==========================
 router.get('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
 
   try {
     const [replies] = await db.execute(`
-      SELECT r.*, a.username AS admin_name
+      SELECT r.*, b.business_name
       FROM support_replies r
-      LEFT JOIN admins a ON r.admin_id = a.id
+      LEFT JOIN businesses b ON r.business_id = b.id
       WHERE r.ticket_id = ?
       ORDER BY r.created_at ASC
     `, [ticketId]);
@@ -114,9 +106,9 @@ router.get('/:id/replies', async (req, res) => {
   }
 });
 
-// ===============================
-// POST: Mark Ticket as Resolved
-// ===============================
+// ==========================
+// Mark a ticket as resolved
+// ==========================
 router.post('/:id/resolve', async (req, res) => {
   const ticketId = req.params.id;
 
@@ -132,9 +124,9 @@ router.post('/:id/resolve', async (req, res) => {
   }
 });
 
-// ===============================
-// DELETE (Soft): Mark Ticket as Deleted
-// ===============================
+// ==========================
+// Soft-delete a ticket
+// ==========================
 router.delete('/:id', async (req, res) => {
   const ticketId = req.params.id;
 

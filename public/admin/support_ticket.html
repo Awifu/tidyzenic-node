@@ -78,19 +78,16 @@
     <!-- Reply Modal -->
     <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center px-4">
       <div class="relative bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl animate-fade-in">
-        <!-- Close Button -->
-       <div class="flex justify-between items-center mb-4">
-  <h2 id="modalTitle" class="text-xl font-semibold text-blue-700">Reply to Ticket</h2>
-  <button id="modalClose"
-    class="text-gray-400 hover:text-black text-2xl font-bold focus:outline-none">
-    &times;
-  </button>
-</div>
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+          <h2 id="modalTitle" class="text-xl font-semibold text-blue-700">Reply to Ticket</h2>
+          <button id="modalClose" class="text-gray-400 hover:text-black text-2xl font-bold focus:outline-none">&times;</button>
+        </div>
 
-
-
+        <!-- Thread -->
         <div id="modalThread" class="space-y-2 mb-4"></div>
 
+        <!-- Reply Box -->
         <textarea
           id="modalTextarea"
           rows="5"
@@ -98,6 +95,7 @@
           class="w-full p-4 border rounded-lg shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
         ></textarea>
 
+        <!-- Submit -->
         <div class="mt-4 text-right">
           <button id="modalSubmit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow-md">
             Send Reply
@@ -105,25 +103,5 @@
         </div>
       </div>
     </div>
-
-    <!-- Ticket Thread Template -->
-    <template id="ticketThreadTemplate">
-      <div class="border border-gray-200 rounded-xl shadow p-4 bg-white">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="text-lg font-semibold text-blue-700">{{subject}}</h3>
-            <p class="text-gray-600 mt-1">{{message}}</p>
-            <p class="text-xs text-gray-400 mt-2">Status: <span class="font-medium">{{status}}</span></p>
-          </div>
-          <div class="flex flex-col gap-2">
-            <button class="reply-btn text-sm text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded">Reply</button>
-            <button class="toggle-thread-btn text-sm text-gray-700 border border-gray-300 hover:bg-gray-100 px-3 py-1 rounded">Show Thread</button>
-          </div>
-        </div>
-        <div class="replies mt-4 hidden">
-          <!-- Replies inserted dynamically -->
-        </div>
-      </div>
-    </template>
   </body>
 </html>

@@ -1,3 +1,5 @@
+// public/admin/js/tickets.js
+
 document.addEventListener('DOMContentLoaded', () => {
   const ticketList = document.getElementById('ticketList');
   const emptyState = document.getElementById('emptyState');
@@ -9,182 +11,190 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalThread = document.getElementById('modalThread');
   const modalTitle = document.getElementById('modalTitle');
 
-  const pagination = document.getElementById('pagination');
-  const prevPageBtn = document.getElementById('prevPage');
-  const nextPageBtn = document.getElementById('nextPage');
-  const pageIndicator = document.getElementById('pageIndicator');
-
-  let currentTicketId = null;
   let allTickets = [];
+  let currentTicketId = null;
+  let businessId = null; // This should be dynamically set
+
+  const TICKETS_PER_PAGE = 4;
   let currentPage = 1;
-  const ticketsPerPage = 4;
+
+  // Get business_id (ideally from backend or auth info)
+  async function fetchBusinessId() {
+    try {
+      const res = await fetch('/api/business/public');
+      const data = await res.json();
+      businessId = data.id;
+    } catch (err) {
+      console.error('Failed to fetch business info:', err);
+    }
+  }
 
   const createCard = (ticket) => {
     const card = document.createElement('div');
-    card.className = 'bg-white rounded-xl shadow-md border p-6 space-y-3';
+    card.className = 'bg-white border rounded-xl shadow-md p-5 space-y-2';
 
     card.innerHTML = `
       <h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>
-      <p class="text-xs text-gray-400">From: <span class="font-medium">${ticket.business_name}</span></p>
-      <p class="text-sm text-gray-700">${ticket.message}</p>
-      <p class="text-xs text-gray-500">Status: <span class="font-medium">${ticket.status}</span></p>
-      <div class="flex flex-wrap gap-2 mt-4">
-        <button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>
-        <button class="px-3 py-1 text-sm text-indigo-600 border border-indigo-600 hover:bg-indigo-50 rounded" data-action="thread">📄 Show Thread</button>
-        <button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>
-        <button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>
+      <p class="text-gray-600">${ticket.message}</p>
+      <p class="text-sm text-gray-400">From: <strong>${ticket.business_name}</strong></p>
+      <p class="text-xs text-gray-500">Status: <span class="font-semibold">${ticket.status}</span></p>
+      <div class="flex gap-2 mt-3">
+        <button class="reply-btn bg-blue-600 text-white px-4 py-1 rounded" data-id="${ticket.id}">💬 Reply</button>
+        <button class="thread-btn border border-indigo-600 text-indigo-600 px-4 py-1 rounded" data-id="${ticket.id}">📄 Show Thread</button>
+        <button class="resolve-btn border border-green-600 text-green-600 px-4 py-1 rounded" data-id="${ticket.id}">✔ Mark Resolved</button>
+        <button class="delete-btn border border-red-600 text-red-600 px-4 py-1 rounded" data-id="${ticket.id}">🗑 Delete</button>
       </div>
     `;
-
-    card.querySelector('[data-action="reply"]').addEventListener('click', () => openReplyModal(ticket.id));
-    card.querySelector('[data-action="thread"]').addEventListener('click', () => openThreadModal(ticket));
-    card.querySelector('[data-action="resolve"]').addEventListener('click', () => markResolved(ticket.id));
-    card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteTicket(ticket.id));
 
     return card;
   };
 
-  const renderTickets = (ticketsToRender = allTickets) => {
-    const start = (currentPage - 1) * ticketsPerPage;
-    const paginated = ticketsToRender.slice(start, start + ticketsPerPage);
+  const renderTickets = () => {
+    const start = (currentPage - 1) * TICKETS_PER_PAGE;
+    const end = start + TICKETS_PER_PAGE;
+    const pageTickets = allTickets.slice(start, end);
 
     ticketList.innerHTML = '';
-    if (!ticketsToRender.length) {
+
+    if (pageTickets.length === 0) {
       emptyState.classList.remove('hidden');
-      pagination.classList.add('hidden');
-      return;
+    } else {
+      emptyState.classList.add('hidden');
+      pageTickets.forEach(ticket => {
+        const card = createCard(ticket);
+        ticketList.appendChild(card);
+      });
     }
 
-    emptyState.classList.add('hidden');
-    paginated.forEach(ticket => ticketList.appendChild(createCard(ticket)));
-
-    const totalPages = Math.ceil(ticketsToRender.length / ticketsPerPage);
-    pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
-    pagination.classList.toggle('hidden', totalPages <= 1);
-    prevPageBtn.disabled = currentPage === 1;
-    nextPageBtn.disabled = currentPage === totalPages;
+    renderPagination();
   };
 
-  const filterTickets = (term) => {
-    const filtered = allTickets.filter(ticket =>
-      ticket.subject.toLowerCase().includes(term) ||
-      ticket.message.toLowerCase().includes(term)
-    );
-    currentPage = 1;
-    renderTickets(filtered);
+  const renderPagination = () => {
+    let totalPages = Math.ceil(allTickets.length / TICKETS_PER_PAGE);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex justify-center gap-2 mt-6';
+
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.className = `px-3 py-1 rounded ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`;
+      btn.addEventListener('click', () => {
+        currentPage = i;
+        renderTickets();
+      });
+      wrapper.appendChild(btn);
+    }
+
+    ticketList.appendChild(wrapper);
   };
 
   const fetchTickets = async () => {
     try {
       const res = await fetch('/api/tickets');
       const data = await res.json();
-      allTickets = Array.isArray(data.tickets) ? data.tickets : [];
+      allTickets = data.tickets || [];
       renderTickets();
     } catch (err) {
       console.error('Error loading tickets:', err);
     }
   };
 
-  const openReplyModal = (ticketId) => {
-    currentTicketId = ticketId;
-    modalTitle.textContent = 'Reply to Ticket';
-    modalTextarea.value = '';
-    modalThread.innerHTML = '';
-    modal.classList.remove('hidden');
-  };
+  // Event delegation
+  ticketList.addEventListener('click', async (e) => {
+    const target = e.target;
+    const ticketId = target.dataset.id;
 
-  const openThreadModal = async (ticket) => {
-    currentTicketId = ticket.id;
-    modalTitle.textContent = `Thread: ${ticket.subject}`;
-    modalTextarea.value = '';
-    modalThread.innerHTML = `
-      <div class="mb-4 bg-gray-50 p-3 rounded border">
-        <div class="text-sm text-gray-500 mb-1">Business: <strong>${ticket.business_name}</strong></div>
-        <div class="text-gray-700">${ticket.message}</div>
-      </div>
-    `;
-
-    try {
-      const res = await fetch(`/api/tickets/${ticket.id}/replies`);
-      const data = await res.json();
-      (data.replies || []).forEach(reply => {
-        const div = document.createElement('div');
-        div.className = 'bg-gray-100 px-3 py-2 rounded';
-        div.innerHTML = `<span class='font-semibold text-sm text-blue-600'>${reply.admin_name || 'Admin'}:</span> ${reply.message}`;
-        modalThread.appendChild(div);
-      });
-    } catch (err) {
-      console.error('Failed to load thread:', err);
+    if (target.classList.contains('reply-btn')) {
+      currentTicketId = ticketId;
+      modalTextarea.value = '';
+      modalTitle.textContent = 'Reply to Ticket';
+      modalThread.innerHTML = '';
+      modal.classList.remove('hidden');
     }
 
-    modal.classList.remove('hidden');
-  };
+    if (target.classList.contains('thread-btn')) {
+      await openThread(ticketId);
+    }
 
-  const closeModal = () => {
-    modal.classList.add('hidden');
-    currentTicketId = null;
-    modalTextarea.value = '';
-    modalThread.innerHTML = '';
-  };
-
-  const markResolved = async (ticketId) => {
-    try {
+    if (target.classList.contains('resolve-btn')) {
       await fetch(`/api/tickets/${ticketId}/resolve`, { method: 'POST' });
       fetchTickets();
+    }
+
+    if (target.classList.contains('delete-btn')) {
+      if (confirm('Delete this ticket?')) {
+        await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
+        fetchTickets();
+      }
+    }
+  });
+
+  const openThread = async (ticketId) => {
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/replies`);
+      const data = await res.json();
+      const replies = data.replies || [];
+
+      const threadCard = allTickets.find(t => t.id == ticketId);
+      if (!threadCard) return;
+
+      currentTicketId = ticketId;
+      modalTitle.textContent = `Thread: ${threadCard.subject}`;
+      modalTextarea.value = '';
+      modalThread.innerHTML = `
+        <div class="mb-3 bg-gray-50 p-3 rounded border">
+          <strong>${threadCard.business_name}</strong><br/>
+          ${threadCard.message}
+        </div>
+      `;
+
+      replies.forEach(reply => {
+        const div = document.createElement('div');
+        div.className = 'bg-gray-100 p-2 mb-2 rounded';
+        div.innerHTML = `<strong>${reply.business_name}</strong>: ${reply.message}`;
+        modalThread.appendChild(div);
+      });
+
+      modal.classList.remove('hidden');
     } catch (err) {
-      console.error('Failed to resolve ticket:', err);
+      console.error('Failed to fetch replies:', err);
     }
   };
 
-  const deleteTicket = async (ticketId) => {
-    if (!confirm('Are you sure you want to delete this ticket?')) return;
-    try {
-      await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
-      fetchTickets();
-    } catch (err) {
-      console.error('Failed to delete ticket:', err);
-    }
-  };
+  modalClose.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    currentTicketId = null;
+  });
 
   modalSubmit.addEventListener('click', async () => {
     const message = modalTextarea.value.trim();
-    if (!message || !currentTicketId) return;
+    if (!message || !currentTicketId || !businessId) return;
+
     try {
       await fetch(`/api/tickets/${currentTicketId}/replies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ admin_id: 1, message })
+        body: JSON.stringify({ business_id: businessId, message })
       });
-      closeModal();
+
+      modal.classList.add('hidden');
       fetchTickets();
     } catch (err) {
-      console.error('Failed to send reply:', err);
+      console.error('Failed to submit reply:', err);
     }
   });
 
-  searchInput.addEventListener('input', (e) => filterTickets(e.target.value.toLowerCase()));
-  modalClose.addEventListener('click', closeModal);
-  prevPageBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTickets();
-    }
-  });
-
-  nextPageBtn.addEventListener('click', () => {
-    const totalPages = Math.ceil(allTickets.length / ticketsPerPage);
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTickets();
-    }
-  });
-
-  const socket = io();
-  socket.on('new_ticket', (ticket) => {
-    allTickets.unshift(ticket);
+  searchInput.addEventListener('input', () => {
+    const term = searchInput.value.toLowerCase();
+    const filtered = allTickets.filter(t =>
+      t.subject.toLowerCase().includes(term) ||
+      t.message.toLowerCase().includes(term)
+    );
     currentPage = 1;
+    allTickets = filtered;
     renderTickets();
   });
 
-  fetchTickets();
+  // Startup
+  fetchBusinessId().then(fetchTickets);
 });
