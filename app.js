@@ -7,6 +7,8 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const crypto = require('crypto');
 const helmet = require('helmet');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,6 +90,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
+app.use('/api/tickets', require('./routes/tickets')); // ✅ Ticket support route
 
 // ==============================
 // 8. HTML Page Routes
@@ -127,9 +130,23 @@ app.use((err, req, res, next) => {
 });
 
 // ==============================
-// 11. Start Server
+// 11. Start HTTP + Socket.IO Server
 // ==============================
-const server = app.listen(PORT, () => {
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  }
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('📡 Client connected');
+});
+
+httpServer.listen(PORT, () => {
   const url = process.env.NODE_ENV === 'production'
     ? 'https://tidyzenic.com'
     : `http://localhost:${PORT}`;
@@ -141,9 +158,8 @@ const server = app.listen(PORT, () => {
 // ==============================
 process.on('SIGINT', () => {
   console.log('🛑 Gracefully shutting down...');
-  server.close(() => {
+  httpServer.close(() => {
     console.log('✅ Server closed');
     process.exit(0);
   });
 });
-// Force rebuild to remove stale static file from Render

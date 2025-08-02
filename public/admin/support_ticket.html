@@ -1,0 +1,36 @@
+<!-- public/admin/support_ticket.html -->
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-100 text-gray-800">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support Tickets</title>
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer src="/admin/js/tickets.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6">
+  <!-- Top bar -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Support Tickets</h1>
+
+    <div class="relative">
+      <button id="notifBtn" class="relative p-2 rounded-full hover:bg-gray-200">
+        🔔
+        <span id="notifCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+      </button>
+
+      <div id="notifDropdown" class="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg hidden z-50">
+        <ul id="notifList" class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+          <!-- New ticket notifications will appear here -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket Inbox -->
+  <div id="ticketList" class="space-y-4">
+    <!-- Tickets will be dynamically inserted here -->
+  </div>
+</body>
+</html>
