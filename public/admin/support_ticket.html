@@ -4,29 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Support Tickets – Tidyzenic Admin</title>
-
     <link rel="stylesheet" href="/styles.css" />
     <script defer src="/socket.io/socket.io.js"></script>
     <script defer src="/admin/js/tickets.js"></script>
     <script defer src="/admin/js/load-sidebar.js"></script>
     <script defer src="/js/auth-check.js"></script>
-
-    <style>
-      @keyframes fade-in {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .animate-fade-in {
-        animation: fade-in 0.2s ease-out;
-      }
-    </style>
   </head>
-
-  <body class="h-full flex flex-col bg-gray-50">
-    <!-- Mobile Header -->
+  <body class="h-full flex flex-col">
     <header class="md:hidden flex items-center justify-between p-4 bg-white shadow sticky top-0 z-40">
       <div class="flex items-center gap-3">
-        <button id="menuToggle" class="text-gray-700 focus:outline-none">
+        <button id="menuToggle" class="text-gray-700">
           <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
@@ -40,34 +27,31 @@
       <div id="sidebar-container"></div>
       <div id="sidebarBackdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden z-30 md:hidden"></div>
 
-      <!-- Main Content -->
-      <main class="flex-1 p-6 md:p-10">
-        <div class="max-w-5xl mx-auto space-y-6">
+      <main class="flex-1 p-6 md:p-10 bg-gray-50">
+        <div class="max-w-5xl mx-auto space-y-8">
           <div class="flex items-center justify-between">
-            <h1 class="text-3xl font-semibold text-blue-700">Support Tickets</h1>
+            <h1 class="text-3xl font-bold text-blue-800">Support Tickets</h1>
           </div>
 
-          <!-- Search Bar -->
           <div>
             <input
               id="ticketSearch"
               type="text"
               placeholder="Search tickets..."
-              class="w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-5 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <!-- Tickets Container -->
-          <div id="ticketList" class="space-y-5"></div>
-
-          <!-- Pagination -->
-          <div id="pagination" class="flex justify-center mt-6 gap-2 hidden">
-            <button id="prevPage" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Previous</button>
-            <span id="pageIndicator" class="px-4 py-2 text-gray-600 font-medium">Page 1</span>
-            <button id="nextPage" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Next</button>
+          <div id="ticketList" class="space-y-6">
+            <!-- Tickets injected here -->
           </div>
 
-          <!-- Empty State -->
+          <div id="pagination" class="flex justify-center items-center gap-4 text-sm text-gray-600 hidden">
+            <button id="prevPage" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Previous</button>
+            <span id="pageIndicator" class="font-medium">Page 1</span>
+            <button id="nextPage" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next</button>
+          </div>
+
           <div id="emptyState" class="hidden text-center text-gray-400 mt-10">
             <p>No support tickets found.</p>
           </div>
@@ -75,53 +59,59 @@
       </main>
     </div>
 
-    <!-- Reply Modal -->
-    <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center px-4">
-      <div class="relative bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl animate-fade-in">
-        <!-- Close Button -->
-       <div class="flex justify-between items-center mb-4">
-  <h2 id="modalTitle" class="text-xl font-semibold text-blue-700">Reply to Ticket</h2>
-  <button id="modalClose"
-    class="text-gray-400 hover:text-black text-2xl font-bold focus:outline-none">
-    &times;
-  </button>
-</div>
+    <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center px-4">
+      <div class="bg-white w-full max-w-lg p-6 rounded-2xl shadow-lg animate-fade-in">
+        <div class="flex justify-between items-center mb-4">
+          <h2 id="modalTitle" class="text-xl font-semibold text-blue-800">Reply to Ticket</h2>
+          <button id="modalClose" class="text-gray-400 hover:text-black text-2xl font-bold">&times;</button>
+        </div>
 
-
-
-        <div id="modalThread" class="space-y-2 mb-4"></div>
+        <div id="modalThread" class="space-y-2 mb-4 text-sm text-gray-700"></div>
 
         <textarea
           id="modalTextarea"
-          rows="5"
+          rows="4"
           placeholder="Write your reply..."
-          class="w-full p-4 border rounded-lg shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full p-4 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         ></textarea>
 
         <div class="mt-4 text-right">
-          <button id="modalSubmit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow-md">
+          <button id="modalSubmit" class="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 shadow-sm">
             Send Reply
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Ticket Thread Template -->
-    <template id="ticketThreadTemplate">
-      <div class="border border-gray-200 rounded-xl shadow p-4 bg-white">
-        <div class="flex justify-between items-start">
+    <template id="ticketTemplate">
+      <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-all space-y-3">
+        <div class="flex items-start justify-between">
           <div>
             <h3 class="text-lg font-semibold text-blue-700">{{subject}}</h3>
-            <p class="text-gray-600 mt-1">{{message}}</p>
-            <p class="text-xs text-gray-400 mt-2">Status: <span class="font-medium">{{status}}</span></p>
-          </div>
-          <div class="flex flex-col gap-2">
-            <button class="reply-btn text-sm text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded">Reply</button>
-            <button class="toggle-thread-btn text-sm text-gray-700 border border-gray-300 hover:bg-gray-100 px-3 py-1 rounded">Show Thread</button>
+            <p class="text-sm text-gray-600 mt-1">{{message}}</p>
+            <p class="text-xs text-gray-500 mt-2">
+              <span class="font-semibold text-gray-700">From:</span> {{business_name}}
+            </p>
+            <p class="text-xs mt-1">
+              <span class="text-gray-500">Status:</span>
+              <span class="font-medium text-{{statusColor}}">{{status}}</span>
+            </p>
           </div>
         </div>
-        <div class="replies mt-4 hidden">
-          <!-- Replies inserted dynamically -->
+
+        <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+          <button class="reply-btn flex items-center gap-1 px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+            💬 Reply
+          </button>
+          <button class="thread-btn flex items-center gap-1 px-3 py-1 text-sm text-indigo-700 border border-indigo-300 hover:bg-indigo-50 rounded-lg">
+            📄 Show Thread
+          </button>
+          <button class="resolve-btn flex items-center gap-1 px-3 py-1 text-sm text-green-700 border border-green-300 hover:bg-green-50 rounded-lg">
+            ✅ Mark Resolved
+          </button>
+          <button class="delete-btn flex items-center gap-1 px-3 py-1 text-sm text-red-600 border border-red-300 hover:bg-red-50 rounded-lg">
+            🗑 Delete
+          </button>
         </div>
       </div>
     </template>
