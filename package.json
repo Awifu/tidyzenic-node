@@ -26,7 +26,8 @@
     "lru-cache": "^7.0.0",
     "morgan": "^1.10.1",
     "mysql2": "^3.14.2",
-    "nodemailer": "^7.0.5"
+    "nodemailer": "^7.0.5",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.17",
