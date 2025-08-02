@@ -3,8 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard – Tidyzenic</title>
+    <title>Support Tickets – Admin | Tidyzenic</title>
     <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="/admin/js/tickets.js"></script>
+    <script defer src="/admin/js/load-sidebar.js"></script>
+    <script defer src="/js/auth-check.js"></script>
   </head>
 
   <body class="min-h-screen bg-gray-100 text-gray-900 overflow-auto">
@@ -17,33 +21,42 @@
           </svg>
         </button>
         <span class="font-bold text-lg text-blue-600">Admin</span>
-        <!-- 👤 Show logged-in user -->
         <span id="userName" class="ml-4 text-sm text-gray-600"></span>
       </div>
     </header>
 
     <!-- Main Layout -->
     <div class="flex min-h-screen">
-      <!-- Sidebar (loaded dynamically) -->
+      <!-- Sidebar -->
       <div id="sidebar-container"></div>
 
-      <!-- Mobile Backdrop -->
+      <!-- Backdrop for mobile -->
       <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
       <!-- Main Content -->
       <main class="flex-1 overflow-y-auto p-4 md:p-8">
-        <div class="max-w-3xl mx-auto">
-          <h2 class="text-2xl font-semibold mb-4 text-blue-700">Welcome to your Admin Dashboard</h2>
-          <div class="bg-white p-6 rounded-2xl shadow">
-            <p>Manage your services, bookings, clients and more. Use the sidebar to navigate your admin tools.</p>
-            <p class="mt-2 text-sm text-gray-600">Logged in as: <span id="userName"></span></p>
+        <div class="max-w-5xl mx-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-semibold text-blue-700">Support Tickets</h2>
+            <div class="relative">
+              <button id="notifBtn" class="relative p-2 rounded-full hover:bg-gray-200">
+                🔔
+                <span id="notifCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+              </button>
+              <div id="notifDropdown" class="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg hidden z-50">
+                <ul id="notifList" class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                  <!-- Ticket notifications go here -->
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticket list -->
+          <div id="ticketList" class="space-y-4">
+            <!-- Tickets loaded dynamically -->
           </div>
         </div>
       </main>
     </div>
-
-    <!-- JS -->
-    <script src="/admin/js/load-sidebar.js" defer></script>
-    <script src="/js/auth-check.js" defer></script>
   </body>
 </html>
