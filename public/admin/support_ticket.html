@@ -1,36 +1,70 @@
-<!-- public/admin/support_ticket.html -->
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-100 text-gray-800">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Support Tickets</title>
-  <script defer src="/socket.io/socket.io.js"></script>
-  <script defer src="/admin/js/tickets.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="p-6">
-  <!-- Top bar -->
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Support Tickets</h1>
+<html lang="en" class="h-full bg-gray-100 text-gray-900">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support Tickets – Tidyzenic Admin</title>
 
-    <div class="relative">
-      <button id="notifBtn" class="relative p-2 rounded-full hover:bg-gray-200">
-        🔔
-        <span id="notifCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
-      </button>
+    <!-- Styles -->
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
 
-      <div id="notifDropdown" class="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg hidden z-50">
-        <ul id="notifList" class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
-          <!-- New ticket notifications will appear here -->
-        </ul>
+    <!-- Scripts -->
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="/admin/js/tickets.js"></script>
+    <script defer src="/admin/js/load-sidebar.js"></script>
+    <script defer src="/js/auth-check.js"></script>
+  </head>
+
+  <body class="min-h-screen overflow-auto">
+    <!-- Mobile Header -->
+    <header class="md:hidden flex items-center justify-between p-4 bg-white shadow sticky top-0 z-50">
+      <div class="flex items-center space-x-2">
+        <button id="menuToggle" class="text-gray-700 focus:outline-none">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span class="font-bold text-lg text-blue-600">Admin</span>
+        <span id="userName" class="ml-4 text-sm text-gray-600"></span>
       </div>
-    </div>
-  </div>
+    </header>
 
-  <!-- Ticket Inbox -->
-  <div id="ticketList" class="space-y-4">
-    <!-- Tickets will be dynamically inserted here -->
-  </div>
-</body>
+    <!-- Main Layout -->
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <div id="sidebar-container"></div>
+
+      <!-- Backdrop for Mobile Sidebar -->
+      <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto p-4 md:p-8">
+        <div class="max-w-5xl mx-auto">
+          <!-- Page Header -->
+          <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-semibold text-blue-700">Support Tickets</h1>
+
+            <!-- Notifications -->
+            <div class="relative">
+              <button id="notifBtn" class="relative p-2 rounded-full hover:bg-gray-200">
+                🔔
+                <span id="notifCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+              </button>
+              <div id="notifDropdown" class="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg hidden z-50">
+                <ul id="notifList" class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                  <!-- Notifications will appear here -->
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ticket List -->
+          <div id="ticketList" class="space-y-4">
+            <!-- Tickets will be dynamically inserted here -->
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
 </html>
