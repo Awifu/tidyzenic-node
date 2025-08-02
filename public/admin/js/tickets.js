@@ -23,18 +23,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const replyButton = `<button class="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded" data-action="reply">💬 Reply</button>`;
     const resolveButton = `<button class="px-3 py-1 text-sm text-green-600 border border-green-600 hover:bg-green-50 rounded" data-action="resolve">✔ Mark Resolved</button>`;
     const deleteButton = `<button class="px-3 py-1 text-sm text-red-600 border border-red-600 hover:bg-red-50 rounded" data-action="delete">🗑 Delete</button>`;
+    const toggleThreadButton = `<button class="px-3 py-1 text-sm text-gray-600 border border-gray-300 hover:bg-gray-100 rounded" data-action="toggle-thread">📂 Show Thread</button>`;
 
-    const actionBar = `<div class="flex gap-2 mt-4">${replyButton}${resolveButton}${deleteButton}</div>`;
-
-    const repliesContainer = `<div class="mt-3 space-y-2 text-sm text-gray-600" id="replies-${ticket.id}"></div>`;
+    const actionBar = `<div class="flex flex-wrap gap-2 mt-4">${replyButton}${resolveButton}${deleteButton}${toggleThreadButton}</div>`;
+    const repliesContainer = `<div class="mt-3 hidden space-y-2 text-sm text-gray-600" id="replies-${ticket.id}"></div>`;
 
     card.innerHTML = `${subject}${business}${message}${status}${actionBar}${repliesContainer}`;
 
     card.querySelector('[data-action="reply"]').addEventListener('click', () => openReplyModal(ticket.id));
     card.querySelector('[data-action="resolve"]').addEventListener('click', () => markResolved(ticket.id));
     card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteTicket(ticket.id));
-
-    fetchReplies(ticket.id);
+    card.querySelector('[data-action="toggle-thread"]').addEventListener('click', () => toggleThread(ticket.id));
 
     return card;
   };
@@ -93,6 +92,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (err) {
       console.error('Error loading replies:', err);
+    }
+  };
+
+  const toggleThread = (ticketId) => {
+    const repliesEl = document.getElementById(`replies-${ticketId}`);
+    if (repliesEl.classList.contains('hidden')) {
+      repliesEl.classList.remove('hidden');
+      fetchReplies(ticketId);
+    } else {
+      repliesEl.classList.add('hidden');
     }
   };
 
