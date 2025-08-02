@@ -88,7 +88,6 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
-app.use('/api', require('./routes/support')); // handles /api/tickets and /api/replies
 
 // ==============================
 // 8. HTML Page Routes
@@ -107,7 +106,6 @@ app.get(['/login', '/login.html'], (req, res) => {
 app.get('/reset-password.html', sendFile('reset-password.html'));
 app.get('/verified.html', sendFile('verified.html'));
 app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin/dashboard.html'));
-app.get('/admin/support.html', sendFile('admin/support.html'));
 
 // ==============================
 // 9. 404 Not Found
