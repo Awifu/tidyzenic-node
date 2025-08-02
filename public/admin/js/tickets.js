@@ -1,4 +1,4 @@
-// public/admin/js/tickets.js
+// File path: public/admin/js/tickets.js
 
 document.addEventListener('DOMContentLoaded', () => {
   const ticketList = document.getElementById('ticketList');
@@ -10,20 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalTextarea = document.getElementById('modalTextarea');
   let currentTicketId = null;
   let allTickets = [];
-
-  const renderReplies = (replies) => {
-    if (!replies || !replies.length) return '';
-    return `
-      <div class="mt-3 space-y-2 border-t pt-2">
-        ${replies.map(r => `
-          <div class="text-sm bg-gray-50 p-2 rounded border">
-            <strong class="text-blue-600">Admin:</strong> ${r.message}<br>
-            <span class="text-xs text-gray-500">${new Date(r.created_at).toLocaleString()}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  };
 
   const renderTickets = (tickets) => {
     ticketList.innerHTML = '';
@@ -37,38 +23,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tickets.forEach(ticket => {
       const card = document.createElement('div');
-      card.className = 'bg-white rounded-xl p-5 shadow-md border animate-fade-in';
+      card.className = 'bg-white p-5 rounded-2xl shadow flex flex-col gap-2 animate-fade-in';
 
-      const repliesHtml = renderReplies(ticket.replies);
-
-      const content = `
+      card.innerHTML = `
         <div class="flex justify-between items-start">
           <div>
-            <h3 class="text-lg font-bold text-blue-700">${ticket.subject}</h3>
+            <h3 class="text-lg font-semibold text-blue-700">${ticket.subject}</h3>
             <p class="text-gray-700 mt-1">${ticket.message}</p>
-            <p class="text-xs text-gray-500 mt-2">Status: <span class="font-semibold">${ticket.status}</span></p>
-            ${repliesHtml}
+            <p class="text-sm text-gray-400 mt-2">Status: <span class="font-semibold">${ticket.status}</span></p>
+            <p class="text-sm text-gray-400">Business: <span class="font-medium">${ticket.business_name || 'N/A'}</span></p>
           </div>
-          <div class="space-y-2 text-right">
-            <button class="replyBtn text-sm text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700" data-id="${ticket.id}">💬 Reply</button>
-            <button class="resolveBtn text-sm text-green-700 border border-green-600 px-3 py-1 rounded hover:bg-green-600 hover:text-white" data-id="${ticket.id}">✅ Resolved</button>
-            <button class="deleteBtn text-sm text-red-600 border border-red-500 px-3 py-1 rounded hover:bg-red-600 hover:text-white" data-id="${ticket.id}">🗑 Delete</button>
+          <div class="flex flex-col items-end gap-2">
+            <button class="reply-btn px-4 py-1 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center gap-1" data-id="${ticket.id}">
+              💬 <span>Reply</span>
+            </button>
+            <button class="resolve-btn px-4 py-1 rounded-lg bg-green-100 hover:bg-green-200 text-green-700" data-id="${ticket.id}">✅ Resolved</button>
+            <button class="delete-btn px-4 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700" data-id="${ticket.id}">🗑️ Delete</button>
           </div>
         </div>
+        <div id="replies-${ticket.id}" class="mt-3 space-y-2"></div>
       `;
 
-      card.innerHTML = content;
-
-      card.querySelector('.replyBtn').addEventListener('click', () => openReplyModal(ticket.id));
-      card.querySelector('.resolveBtn').addEventListener('click', () => markResolved(ticket.id));
-      card.querySelector('.deleteBtn').addEventListener('click', () => deleteTicket(ticket.id));
-
       ticketList.appendChild(card);
+      loadReplies(ticket.id);
     });
+
+    document.querySelectorAll('.reply-btn').forEach(btn => btn.addEventListener('click', openReplyModal));
+    document.querySelectorAll('.resolve-btn').forEach(btn => btn.addEventListener('click', markAsResolved));
+    document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', deleteTicket));
   };
 
-  const openReplyModal = (ticketId) => {
-    currentTicketId = ticketId;
+  const loadReplies = async (ticketId) => {
+    const replyContainer = document.getElementById(`replies-${ticketId}`);
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/replies`);
+      const data = await res.json();
+      replyContainer.innerHTML = data.replies.map(reply => `
+        <div class="bg-gray-100 rounded-lg p-3 text-sm">
+          <p class="text-gray-800">${reply.message}</p>
+          <p class="text-xs text-gray-400 mt-1">— ${reply.admin_name || 'Admin'}</p>
+        </div>`
+      ).join('');
+    } catch (err) {
+      console.error('Error loading replies:', err);
+    }
+  };
+
+  const openReplyModal = (e) => {
+    currentTicketId = e.currentTarget.dataset.id;
     modalTextarea.value = '';
     modal.classList.remove('hidden');
   };
@@ -76,44 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeModal = () => {
     modal.classList.add('hidden');
     currentTicketId = null;
-  };
-
-  const fetchTickets = async () => {
-    try {
-      const res = await fetch('/api/tickets');
-      const data = await res.json();
-      allTickets = Array.isArray(data.tickets) ? data.tickets : [];
-      renderTickets(allTickets);
-    } catch (err) {
-      console.error('Error loading tickets:', err);
-    }
-  };
-
-  const markResolved = async (ticketId) => {
-    try {
-      await fetch(`/api/tickets/${ticketId}/resolve`, { method: 'PUT' });
-      fetchTickets();
-    } catch (err) {
-      console.error('Failed to mark resolved:', err);
-    }
-  };
-
-  const deleteTicket = async (ticketId) => {
-    if (!confirm('Delete this ticket?')) return;
-    try {
-      await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
-      fetchTickets();
-    } catch (err) {
-      console.error('Failed to delete ticket:', err);
-    }
-  };
-
-  const filterTickets = (searchTerm) => {
-    const filtered = allTickets.filter(ticket =>
-      ticket.subject.toLowerCase().includes(searchTerm) ||
-      ticket.message.toLowerCase().includes(searchTerm)
-    );
-    renderTickets(filtered);
   };
 
   modalSubmit.addEventListener('click', async () => {
@@ -133,11 +97,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  const markAsResolved = async (e) => {
+    const ticketId = e.currentTarget.dataset.id;
+    try {
+      await fetch(`/api/tickets/${ticketId}/resolve`, { method: 'POST' });
+      fetchTickets();
+    } catch (err) {
+      console.error('Failed to resolve ticket:', err);
+    }
+  };
+
+  const deleteTicket = async (e) => {
+    const ticketId = e.currentTarget.dataset.id;
+    try {
+      await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
+      fetchTickets();
+    } catch (err) {
+      console.error('Failed to delete ticket:', err);
+    }
+  };
+
+  const filterTickets = (term) => {
+    const filtered = allTickets.filter(ticket =>
+      ticket.subject.toLowerCase().includes(term) ||
+      ticket.message.toLowerCase().includes(term)
+    );
+    renderTickets(filtered);
+  };
+
+  const fetchTickets = async () => {
+    try {
+      const res = await fetch('/api/tickets');
+      const data = await res.json();
+      allTickets = Array.isArray(data.tickets) ? data.tickets : [];
+      renderTickets(allTickets);
+    } catch (err) {
+      console.error('Error loading tickets:', err);
+    }
+  };
+
   modalClose.addEventListener('click', closeModal);
-  searchInput.addEventListener('input', (e) => filterTickets(e.target.value.toLowerCase()));
+  searchInput.addEventListener('input', e => filterTickets(e.target.value.toLowerCase()));
 
   const socket = io();
-  socket.on('new_ticket', (ticket) => {
+  socket.on('new_ticket', ticket => {
     allTickets.unshift(ticket);
     renderTickets(allTickets);
   });
