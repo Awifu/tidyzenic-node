@@ -7,8 +7,6 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const crypto = require('crypto');
 const helmet = require('helmet');
-const http = require('http');
-const { Server } = require('socket.io');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -131,27 +129,9 @@ app.use((err, req, res, next) => {
 });
 
 // ==============================
-// 11. HTTP + Socket.IO Setup
+// 11. Start Server
 // ==============================
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true
-  }
-});
-
-// Expose Socket.IO for use in routes
-app.set('io', io);
-
-io.on('connection', (socket) => {
-  console.log('📡 Socket.IO client connected');
-});
-
-// ==============================
-// 12. Start Server
-// ==============================
-httpServer.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   const url = process.env.NODE_ENV === 'production'
     ? 'https://tidyzenic.com'
     : `http://localhost:${PORT}`;
@@ -159,11 +139,11 @@ httpServer.listen(PORT, () => {
 });
 
 // ==============================
-// 13. Graceful Shutdown
+// 12. Graceful Shutdown
 // ==============================
 process.on('SIGINT', () => {
   console.log('🛑 Gracefully shutting down...');
-  httpServer.close(() => {
+  server.close(() => {
     console.log('✅ Server closed');
     process.exit(0);
   });
