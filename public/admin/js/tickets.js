@@ -11,8 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalThread = document.getElementById('modalThread');
   const modalTitle = document.getElementById('modalTitle');
 
+  const notifCountEl = document.getElementById('notifCount');
+  const notifBtn = document.getElementById('notifBtn');
+
   let currentTicketId = null;
   let allTickets = [];
+  let newTicketCount = 0;
 
   const createCard = (ticket) => {
     const card = document.createElement('div');
@@ -130,6 +134,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const updateNotificationCount = () => {
+    newTicketCount++;
+    notifCountEl.textContent = newTicketCount;
+    notifCountEl.classList.remove('hidden');
+  };
+
   modalSubmit.addEventListener('click', async () => {
     const message = modalTextarea.value.trim();
     if (!message || !currentTicketId) return;
@@ -147,12 +157,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   modalClose.addEventListener('click', closeModal);
+
+  notifBtn.addEventListener('click', () => {
+    newTicketCount = 0;
+    notifCountEl.textContent = '0';
+    notifCountEl.classList.add('hidden');
+  });
+
   searchInput.addEventListener('input', (e) => filterTickets(e.target.value.toLowerCase()));
 
   const socket = io();
   socket.on('new_ticket', (ticket) => {
     allTickets.unshift(ticket);
     renderTickets(allTickets);
+    updateNotificationCount();
   });
 
   fetchTickets();
