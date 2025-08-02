@@ -13,11 +13,11 @@
 
     <style>
       @keyframes fade-in {
-        from { opacity: 0; transform: translateY(8px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .animate-fade-in {
-        animation: fade-in 0.2s ease-out;
+        animation: fade-in 0.25s ease-out;
       }
     </style>
   </head>
@@ -31,8 +31,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span class="font-bold text-lg text-blue-600">Admin</span>
-        <span id="userName" class="ml-2 text-sm text-gray-500"></span>
+        <span class="font-bold text-lg text-blue-700">Admin Panel</span>
       </div>
     </header>
 
@@ -42,61 +41,63 @@
 
       <!-- Main Content -->
       <main class="flex-1 p-6 md:p-10">
-        <div class="max-w-5xl mx-auto space-y-6">
+        <div class="max-w-6xl mx-auto space-y-6">
           <div class="flex items-center justify-between">
-            <h1 class="text-3xl font-semibold text-blue-700">Support Tickets</h1>
+            <h1 class="text-4xl font-bold text-blue-800">Support Tickets</h1>
           </div>
 
-          <!-- Search Bar -->
+          <!-- Search -->
           <div>
             <input
               id="ticketSearch"
               type="text"
-              placeholder="Search tickets..."
-              class="w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Search tickets by subject or message..."
+              class="w-full px-5 py-3 text-sm border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <!-- Tickets Container -->
+          <!-- Tickets -->
           <div id="ticketList" class="space-y-5"></div>
-
-          <!-- Pagination -->
-          <div id="pagination" class="flex justify-center mt-6 gap-2 hidden">
-            <button id="prevPage" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Previous</button>
-            <span id="pageIndicator" class="px-4 py-2 text-gray-600 font-medium">Page 1</span>
-            <button id="nextPage" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Next</button>
-          </div>
 
           <!-- Empty State -->
           <div id="emptyState" class="hidden text-center text-gray-400 mt-10">
-            <p>No support tickets found.</p>
+            <p class="text-lg">No support tickets found.</p>
+          </div>
+
+          <!-- Pagination -->
+          <div id="pagination" class="flex justify-center items-center gap-4 mt-8 hidden">
+            <button id="prevPage" class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+              ← Previous
+            </button>
+            <span id="pageIndicator" class="text-gray-600 font-medium text-sm">Page 1</span>
+            <button id="nextPage" class="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">
+              Next →
+            </button>
           </div>
         </div>
       </main>
     </div>
 
     <!-- Reply Modal -->
-    <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center px-4">
-      <div class="relative bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl animate-fade-in">
-        <!-- Header -->
+    <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden flex items-center justify-center px-4">
+      <div class="relative bg-white w-full max-w-lg p-6 rounded-2xl shadow-2xl animate-fade-in">
         <div class="flex justify-between items-center mb-4">
           <h2 id="modalTitle" class="text-xl font-semibold text-blue-700">Reply to Ticket</h2>
-          <button id="modalClose" class="text-gray-400 hover:text-black text-2xl font-bold focus:outline-none">&times;</button>
+          <button id="modalClose" class="text-gray-500 hover:text-black text-2xl font-bold focus:outline-none">
+            &times;
+          </button>
         </div>
 
-        <!-- Thread -->
-        <div id="modalThread" class="space-y-2 mb-4"></div>
+        <div id="modalThread" class="space-y-3 mb-4 text-sm text-gray-700"></div>
 
-        <!-- Reply Box -->
         <textarea
           id="modalTextarea"
           rows="5"
           placeholder="Write your reply..."
-          class="w-full p-4 border rounded-lg shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
         ></textarea>
 
-        <!-- Submit -->
-        <div class="mt-4 text-right">
+        <div class="mt-5 text-right">
           <button id="modalSubmit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow-md">
             Send Reply
           </button>
