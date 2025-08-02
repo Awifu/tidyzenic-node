@@ -91,6 +91,9 @@ app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
 app.use('/api/tickets', require('./routes/tickets')); // ✅ Ticket support route
+app.get('/admin/support.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'support_ticket.html'));
+});
 
 // ==============================
 // 8. HTML Page Routes
