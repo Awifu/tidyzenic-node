@@ -46,22 +46,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const createCard = (ticket) => {
   const card = document.createElement('div');
-  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md px-6 py-6 transition hover:shadow-lg space-y-5';
+  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md px-6 py-7 transition hover:shadow-lg space-y-6';
 
   card.innerHTML = `
-    <div class="space-y-2">
-      <h3 class="text-xl font-bold text-indigo-700 leading-tight">${ticket.subject}</h3>
-      <p class="text-sm text-gray-800 leading-relaxed">${ticket.message}</p>
+    <div class="space-y-4">
+      <h3 class="text-xl font-bold text-indigo-700 leading-snug">${ticket.subject}</h3>
+      <p class="text-base text-gray-800 leading-relaxed">${ticket.message}</p>
 
-      <div class="text-sm text-gray-600 space-y-1 pt-2">
+      <div class="text-sm text-gray-600 space-y-1 pt-1">
         <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
         <p><span class="font-medium text-gray-800">Status:</span> <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'} font-medium">${ticket.status}</span></p>
         <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-3 pt-2">
-      <button class="reply-btn bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-sm transition" data-id="${ticket.id}">
+    <div class="flex flex-wrap gap-3 pt-5 border-t border-gray-100 mt-2 pt-6">
+      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-sm transition" data-id="${ticket.id}">
         💬 Reply
       </button>
       <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-4 py-2 rounded-full transition" data-id="${ticket.id}">
