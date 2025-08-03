@@ -5,7 +5,7 @@ const router = express.Router();
 const db = require('../db');
 
 // ==========================
-// GET all active tickets
+// GET: All active support tickets with business info
 // ==========================
 router.get('/', async (req, res) => {
   try {
@@ -16,6 +16,7 @@ router.get('/', async (req, res) => {
       WHERE t.is_deleted = 0
       ORDER BY t.created_at DESC
     `);
+
     res.json({ tickets });
   } catch (err) {
     console.error('❌ Error fetching tickets:', err);
@@ -24,7 +25,7 @@ router.get('/', async (req, res) => {
 });
 
 // ==========================
-// POST a new support ticket
+// POST: Create a new support ticket
 // ==========================
 router.post('/', async (req, res) => {
   const { user_id, business_id, subject, message } = req.body;
@@ -49,7 +50,6 @@ router.post('/', async (req, res) => {
       created_at: new Date()
     };
 
-    // Real-time push
     const io = req.app.get('io');
     io.emit('new_ticket', newTicket);
 
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
 });
 
 // ==========================
-// POST a reply to a ticket
+// POST: Add a reply to a specific ticket
 // ==========================
 router.post('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
@@ -85,7 +85,7 @@ router.post('/:id/replies', async (req, res) => {
 });
 
 // ==========================
-// GET all replies for a ticket
+// GET: All replies for a specific ticket
 // ==========================
 router.get('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
@@ -107,7 +107,7 @@ router.get('/:id/replies', async (req, res) => {
 });
 
 // ==========================
-// PUT: update status (Open/Resolved)
+// PUT: Update ticket status (Open <-> Resolved)
 // ==========================
 router.put('/:id/status', async (req, res) => {
   const ticketId = req.params.id;
@@ -130,7 +130,7 @@ router.put('/:id/status', async (req, res) => {
 });
 
 // ==========================
-// DELETE (soft-delete) a ticket
+// DELETE: Soft-delete a ticket
 // ==========================
 router.delete('/:id', async (req, res) => {
   const ticketId = req.params.id;
