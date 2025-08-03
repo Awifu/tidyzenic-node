@@ -231,10 +231,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btn.classList.contains('thread-btn')) await openThread(id);
-    if (btn.classList.contains('resolve-btn')) {
-      await fetch(`/api/tickets/${id}/resolve`, { method: 'POST' });
-      fetchTickets();
-    }
+   if (btn.classList.contains('resolve-btn')) {
+  const ticket = allTickets.find(t => t.id == id);
+  const newStatus = ticket.status === 'Resolved' ? 'Open' : 'Resolved';
+
+  try {
+    await fetch(`/api/tickets/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    fetchTickets(); // refresh the list
+  } catch (err) {
+    console.error('❌ Failed to update status:', err);
+  }
+}
+
     if (btn.classList.contains('delete-btn') && confirm('Delete this ticket?')) {
       await fetch(`/api/tickets/${id}`, { method: 'DELETE' });
       fetchTickets();
