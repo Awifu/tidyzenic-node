@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const createCard = (ticket) => {
   const card = document.createElement('div');
-  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-8 transition hover:shadow-lg space-y-6';
+  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-6 sm:p-8 transition hover:shadow-lg space-y-6';
 
   card.innerHTML = `
     <div class="space-y-4">
@@ -64,17 +64,17 @@ const createCard = (ticket) => {
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-4 pt-6 mt-4 border-t border-gray-100">
-      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition min-w-[140px]" data-id="${ticket.id}">
+    <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-6 mt-4 border-t border-gray-100">
+      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition w-full sm:w-auto min-w-[140px]" data-id="${ticket.id}">
         💬 Reply
       </button>
-      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-6 py-2.5 rounded-full transition min-w-[160px]" data-id="${ticket.id}">
+      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto min-w-[160px]" data-id="${ticket.id}">
         📄 Show Thread
       </button>
-      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-6 py-2.5 rounded-full transition min-w-[170px]" data-id="${ticket.id}">
+      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto min-w-[170px]" data-id="${ticket.id}">
         ✔ Mark Resolved
       </button>
-      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-6 py-2.5 rounded-full transition min-w-[120px]" data-id="${ticket.id}">
+      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto min-w-[120px]" data-id="${ticket.id}">
         🗑 Delete
       </button>
     </div>
