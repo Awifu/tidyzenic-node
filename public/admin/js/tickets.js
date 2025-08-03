@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const prevPageBtn = document.getElementById('prevPage');
   const nextPageBtn = document.getElementById('nextPage');
 
-  const TICKETS_PER_PAGE = 4;
+  const TICKETS_PER_PAGE = 2;
   let allTickets = [];
   let filteredTickets = [];
   let currentTicketId = null;
