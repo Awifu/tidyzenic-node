@@ -43,13 +43,13 @@
     <div id="sidebar-container"></div>
     <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
-    <!-- Main Content -->
+    <!-- Main Section -->
     <main class="flex-1 p-6 md:p-10">
       <div class="max-w-5xl mx-auto space-y-6">
-        <!-- Page Title -->
+        <!-- Title -->
         <h1 class="text-3xl font-bold text-indigo-700">Support Tickets</h1>
 
-        <!-- Search Bar -->
+        <!-- Search Input -->
         <input
           id="ticketSearch"
           type="text"
@@ -58,7 +58,7 @@
         />
 
         <!-- Ticket List -->
-        <div id="ticketList" class="space-y-6"></div>
+        <div id="ticketList" class="space-y-6 mt-6"></div>
 
         <!-- Empty State -->
         <div id="emptyState" class="hidden text-center text-gray-400 mt-10">
@@ -77,21 +77,27 @@
 
   <!-- Modal -->
   <div id="ticketModal" class="fixed inset-0 z-50 bg-black bg-opacity-40 hidden flex items-center justify-center px-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in relative">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] p-6 animate-fade-in flex flex-col overflow-hidden">
+      <!-- Header -->
       <div class="flex justify-between items-center mb-4">
         <h2 id="modalTitle" class="text-lg font-semibold text-indigo-700">Reply to Ticket</h2>
         <button id="modalClose" class="text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none">&times;</button>
       </div>
 
-      <div id="modalThread" class="text-sm text-gray-700 space-y-3 mb-4 border-t pt-3"></div>
+      <!-- Thread -->
+      <div id="modalThread" class="text-sm text-gray-700 space-y-3 border-t pt-4 pb-4 overflow-y-auto flex-1 pr-1">
+        <!-- Thread content populated via JS -->
+      </div>
 
+      <!-- Message Box -->
       <textarea
         id="modalTextarea"
         rows="4"
         placeholder="Write your reply..."
-        class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+        class="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
       ></textarea>
 
+      <!-- Action -->
       <div class="mt-6 text-right">
         <button
           id="modalSubmit"
@@ -109,7 +115,6 @@
       <div class="space-y-2">
         <h3 class="text-xl font-bold text-indigo-700 leading-tight">{{subject}}</h3>
         <p class="text-base text-gray-800">{{message}}</p>
-
         <div class="text-sm text-gray-600 pt-2 space-y-1">
           <p><span class="font-medium text-gray-800">From:</span> {{business_name}}</p>
           <p><span class="font-medium text-gray-800">Status:</span> <span class="text-{{statusColor}} font-medium">{{status}}</span></p>
@@ -117,6 +122,7 @@
         </div>
       </div>
 
+      <!-- Buttons -->
       <div class="flex flex-wrap gap-4 pt-6 border-t border-gray-100">
         <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition">
           💬 Reply
