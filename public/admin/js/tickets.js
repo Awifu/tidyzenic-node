@@ -46,25 +46,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const createCard = (ticket) => {
   const card = document.createElement('div');
-  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md px-6 py-5 space-y-4';
+  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md px-6 py-6 transition hover:shadow-lg space-y-5';
 
   card.innerHTML = `
-    <div>
-      <h3 class="text-xl font-semibold text-indigo-700 leading-tight">${ticket.subject}</h3>
-      <p class="text-sm text-gray-800 mt-1">${ticket.message}</p>
+    <div class="space-y-2">
+      <h3 class="text-xl font-bold text-indigo-700 leading-tight">${ticket.subject}</h3>
+      <p class="text-sm text-gray-800 leading-relaxed">${ticket.message}</p>
 
-      <div class="text-sm text-gray-600 mt-3 space-y-1">
+      <div class="text-sm text-gray-600 space-y-1 pt-2">
         <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
-        <p><span class="font-medium text-gray-800">Status:</span> <span class="text-${ticket.status === 'Resolved' ? 'green-600' : 'gray-500'}">${ticket.status}</span></p>
+        <p><span class="font-medium text-gray-800">Status:</span> <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'} font-medium">${ticket.status}</span></p>
         <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-2 pt-2">
-      <button class="reply-btn bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-1.5 rounded shadow" data-id="${ticket.id}">💬 Reply</button>
-      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-4 py-1.5 rounded" data-id="${ticket.id}">📄 Show Thread</button>
-      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-4 py-1.5 rounded" data-id="${ticket.id}">✔ Mark Resolved</button>
-      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-4 py-1.5 rounded" data-id="${ticket.id}">🗑 Delete</button>
+    <div class="flex flex-wrap gap-3 pt-2">
+      <button class="reply-btn bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-sm transition" data-id="${ticket.id}">
+        💬 Reply
+      </button>
+      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-4 py-2 rounded-full transition" data-id="${ticket.id}">
+        📄 Show Thread
+      </button>
+      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-4 py-2 rounded-full transition" data-id="${ticket.id}">
+        ✔ Mark Resolved
+      </button>
+      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-4 py-2 rounded-full transition" data-id="${ticket.id}">
+        🗑 Delete
+      </button>
     </div>
   `;
 
