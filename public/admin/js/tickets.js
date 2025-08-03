@@ -55,22 +55,26 @@ const createCard = (ticket) => {
 
       <div class="text-sm text-gray-600 space-y-1 pt-2">
         <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
-        <p><span class="font-medium text-gray-800">Status:</span> <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'} font-medium">${ticket.status}</span></p>
+        <p><span class="font-medium text-gray-800">Status:</span> 
+          <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'} font-medium">
+            ${ticket.status}
+          </span>
+        </p>
         <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
       </div>
     </div>
 
     <div class="flex flex-wrap gap-4 pt-6 mt-4 border-t border-gray-100">
-      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-7 py-3 rounded-full shadow-sm transition min-w-[130px]" data-id="${ticket.id}">
+      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition min-w-[140px]" data-id="${ticket.id}">
         💬 Reply
       </button>
-      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-7 py-3 rounded-full transition min-w-[150px]" data-id="${ticket.id}">
+      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-6 py-2.5 rounded-full transition min-w-[160px]" data-id="${ticket.id}">
         📄 Show Thread
       </button>
-      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-7 py-3 rounded-full transition min-w-[160px]" data-id="${ticket.id}">
+      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-6 py-2.5 rounded-full transition min-w-[170px]" data-id="${ticket.id}">
         ✔ Mark Resolved
       </button>
-      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-7 py-3 rounded-full transition min-w-[120px]" data-id="${ticket.id}">
+      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-6 py-2.5 rounded-full transition min-w-[120px]" data-id="${ticket.id}">
         🗑 Delete
       </button>
     </div>
