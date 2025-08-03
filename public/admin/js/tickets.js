@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterDate = document.getElementById('filterDate');
   const filterStatus = document.getElementById('filterStatus');
 
-  const TICKETS_PER_PAGE = 4;
+  const TICKETS_PER_PAGE = 2;
   let allTickets = [];
   let filteredTickets = [];
   let currentPage = 1;
