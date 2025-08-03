@@ -231,21 +231,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btn.classList.contains('thread-btn')) await openThread(id);
-   if (btn.classList.contains('resolve-btn')) {
+  if (btn.classList.contains('resolve-btn')) {
   const ticket = allTickets.find(t => t.id == id);
   const newStatus = ticket.status === 'Resolved' ? 'Open' : 'Resolved';
 
   try {
-    await fetch(`/api/tickets/${id}/status`, {
+    const res = await fetch(`/api/tickets/${id}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
     });
-    fetchTickets(); // refresh the list
+
+    if (!res.ok) throw new Error('Failed to update status');
+
+    // Update local data
+    ticket.status = newStatus;
+
+    // Update status label
+    const statusSpan = btn.closest('div').previousElementSibling.querySelector('span.font-medium');
+    statusSpan.textContent = newStatus;
+    statusSpan.className = `font-medium ${newStatus === 'Resolved' ? 'text-green-600' : 'text-gray-500'}`;
+
+    // Update button label
+    btn.textContent = newStatus === 'Resolved' ? '↩ Reopen' : '✔ Mark Resolved';
+
   } catch (err) {
-    console.error('❌ Failed to update status:', err);
+    console.error('❌ Failed to toggle status:', err);
   }
 }
+
 
     if (btn.classList.contains('delete-btn') && confirm('Delete this ticket?')) {
       await fetch(`/api/tickets/${id}`, { method: 'DELETE' });
