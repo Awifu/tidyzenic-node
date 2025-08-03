@@ -5,18 +5,17 @@ const router = express.Router();
 const db = require('../db');
 
 // ==========================
-// GET all active tickets (with business info)
+// GET all active tickets
 // ==========================
 router.get('/', async (req, res) => {
   try {
     const [tickets] = await db.execute(`
-      SELECT t.*, b.business_name 
+      SELECT t.*, b.business_name
       FROM support_tickets t
       JOIN businesses b ON t.business_id = b.id
       WHERE t.is_deleted = 0
       ORDER BY t.created_at DESC
     `);
-
     res.json({ tickets });
   } catch (err) {
     console.error('❌ Error fetching tickets:', err);
@@ -50,6 +49,7 @@ router.post('/', async (req, res) => {
       created_at: new Date()
     };
 
+    // Real-time push
     const io = req.app.get('io');
     io.emit('new_ticket', newTicket);
 
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
 });
 
 // ==========================
-// POST a reply to a ticket (using business_id)
+// POST a reply to a ticket
 // ==========================
 router.post('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
@@ -85,7 +85,7 @@ router.post('/:id/replies', async (req, res) => {
 });
 
 // ==========================
-// GET all replies for a specific ticket
+// GET all replies for a ticket
 // ==========================
 router.get('/:id/replies', async (req, res) => {
   const ticketId = req.params.id;
@@ -107,25 +107,30 @@ router.get('/:id/replies', async (req, res) => {
 });
 
 // ==========================
-// Mark a ticket as resolved
+// PUT: update status (Open/Resolved)
 // ==========================
-router.post('/:id/resolve', async (req, res) => {
+router.put('/:id/status', async (req, res) => {
   const ticketId = req.params.id;
+  const { status } = req.body;
+
+  if (!['Open', 'Resolved'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status value' });
+  }
 
   try {
     await db.execute(`
-      UPDATE support_tickets SET status = 'Resolved' WHERE id = ?
-    `, [ticketId]);
+      UPDATE support_tickets SET status = ? WHERE id = ?
+    `, [status, ticketId]);
 
-    res.json({ success: true, message: 'Ticket marked as resolved' });
+    res.json({ success: true, message: `Ticket marked as ${status}`, status });
   } catch (err) {
-    console.error('❌ Error resolving ticket:', err);
-    res.status(500).json({ error: 'Failed to resolve ticket' });
+    console.error('❌ Error updating ticket status:', err);
+    res.status(500).json({ error: 'Failed to update status' });
   }
 });
 
 // ==========================
-// Soft-delete a ticket
+// DELETE (soft-delete) a ticket
 // ==========================
 router.delete('/:id', async (req, res) => {
   const ticketId = req.params.id;
