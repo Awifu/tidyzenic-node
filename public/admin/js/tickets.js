@@ -45,29 +45,70 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const createCard = (ticket) => {
-    const card = document.createElement('div');
-    card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-6 sm:p-8 transition hover:shadow-lg space-y-6';
-    card.innerHTML = `
-      <div class="space-y-4">
-        <h3 class="text-xl font-bold text-indigo-700">${ticket.subject}</h3>
-        <p class="text-base text-gray-800 leading-relaxed">${ticket.message}</p>
-        <div class="text-sm text-gray-600 space-y-1 pt-2">
-          <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
-          <p><span class="font-medium text-gray-800">Status:</span> 
-            <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'} font-medium">${ticket.status}</span>
-          </p>
-          <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
-        </div>
+  const card = document.createElement('div');
+  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-6 sm:p-8 transition hover:shadow-lg space-y-6';
+
+  card.innerHTML = `
+    <div class="space-y-4">
+      <h3 class="text-xl font-bold text-indigo-700">${ticket.subject}</h3>
+      <p class="text-base text-gray-800 leading-relaxed">${ticket.message}</p>
+
+      <div class="text-sm text-gray-600 space-y-1 pt-2">
+        <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
+        <p>
+          <span class="font-medium text-gray-800">Status:</span> 
+          <button
+            class="status-toggle-btn font-medium focus:outline-none"
+            data-id="${ticket.id}"
+            data-status="${ticket.status}"
+            style="background: none; border: none; padding: 0; cursor: pointer;"
+          >
+            <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'}">
+              ${ticket.status}
+            </span>
+          </button>
+        </p>
+        <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
       </div>
-      <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-6 mt-4 border-t border-gray-100">
-        <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition w-full sm:w-auto" data-id="${ticket.id}">💬 Reply</button>
-        <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">📄 Show Thread</button>
-        <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">✔ Mark Resolved</button>
-        <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">🗑 Delete</button>
-      </div>
-    `;
-    return card;
-  };
+    </div>
+
+    <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-6 mt-4 border-t border-gray-100">
+      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition w-full sm:w-auto" data-id="${ticket.id}">💬 Reply</button>
+      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">📄 Show Thread</button>
+      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">✔ Mark Resolved</button>
+      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">🗑 Delete</button>
+    </div>
+  `;
+
+  // Attach click handler for the status toggle button
+  const statusBtn = card.querySelector('.status-toggle-btn');
+  statusBtn.addEventListener('click', async () => {
+    const id = statusBtn.dataset.id;
+    const currentStatus = statusBtn.dataset.status;
+    const newStatus = currentStatus === 'Resolved' ? 'Open' : 'Resolved';
+
+    try {
+      const res = await fetch(`/api/tickets/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (res.ok) {
+        statusBtn.dataset.status = newStatus;
+        const span = statusBtn.querySelector('span');
+        span.textContent = newStatus;
+        span.className = newStatus === 'Resolved' ? 'text-green-600' : 'text-gray-500';
+      } else {
+        alert('Failed to update status.');
+      }
+    } catch (err) {
+      console.error('❌ Status update failed:', err);
+    }
+  });
+
+  return card;
+};
 
   const renderPagination = () => {
     const totalPages = Math.ceil(filteredTickets.length / TICKETS_PER_PAGE);
