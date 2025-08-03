@@ -60,17 +60,17 @@ const createCard = (ticket) => {
       </div>
     </div>
 
-    <div class="flex flex-wrap gap-3 pt-6 mt-4 border-t border-gray-100">
-      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-full shadow-sm transition" data-id="${ticket.id}">
+    <div class="flex flex-wrap gap-4 pt-6 mt-4 border-t border-gray-100">
+      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-7 py-3 rounded-full shadow-sm transition min-w-[130px]" data-id="${ticket.id}">
         💬 Reply
       </button>
-      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-5 py-2 rounded-full transition" data-id="${ticket.id}">
+      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-7 py-3 rounded-full transition min-w-[150px]" data-id="${ticket.id}">
         📄 Show Thread
       </button>
-      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-5 py-2 rounded-full transition" data-id="${ticket.id}">
+      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-7 py-3 rounded-full transition min-w-[160px]" data-id="${ticket.id}">
         ✔ Mark Resolved
       </button>
-      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-5 py-2 rounded-full transition" data-id="${ticket.id}">
+      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-7 py-3 rounded-full transition min-w-[120px]" data-id="${ticket.id}">
         🗑 Delete
       </button>
     </div>
