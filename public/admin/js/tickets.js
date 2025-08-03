@@ -12,19 +12,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const pageIndicator = document.getElementById('pageIndicator');
   const prevPageBtn = document.getElementById('prevPage');
   const nextPageBtn = document.getElementById('nextPage');
+  const filterDate = document.getElementById('filterDate');
+  const filterStatus = document.getElementById('filterStatus');
 
-  const TICKETS_PER_PAGE = 2;
+  const TICKETS_PER_PAGE = 4;
   let allTickets = [];
   let filteredTickets = [];
+  let currentPage = 1;
   let currentTicketId = null;
   let businessId = null;
-  let currentPage = 1;
 
   const formatRelativeTime = (isoString) => {
     const date = new Date(isoString);
     const now = new Date();
-    const diff = Math.floor((now - date) / 1000); // in seconds
-
+    const diff = Math.floor((now - date) / 1000);
     const times = [
       { limit: 60, value: 1, unit: 'second' },
       { limit: 3600, value: 60, unit: 'minute' },
@@ -34,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
       { limit: 31536000, value: 2592000, unit: 'month' },
       { limit: Infinity, value: 31536000, unit: 'year' },
     ];
-
     for (let { limit, value, unit } of times) {
       if (diff < limit) {
         const relative = Math.floor(diff / value);
@@ -44,45 +44,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'some time ago';
   };
 
-const createCard = (ticket) => {
-  const card = document.createElement('div');
-  card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-6 sm:p-8 transition hover:shadow-lg space-y-6';
-
-  card.innerHTML = `
-    <div class="space-y-4">
-      <h3 class="text-xl font-bold text-indigo-700">${ticket.subject}</h3>
-      <p class="text-base text-gray-800 leading-relaxed">${ticket.message}</p>
-
-      <div class="text-sm text-gray-600 space-y-1 pt-2">
-        <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
-        <p><span class="font-medium text-gray-800">Status:</span> 
-          <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'} font-medium">
-            ${ticket.status}
-          </span>
-        </p>
-        <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
+  const createCard = (ticket) => {
+    const card = document.createElement('div');
+    card.className = 'bg-white border border-gray-200 rounded-2xl shadow-md p-6 sm:p-8 transition hover:shadow-lg space-y-6';
+    card.innerHTML = `
+      <div class="space-y-4">
+        <h3 class="text-xl font-bold text-indigo-700">${ticket.subject}</h3>
+        <p class="text-base text-gray-800 leading-relaxed">${ticket.message}</p>
+        <div class="text-sm text-gray-600 space-y-1 pt-2">
+          <p><span class="font-medium text-gray-800">From:</span> ${ticket.business_name}</p>
+          <p><span class="font-medium text-gray-800">Status:</span> 
+            <span class="${ticket.status === 'Resolved' ? 'text-green-600' : 'text-gray-500'} font-medium">${ticket.status}</span>
+          </p>
+          <p><span class="font-medium text-gray-800">Created:</span> ${formatRelativeTime(ticket.created_at)}</p>
+        </div>
       </div>
-    </div>
-
-    <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-6 mt-4 border-t border-gray-100">
-      <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition w-full sm:w-auto min-w-[140px]" data-id="${ticket.id}">
-        💬 Reply
-      </button>
-      <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto min-w-[160px]" data-id="${ticket.id}">
-        📄 Show Thread
-      </button>
-      <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto min-w-[170px]" data-id="${ticket.id}">
-        ✔ Mark Resolved
-      </button>
-      <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto min-w-[120px]" data-id="${ticket.id}">
-        🗑 Delete
-      </button>
-    </div>
-  `;
-
-  return card;
-};
-
+      <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-6 mt-4 border-t border-gray-100">
+        <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition w-full sm:w-auto" data-id="${ticket.id}">💬 Reply</button>
+        <button class="thread-btn border border-indigo-300 text-indigo-600 hover:bg-indigo-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">📄 Show Thread</button>
+        <button class="resolve-btn border border-green-300 text-green-600 hover:bg-green-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">✔ Mark Resolved</button>
+        <button class="delete-btn border border-red-300 text-red-600 hover:bg-red-50 text-sm px-6 py-2.5 rounded-full transition w-full sm:w-auto" data-id="${ticket.id}">🗑 Delete</button>
+      </div>
+    `;
+    return card;
+  };
 
   const renderPagination = () => {
     const totalPages = Math.ceil(filteredTickets.length / TICKETS_PER_PAGE);
@@ -99,12 +84,36 @@ const createCard = (ticket) => {
 
     ticketList.innerHTML = '';
     emptyState.classList.toggle('hidden', visibleTickets.length > 0);
-
-    visibleTickets.forEach(ticket => {
-      ticketList.appendChild(createCard(ticket));
-    });
+    visibleTickets.forEach(ticket => ticketList.appendChild(createCard(ticket)));
 
     renderPagination();
+  };
+
+  const applyFilters = () => {
+    const term = searchInput.value.toLowerCase().trim();
+    const dateOrder = filterDate?.value;
+    const status = filterStatus?.value.toLowerCase();
+
+    filteredTickets = [...allTickets];
+
+    if (term) {
+      filteredTickets = filteredTickets.filter(t =>
+        t.subject.toLowerCase().includes(term) || t.message.toLowerCase().includes(term)
+      );
+    }
+
+    if (status) {
+      filteredTickets = filteredTickets.filter(t => t.status.toLowerCase() === status);
+    }
+
+    if (dateOrder === 'newest') {
+      filteredTickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (dateOrder === 'oldest') {
+      filteredTickets.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    }
+
+    currentPage = 1;
+    renderTickets();
   };
 
   const fetchBusinessId = async () => {
@@ -123,8 +132,7 @@ const createCard = (ticket) => {
       const data = await res.json();
       allTickets = data.tickets || [];
       filteredTickets = [...allTickets];
-      currentPage = 1;
-      renderTickets();
+      applyFilters();
     } catch (err) {
       console.error('❌ Error loading tickets:', err);
     }
@@ -167,6 +175,7 @@ const createCard = (ticket) => {
     }
   };
 
+  // Event Listeners
   ticketList.addEventListener('click', async (e) => {
     const btn = e.target;
     const id = btn.dataset.id;
@@ -180,20 +189,14 @@ const createCard = (ticket) => {
       modal.classList.remove('hidden');
     }
 
-    if (btn.classList.contains('thread-btn')) {
-      await openThread(id);
-    }
-
+    if (btn.classList.contains('thread-btn')) await openThread(id);
     if (btn.classList.contains('resolve-btn')) {
       await fetch(`/api/tickets/${id}/resolve`, { method: 'POST' });
       fetchTickets();
     }
-
-    if (btn.classList.contains('delete-btn')) {
-      if (confirm('Delete this ticket?')) {
-        await fetch(`/api/tickets/${id}`, { method: 'DELETE' });
-        fetchTickets();
-      }
+    if (btn.classList.contains('delete-btn') && confirm('Delete this ticket?')) {
+      await fetch(`/api/tickets/${id}`, { method: 'DELETE' });
+      fetchTickets();
     }
   });
 
@@ -234,17 +237,9 @@ const createCard = (ticket) => {
     }
   });
 
-  searchInput.addEventListener('input', () => {
-    const term = searchInput.value.toLowerCase().trim();
-    filteredTickets = term
-      ? allTickets.filter(t =>
-          t.subject.toLowerCase().includes(term) ||
-          t.message.toLowerCase().includes(term)
-        )
-      : [...allTickets];
-    currentPage = 1;
-    renderTickets();
-  });
+  // Filter & Search
+  [filterDate, filterStatus].forEach(el => el?.addEventListener('change', applyFilters));
+  searchInput?.addEventListener('input', applyFilters);
 
   fetchBusinessId().then(fetchTickets);
 });
