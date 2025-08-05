@@ -1,18 +1,27 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const businessId = window.localStorage.getItem('business_id');
-
-  if (!businessId) {
-    alert('We couldn’t find your business info. Redirecting to login.');
-    window.location.href = '/login.html';
-    return;
-  }
-
   const googleReviewLink = document.getElementById('googleReviewLink');
   const enableInternalReview = document.getElementById('enableInternalReview');
   const reviewDelayHours = document.getElementById('reviewDelayHours');
   const sendEmailReview = document.getElementById('sendEmailReview');
   const sendSmsReview = document.getElementById('sendSmsReview');
   const saveButton = document.getElementById('saveReviewSettings');
+
+  let businessId = null;
+
+  try {
+    const res = await fetch('/api/business/me', { credentials: 'include' });
+    const data = await res.json();
+
+    if (!res.ok || !data.id) {
+      console.warn('Unable to resolve business info');
+      return;
+    }
+
+    businessId = data.id;
+  } catch (err) {
+    console.error('Failed to fetch business info:', err);
+    return;
+  }
 
   // Load settings
   try {
