@@ -40,17 +40,27 @@
   sidebar?.classList.add('overflow-y-auto');
 
   // ⬇️ Dropdown toggle behavior
-  document.querySelectorAll('.dropdown-toggle').forEach(button => {
-    const icon = button.querySelector('svg');
-    const menu = button.nextElementSibling;
+document.querySelectorAll('.dropdown-toggle').forEach(button => {
+  const icon = button.querySelector('svg');
+  const menu = button.nextElementSibling;
 
-    button.addEventListener('click', () => {
-      if (!menu?.classList.contains('dropdown-menu')) return;
+  console.log('Dropdown toggle found:', button);
+  console.log('Menu found:', menu);
+  console.log('Icon found:', icon);
 
-      menu.classList.toggle('hidden');
-      icon?.classList.toggle('rotate-180');
-    });
+  button.addEventListener('click', () => {
+    console.log('Clicked dropdown');
+    if (!menu?.classList.contains('dropdown-menu')) {
+      console.warn('Dropdown menu not found or invalid');
+      return;
+    }
+
+    menu.classList.toggle('hidden');
+    icon?.classList.toggle('rotate-180');
+    console.log('Toggled dropdown and icon');
   });
+});
+
 
   // 🔄 Auto-expand dropdown if current URL matches submenu
   const currentUrl = window.location.pathname;
