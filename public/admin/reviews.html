@@ -106,5 +106,36 @@
       </div>
     </main>
   </div>
+<!-- SMS Setup Modal -->
+<div id="smsModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg space-y-6 relative">
+    <button id="closeSmsModal" class="absolute top-3 right-4 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+    <h2 class="text-xl font-bold text-gray-800">Setup SMS Integration</h2>
+    
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Twilio SID</label>
+        <input type="text" id="twilioSid" class="w-full border px-4 py-2 rounded-lg" placeholder="Your Twilio SID">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Twilio Auth Token</label>
+        <input type="text" id="twilioAuthToken" class="w-full border px-4 py-2 rounded-lg" placeholder="Your Twilio Auth Token">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Twilio Phone Number</label>
+        <input type="text" id="twilioPhone" class="w-full border px-4 py-2 rounded-lg" placeholder="+1...">
+      </div>
+
+      <div class="text-right">
+        <button id="saveTwilioSettings" class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 </body>
 </html>
