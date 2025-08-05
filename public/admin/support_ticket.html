@@ -25,7 +25,7 @@
   </style>
 </head>
 
-<body class="h-full font-sans flex flex-col bg-gray-100">
+<body class="h-full font-sans bg-gray-100 flex flex-col">
   <!-- Mobile Header -->
   <header class="md:hidden sticky top-0 z-40 bg-white shadow p-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
@@ -35,42 +35,42 @@
         </svg>
       </button>
       <span class="text-indigo-600 text-lg font-bold">Admin</span>
-      <span id="userName" class="ml-2 text-sm text-gray-500 truncate"></span>
+      <span id="userName" class="ml-2 text-sm text-gray-500"></span>
     </div>
   </header>
 
-  <div class="flex flex-1 overflow-hidden">
+  <div class="flex flex-1">
     <div id="sidebar-container"></div>
     <div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-50 hidden md:hidden"></div>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto p-6 md:p-10">
+    <!-- Main Section -->
+    <main class="flex-1 p-6 md:p-10">
       <div class="max-w-5xl mx-auto space-y-6">
+        <!-- Title -->
         <h1 class="text-3xl font-bold text-indigo-700">Support Tickets</h1>
 
-        <!-- Search and Filters -->
-        <div class="space-y-4">
-          <input
-            id="ticketSearch"
-            type="text"
-            placeholder="🔍 Search tickets..."
-            class="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <div class="flex flex-wrap gap-4 items-center">
-            <select id="filterDate" class="border rounded px-3 py-2 text-sm shadow-sm">
-              <option value="">🕓 Filter by Time</option>
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-            </select>
-            <select id="filterStatus" class="border rounded px-3 py-2 text-sm shadow-sm">
-              <option value="">📌 Filter by Status</option>
-              <option value="Open">Open</option>
-              <option value="Resolved">Resolved</option>
-            </select>
-          </div>
-        </div>
+        <!-- Search Input -->
+        <input
+          id="ticketSearch"
+          type="text"
+          placeholder="🔍 Search tickets..."
+          class="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+<div class="flex flex-wrap gap-6 items-center">
+  <select id="filterDate" class="border rounded px-3 py-2 text-sm shadow-sm">
+    <option value="">🕓 Filter by Time</option>
+    <option value="newest">Newest First</option>
+    <option value="oldest">Oldest First</option>
+  </select>
 
-        <!-- Tickets List -->
+  <select id="filterStatus" class="border rounded px-3 py-2 text-sm shadow-sm">
+    <option value="">📌 Filter by Status</option>
+    <option value="Open">Open</option>
+    <option value="Resolved">Resolved</option>
+  </select>
+</div>
+
+        <!-- Ticket List -->
         <div id="ticketList" class="space-y-6 mt-6"></div>
 
         <!-- Empty State -->
@@ -89,41 +89,48 @@
   </div>
 
   <!-- Modal -->
-  <div id="ticketModal" class="fixed inset-0 z-50 bg-black bg-opacity-40 hidden flex items-center justify-center px-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] animate-fade-in relative flex flex-col overflow-hidden">
-      <!-- Modal Header -->
-      <div class="flex justify-between items-center px-6 pt-6 pb-3 border-b">
-        <h2 id="modalTitle" class="text-lg font-semibold text-indigo-700">Reply to Ticket</h2>
-        <button id="modalClose" class="text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none">&times;</button>
+<div id="ticketModal" class="fixed inset-0 z-50 bg-black bg-opacity-40 hidden items-center justify-center px-4 py-6 overflow-y-auto">
+  <!-- Modal Container -->
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto p-6 animate-fade-in relative">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-4">
+      <h2 id="modalTitle" class="text-lg font-semibold text-indigo-700">Reply to Ticket</h2>
+      <button id="modalClose" class="text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none">&times;</button>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="overflow-y-auto max-h-[60vh] pr-1">
+      <!-- Ticket Thread -->
+      <div id="modalThread" class="text-sm text-gray-700 space-y-3 mb-4 border-t pt-3">
+        <!-- Replies dynamically inserted here -->
       </div>
 
-      <!-- Modal Body (Scrollable) -->
-      <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        <div id="modalThread" class="text-sm text-gray-700 space-y-3 border-t pt-3"></div>
+      <!-- Reply Textarea -->
+      <textarea
+        id="modalTextarea"
+        rows="4"
+        placeholder="Write your reply..."
+        class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-4"
+      ></textarea>
+    </div>
 
-        <textarea
-          id="modalTextarea"
-          rows="4"
-          placeholder="Write your reply..."
-          class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-        ></textarea>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="px-6 py-4 border-t text-right">
-        <button
-          id="modalSubmit"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-sm transition"
-        >
-          Send Reply
-        </button>
-      </div>
+    <!-- Footer -->
+    <div class="text-right">
+      <button
+        id="modalSubmit"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-sm transition"
+      >
+        Send Reply
+      </button>
     </div>
   </div>
+</div>
 
-  <!-- Ticket Thread Template -->
+
+  <!-- Ticket Template -->
   <template id="ticketThreadTemplate">
-    <div class="bg-white border border-gray-200 rounded-2xl shadow-md p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-md p-6 space-y-6">
       <div class="space-y-2">
         <h3 class="text-xl font-bold text-indigo-700 leading-tight">{{subject}}</h3>
         <p class="text-base text-gray-800">{{message}}</p>
@@ -134,7 +141,7 @@
         </div>
       </div>
 
-      <!-- Actions -->
+      <!-- Buttons -->
       <div class="flex flex-wrap gap-4 pt-6 border-t border-gray-100">
         <button class="reply-btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-sm transition">
           💬 Reply
