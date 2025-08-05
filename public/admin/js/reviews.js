@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const businessId = window.localStorage.getItem('business_id');
+
+  // Redirect if no business ID found
+  if (!businessId) {
+    window.location.href = '/login.html';
+    return;
+  }
+
   const googleReviewLink = document.getElementById('googleReviewLink');
   const enableInternalReview = document.getElementById('enableInternalReview');
   const reviewDelayHours = document.getElementById('reviewDelayHours');
@@ -6,21 +14,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sendSmsReview = document.getElementById('sendSmsReview');
   const saveButton = document.getElementById('saveReviewSettings');
 
-  let businessId = null;
+  // Toast setup
+  const toast = document.createElement('div');
+  toast.className =
+    'fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-green-600 text-white text-sm px-4 py-2 rounded shadow-lg z-50 opacity-0 transition-opacity duration-300';
+  toast.textContent = '✅ Settings saved successfully!';
+  document.body.appendChild(toast);
 
-  try {
-    const res = await fetch('/api/business/me', { credentials: 'include' });
-    const data = await res.json();
-
-    if (!res.ok || !data.id) {
-      console.warn('Unable to resolve business info');
-      return;
-    }
-
-    businessId = data.id;
-  } catch (err) {
-    console.error('Failed to fetch business info:', err);
-    return;
+  function showToast() {
+    toast.classList.remove('opacity-0');
+    toast.classList.add('opacity-100');
+    setTimeout(() => {
+      toast.classList.remove('opacity-100');
+      toast.classList.add('opacity-0');
+    }, 3000);
   }
 
   // Load settings
@@ -42,11 +49,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Save settings
   saveButton.addEventListener('click', async () => {
+    saveButton.disabled = true;
+    saveButton.textContent = 'Saving...';
+
     const payload = {
       business_id: businessId,
       google_review_link: googleReviewLink.value.trim(),
       enable_internal: enableInternalReview.checked,
-      delay_minutes: parseInt(reviewDelayHours.value) * 60 || 120,
+      delay_minutes: parseInt(reviewDelayHours.value || '2') * 60,
       send_email: sendEmailReview.checked,
       send_sms: sendSmsReview.checked,
     };
@@ -60,10 +70,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (!res.ok) throw new Error('Failed to save settings');
 
-      alert('✅ Review settings saved!');
+      showToast();
     } catch (err) {
       console.error('Error saving review settings:', err);
-      alert('❌ Failed to save settings. Please try again.');
+      alert('❌ Something went wrong. Please try again.');
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = 'Save Settings';
     }
   });
 });
