@@ -1,82 +1,101 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  const businessId = window.localStorage.getItem('business_id');
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100 text-gray-900">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reviews – Tidyzenic Admin</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script defer src="/admin/js/load-sidebar.js"></script>
+  <script defer src="/admin/js/reviews.js"></script>
+</head>
+<body class="h-full font-sans bg-gray-100 flex flex-col">
 
-  // Redirect if no business ID found
-  if (!businessId) {
-    window.location.href = '/login.html';
-    return;
-  }
+  <!-- Mobile Header -->
+  <header class="md:hidden sticky top-0 z-40 bg-white shadow-sm p-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <button id="menuToggle" class="text-gray-700 focus:outline-none">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <span class="text-indigo-600 text-lg font-bold">Admin</span>
+    </div>
+  </header>
 
-  const googleReviewLink = document.getElementById('googleReviewLink');
-  const enableInternalReview = document.getElementById('enableInternalReview');
-  const reviewDelayHours = document.getElementById('reviewDelayHours');
-  const sendEmailReview = document.getElementById('sendEmailReview');
-  const sendSmsReview = document.getElementById('sendSmsReview');
-  const saveButton = document.getElementById('saveReviewSettings');
+  <div class="flex flex-1">
+    <div id="sidebar-container"></div>
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+      <div class="max-w-3xl mx-auto space-y-8">
+        <h1 class="text-3xl font-bold text-indigo-700">Review Settings</h1>
 
-  // Toast setup
-  const toast = document.createElement('div');
-  toast.className =
-    'fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-green-600 text-white text-sm px-4 py-2 rounded shadow-lg z-50 opacity-0 transition-opacity duration-300';
-  toast.textContent = '✅ Settings saved successfully!';
-  document.body.appendChild(toast);
+        <!-- Smart Tips -->
+        <div class="p-4 bg-indigo-50 border-l-4 border-indigo-500 text-sm text-indigo-800 rounded-xl">
+          💡 <strong>AI Suggestion:</strong> Set the review request delay between <strong>1–3 hours</strong> after service to ensure it's fresh in the customer's mind but not too soon to feel intrusive.
+        </div>
 
-  function showToast() {
-    toast.classList.remove('opacity-0');
-    toast.classList.add('opacity-100');
-    setTimeout(() => {
-      toast.classList.remove('opacity-100');
-      toast.classList.add('opacity-0');
-    }, 3000);
-  }
+        <!-- Google Reviews -->
+        <section class="bg-white shadow rounded-2xl p-6 space-y-4">
+          <h2 class="text-xl font-semibold text-gray-800">Google Reviews</h2>
+          <label class="block text-sm text-gray-600 mb-1">Google My Business Review Link</label>
+          <input type="url" id="googleReviewLink" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="https://g.page/your-business" />
+        </section>
 
-  // Load settings
-  try {
-    const res = await fetch(`/api/reviews/settings/${businessId}`);
-    const data = await res.json();
+        <!-- Internal Reviews -->
+        <section class="bg-white shadow rounded-2xl p-6 space-y-4">
+          <h2 class="text-xl font-semibold text-gray-800">Internal Reviews</h2>
+          <label class="inline-flex items-center space-x-3">
+            <input type="checkbox" id="enableInternalReview" class="form-checkbox h-5 w-5 text-indigo-600">
+            <span class="text-sm text-gray-700">Enable internal review system</span>
+          </label>
 
-    if (data.settings) {
-      const s = data.settings;
-      googleReviewLink.value = s.google_review_link || '';
-      enableInternalReview.checked = !!s.enable_internal;
-      reviewDelayHours.value = s.delay_minutes ? Math.round(s.delay_minutes / 60) : '';
-      sendEmailReview.checked = !!s.send_email;
-      sendSmsReview.checked = !!s.send_sms;
-    }
-  } catch (err) {
-    console.error('Error loading review settings:', err);
-  }
+          <!-- Embed Code -->
+          <div class="pt-4 border-t">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Embed on your website</label>
+            <p class="text-xs text-gray-500 mb-2">Paste this code anywhere on your site or landing page:</p>
+            <div class="relative">
+              <textarea
+                readonly
+                id="embedCode"
+                class="w-full text-xs p-3 border rounded-lg bg-gray-50 font-mono text-gray-700 resize-none"
+                rows="6"
+              ></textarea>
+              <button
+                id="copyEmbedCode"
+                class="absolute top-2 right-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1 rounded"
+              >Copy</button>
+            </div>
+          </div>
+        </section>
 
-  // Save settings
-  saveButton.addEventListener('click', async () => {
-    saveButton.disabled = true;
-    saveButton.textContent = 'Saving...';
+        <!-- Review Delay Configuration -->
+        <section class="bg-white shadow rounded-2xl p-6 space-y-4">
+          <h2 class="text-xl font-semibold text-gray-800">Schedule Review Request</h2>
+          <label class="block text-sm text-gray-600 mb-1">Send request after</label>
+          <input type="number" id="reviewDelayHours" min="1" max="72" class="w-32 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="2" />
+          <span class="text-sm text-gray-500 ml-2">hours after service completion</span>
+        </section>
 
-    const payload = {
-      business_id: businessId,
-      google_review_link: googleReviewLink.value.trim(),
-      enable_internal: enableInternalReview.checked,
-      delay_minutes: parseInt(reviewDelayHours.value || '2') * 60,
-      send_email: sendEmailReview.checked,
-      send_sms: sendSmsReview.checked,
-    };
+        <!-- Review Method -->
+        <section class="bg-white shadow rounded-2xl p-6 space-y-4">
+          <h2 class="text-xl font-semibold text-gray-800">Delivery Method</h2>
+          <label class="inline-flex items-center space-x-3">
+            <input type="checkbox" id="sendEmailReview" class="form-checkbox h-5 w-5 text-indigo-600">
+            <span class="text-sm text-gray-700">Send via Email</span>
+          </label>
+          <label class="inline-flex items-center space-x-3">
+            <input type="checkbox" id="sendSmsReview" class="form-checkbox h-5 w-5 text-indigo-600">
+            <span class="text-sm text-gray-700">Send via SMS</span>
+          </label>
+        </section>
 
-    try {
-      const res = await fetch('/api/reviews/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) throw new Error('Failed to save settings');
-
-      showToast();
-    } catch (err) {
-      console.error('Error saving review settings:', err);
-      alert('❌ Something went wrong. Please try again.');
-    } finally {
-      saveButton.disabled = false;
-      saveButton.textContent = 'Save Settings';
-    }
-  });
-});
+        <!-- Save Button -->
+        <div class="text-right">
+          <button id="saveReviewSettings" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm transition">
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

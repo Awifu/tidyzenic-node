@@ -118,6 +118,9 @@ app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin/dashboard.ht
 // ==============================
 // 9. 404 Not Found
 // ==============================
+app.use('/api/review-analytics', require('./routes/reviewAnalytics'));
+
+// 9. 404 Not Found
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
