@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const businessId = window.localStorage.getItem('business_id'); // Assuming business ID is stored
-  if (!businessId) return alert('Business not found. Please log in again.');
+  const businessId = window.localStorage.getItem('business_id');
+
+  if (!businessId) {
+    alert('We couldn’t find your business info. Redirecting to login.');
+    window.location.href = '/login.html';
+    return;
+  }
 
   const googleReviewLink = document.getElementById('googleReviewLink');
   const enableInternalReview = document.getElementById('enableInternalReview');
