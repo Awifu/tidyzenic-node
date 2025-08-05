@@ -31,36 +31,42 @@
         <!-- Page Title -->
         <h1 class="text-3xl font-bold text-indigo-700">Review Settings</h1>
 
-        <!-- Smart Tip -->
+        <!-- AI Smart Tip -->
         <div class="p-4 bg-indigo-50 border-l-4 border-indigo-500 text-sm text-indigo-800 rounded-xl">
-          💡 <strong>AI Suggestion:</strong> Set review delay to <strong>1–3 hours</strong> after service completion to maximize response rate.
+          💡 <strong>AI Suggestion:</strong> Set the review delay to <strong>1–3 hours</strong> after service to boost engagement.
         </div>
 
-        <!-- Google Reviews -->
+        <!-- Google Reviews Section -->
         <section class="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 class="text-xl font-semibold text-gray-800">Google Reviews</h2>
-          <label for="googleReviewLink" class="block text-sm text-gray-600">Google My Business Review Link</label>
+
+          <label for="googleReviewLink" class="block text-sm text-gray-600 mb-1">Google My Business Review Link</label>
           <input
             type="url"
             id="googleReviewLink"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition"
             placeholder="https://g.page/your-business"
           />
+
+          <label class="inline-flex items-center space-x-3 mt-2">
+            <input type="checkbox" id="enableGoogleReview" class="form-checkbox h-5 w-5 text-indigo-600" />
+            <span class="text-sm text-gray-700">Enable Google Review Requests</span>
+          </label>
         </section>
 
         <!-- Internal Reviews -->
         <section class="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 class="text-xl font-semibold text-gray-800">Internal Reviews</h2>
           <label class="inline-flex items-center space-x-3">
-            <input type="checkbox" id="enableInternalReview" class="form-checkbox h-5 w-5 text-indigo-600">
-            <span class="text-sm text-gray-700">Enable internal review system</span>
+            <input type="checkbox" id="enableInternalReview" class="form-checkbox h-5 w-5 text-indigo-600" />
+            <span class="text-sm text-gray-700">Enable Internal Review System</span>
           </label>
         </section>
 
         <!-- Review Delay -->
         <section class="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 class="text-xl font-semibold text-gray-800">Schedule Review Request</h2>
-          <label for="reviewDelayHours" class="block text-sm text-gray-600">Send request after</label>
+          <label for="reviewDelayHours" class="block text-sm text-gray-600">Send Request After</label>
           <div class="flex items-center gap-2">
             <input
               type="number"
@@ -70,7 +76,7 @@
               class="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               placeholder="2"
             />
-            <span class="text-sm text-gray-500">hours after service</span>
+            <span class="text-sm text-gray-500">hours after service completion</span>
           </div>
         </section>
 
@@ -78,11 +84,11 @@
         <section class="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 class="text-xl font-semibold text-gray-800">Delivery Method</h2>
           <label class="inline-flex items-center space-x-3">
-            <input type="checkbox" id="sendEmailReview" class="form-checkbox h-5 w-5 text-indigo-600">
+            <input type="checkbox" id="sendEmailReview" class="form-checkbox h-5 w-5 text-indigo-600" />
             <span class="text-sm text-gray-700">Send via Email</span>
           </label>
           <label class="inline-flex items-center space-x-3">
-            <input type="checkbox" id="sendSmsReview" class="form-checkbox h-5 w-5 text-indigo-600">
+            <input type="checkbox" id="sendSmsReview" class="form-checkbox h-5 w-5 text-indigo-600" />
             <span class="text-sm text-gray-700">Send via SMS</span>
           </label>
         </section>
@@ -100,6 +106,5 @@
       </div>
     </main>
   </div>
-
 </body>
 </html>
