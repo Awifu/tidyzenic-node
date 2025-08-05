@@ -88,10 +88,10 @@
     </main>
   </div>
 
-  <!-- Modal -->
-<div id="ticketModal" class="fixed inset-0 z-50 bg-black bg-opacity-40 hidden items-center justify-center px-4 py-6 overflow-y-auto">
+ <!-- Modal -->
+<div id="ticketModal" class="fixed inset-0 z-50 bg-black bg-opacity-40 hidden flex items-center justify-center px-4">
   <!-- Modal Container -->
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto p-6 animate-fade-in relative">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto mx-auto p-6 animate-fade-in relative">
     
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
@@ -100,13 +100,9 @@
     </div>
 
     <!-- Scrollable Content -->
-    <div class="overflow-y-auto max-h-[60vh] pr-1">
-      <!-- Ticket Thread -->
-      <div id="modalThread" class="text-sm text-gray-700 space-y-3 mb-4 border-t pt-3">
-        <!-- Replies dynamically inserted here -->
-      </div>
+    <div>
+      <div id="modalThread" class="text-sm text-gray-700 space-y-3 mb-4 border-t pt-3"></div>
 
-      <!-- Reply Textarea -->
       <textarea
         id="modalTextarea"
         rows="4"
@@ -126,6 +122,7 @@
     </div>
   </div>
 </div>
+
 
 
   <!-- Ticket Template -->
