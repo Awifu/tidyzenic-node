@@ -1,50 +1,66 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const googleReviewLink = document.getElementById('googleReviewLink');
-  const enableInternalReview = document.getElementById('enableInternalReview');
-  const reviewDelayHours = document.getElementById('reviewDelayHours');
-  const sendEmailReview = document.getElementById('sendEmailReview');
-  const sendSmsReview = document.getElementById('sendSmsReview');
-  const saveBtn = document.getElementById('saveReviewSettings');
-
-  // Utility: Show toast message
-  const showToast = (msg, type = 'success') => {
-    const toast = document.createElement('div');
-    toast.textContent = msg;
-    toast.className = `fixed bottom-6 right-6 px-4 py-2 rounded shadow-lg text-white text-sm z-50 transition 
-      ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+  const elements = {
+    googleLink: document.getElementById('googleReviewLink'),
+    enableInternal: document.getElementById('enableInternalReview'),
+    reviewDelay: document.getElementById('reviewDelayHours'),
+    sendEmail: document.getElementById('sendEmailReview'),
+    sendSms: document.getElementById('sendSmsReview'),
+    saveBtn: document.getElementById('saveReviewSettings'),
   };
 
-  // Load saved settings from backend
-  const loadSettings = async () => {
-    try {
-      const res = await fetch('/api/reviews/settings');
-      const data = await res.json();
+  let businessId = null;
 
-      if (res.ok && data) {
-        googleReviewLink.value = data.google_review_link || '';
-        enableInternalReview.checked = data.internal_enabled || false;
-        reviewDelayHours.value = data.delay_hours || '';
-        sendEmailReview.checked = data.send_email || false;
-        sendSmsReview.checked = data.send_sms || false;
-      } else {
-        throw new Error(data.error || 'Failed to load review settings.');
-      }
+  // 🔹 Load business info
+  async function getBusinessId() {
+    try {
+      const res = await fetch('/api/business/public');
+      const data = await res.json();
+      if (!data?.id) throw new Error('No business ID found');
+      businessId = data.id;
+      return businessId;
+    } catch (err) {
+      console.error('❌ Failed to fetch business ID:', err);
+      return null;
+    }
+  }
+
+  // 🔹 Load settings
+  async function loadSettings() {
+    if (!businessId) return;
+
+    try {
+      const res = await fetch(`/api/reviews/settings/${businessId}`);
+      const data = await res.json();
+      const settings = data?.settings;
+
+      if (!settings) return;
+
+      if (elements.googleLink) elements.googleLink.value = settings.google_review_link || '';
+      if (elements.enableInternal) elements.enableInternal.checked = !!settings.enable_internal;
+      if (elements.reviewDelay) elements.reviewDelay.value = Math.floor((settings.delay_minutes || 0) / 60);
+      if (elements.sendEmail) elements.sendEmail.checked = !!settings.send_email;
+      if (elements.sendSms) elements.sendSms.checked = !!settings.send_sms;
+
     } catch (err) {
       console.error('❌ Error loading settings:', err);
-      showToast('Failed to load review settings.', 'error');
     }
-  };
+  }
 
-  // Save settings to backend
-  const saveSettings = async () => {
+  // 🔹 Save settings
+  async function saveSettings() {
+    if (!businessId) {
+      console.error('❌ Cannot save settings: business ID is missing');
+      return;
+    }
+
     const payload = {
-      google_review_link: googleReviewLink.value.trim(),
-      internal_enabled: enableInternalReview.checked,
-      delay_hours: parseInt(reviewDelayHours.value) || 0,
-      send_email: sendEmailReview.checked,
-      send_sms: sendSmsReview.checked,
+      business_id: businessId,
+      google_review_link: elements.googleLink?.value?.trim() || '',
+      enable_google: true,
+      enable_internal: elements.enableInternal?.checked || false,
+      delay_minutes: parseInt(elements.reviewDelay?.value || '0') * 60,
+      send_email: elements.sendEmail?.checked || false,
+      send_sms: elements.sendSms?.checked || false,
     };
 
     try {
@@ -54,22 +70,18 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || 'Failed to save settings');
 
-      if (res.ok) {
-        showToast('✅ Review settings saved!');
-      } else {
-        throw new Error(data.error || 'Failed to save settings.');
-      }
+      alert('✅ Review settings saved!');
     } catch (err) {
       console.error('❌ Error saving settings:', err);
-      showToast('Failed to save review settings.', 'error');
     }
-  };
+  }
 
-  // Event Listener
-  saveBtn.addEventListener('click', saveSettings);
+  // 🔹 Attach save button
+  elements.saveBtn?.addEventListener('click', saveSettings);
 
-  // Initial Load
-  loadSettings();
+  // Init
+  getBusinessId().then(loadSettings);
 });
