@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { sendMail } = require('../utils/mailer');
 
 // ==========================
 // GET: All active support tickets with business info
@@ -50,6 +51,25 @@ router.post('/', async (req, res) => {
       created_at: new Date()
     };
 
+    // Send email to business owner
+    const [[business]] = await db.execute(
+      'SELECT email, business_name FROM businesses WHERE id = ?',
+      [business_id]
+    );
+
+    if (business?.email) {
+      await sendMail({
+        to: business.email,
+        subject: `🆘 New Support Ticket – ${subject}`,
+        html: `
+          <h2>New Support Ticket</h2>
+          <p><strong>Business:</strong> ${business.business_name}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Message:</strong> ${message}</p>
+        `,
+      });
+    }
+
     const io = req.app.get('io');
     io.emit('new_ticket', newTicket);
 
@@ -76,6 +96,28 @@ router.post('/:id/replies', async (req, res) => {
       INSERT INTO support_replies (ticket_id, business_id, message, created_at)
       VALUES (?, ?, ?, NOW())
     `, [ticketId, business_id, message]);
+
+    // Fetch original ticket and user info
+    const [[ticket]] = await db.execute(`
+      SELECT t.subject, t.message AS original_msg, u.email AS user_email, b.business_name
+      FROM support_tickets t
+      LEFT JOIN users u ON u.id = t.user_id
+      LEFT JOIN businesses b ON b.id = t.business_id
+      WHERE t.id = ?
+    `, [ticketId]);
+
+    if (ticket?.user_email) {
+      await sendMail({
+        to: ticket.user_email,
+        subject: `💬 Reply to Your Ticket – ${ticket.subject}`,
+        html: `
+          <p>You have a new reply to your ticket:</p>
+          <blockquote>${message}</blockquote>
+          <p><strong>Original Message:</strong> ${ticket.original_msg}</p>
+          <br><p>— ${ticket.business_name} Support</p>
+        `,
+      });
+    }
 
     res.status(201).json({ success: true, message: 'Reply submitted' });
   } catch (err) {
