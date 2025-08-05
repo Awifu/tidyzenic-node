@@ -9,7 +9,7 @@
 
   // Load branding
   try {
-const res = await fetch('/api/business/public');
+    const res = await fetch('/api/business/public');
     const data = await res.json();
     if (data.business_name && bizNameEl) bizNameEl.textContent = data.business_name.toUpperCase();
     if (data.logo_filename && logoEl) {
@@ -37,4 +37,17 @@ const res = await fetch('/api/business/public');
 
   // Enable scrolling inside sidebar
   if (sidebar) sidebar.classList.add('overflow-y-auto');
+
+  // ⬇️ Dropdown toggle logic
+  document.querySelectorAll('.dropdown-toggle').forEach(button => {
+    button.addEventListener('click', () => {
+      const menu = button.nextElementSibling;
+      const chevron = button.querySelector('svg');
+
+      if (menu?.classList.contains('dropdown-menu')) {
+        menu.classList.toggle('hidden');
+        chevron?.classList.toggle('rotate-180');
+      }
+    });
+  });
 })();
