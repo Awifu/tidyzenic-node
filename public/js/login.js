@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const API_BASE = 'https://tidyzenic.com'; // 🔒 Always use main domain
+  const API_BASE = 'https://tidyzenic.com';
 
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
@@ -70,13 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ email, password })
       });
 
-      let result;
-      try {
-        result = await response.json();
-      } catch {
-        showError('Unexpected server response.');
-        return;
-      }
+      const result = await response.json();
 
       if (!response.ok) {
         if (response.status === 403 && result.error?.includes('verify')) {
@@ -87,6 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // ✅ Store user session details
+      if (result.user) {
+        localStorage.setItem('user_id', result.user.id);
+        localStorage.setItem('user_email', result.user.email);
+        localStorage.setItem('business_id', result.user.business_id);
+        localStorage.setItem('user_role', result.user.role);
+      }
+
       if (rememberMe.checked) {
         localStorage.setItem('rememberedEmail', email);
         showToast();
@@ -95,14 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (result.redirect) {
-        // 🛑 Prevent redirect loop to login again
         if (result.redirect.includes('/login.html')) {
           showError('Something went wrong. Try again.');
           return;
         }
         window.location.href = result.redirect;
       } else {
-        showError('Missing redirect URL.');
+        window.location.href = '/admin/dashboard.html';
       }
 
     } catch (err) {
