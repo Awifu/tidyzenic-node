@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let businessId = null;
 
-  // 🔹 Load business info
+  // 🔹 Get Business ID
   async function getBusinessId() {
     try {
       const res = await fetch('/api/business/public');
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🔹 Load settings
+  // 🔹 Load Settings
   async function loadSettings() {
     if (!businessId) return;
 
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🔹 Save settings
+  // 🔹 Save Settings
   async function saveSettings() {
     if (!businessId) {
       console.error('❌ Cannot save settings: business ID is missing');
@@ -79,9 +79,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🔹 Attach save button
+  // 🔹 Validate Google Review Link
+  if (elements.googleLink) {
+    elements.googleLink.addEventListener('input', () => {
+      const value = elements.googleLink.value.trim();
+      const isValid = /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(value);
+
+      elements.googleLink.classList.remove('border-green-500', 'border-red-500');
+      if (value === '') return;
+      elements.googleLink.classList.add(isValid ? 'border-green-500' : 'border-red-500');
+    });
+  }
+
+  // 🔹 Event listeners
   elements.saveBtn?.addEventListener('click', saveSettings);
 
-  // Init
+  // 🔹 Init flow
   getBusinessId().then(loadSettings);
 });
