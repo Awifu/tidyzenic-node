@@ -1,42 +1,48 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-50 text-gray-900">
+<html lang="en" class="h-full bg-gray-100 text-gray-900">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leave a Review – Tidyzenic</title>
+  <title>Leave a Review</title>
   <link rel="stylesheet" href="/styles.css" />
   <script defer src="/js/review-internal.js"></script>
 </head>
-<body class="min-h-screen flex items-center justify-center px-4 py-10">
-  <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 space-y-6">
-    <h1 class="text-2xl font-bold text-indigo-700">We’d love your feedback!</h1>
-    <p class="text-sm text-gray-600">Please rate your experience with us:</p>
+<body class="h-full flex items-center justify-center p-6">
 
-    <!-- Rating -->
-    <div class="flex gap-2" id="ratingContainer">
-      <!-- Stars inserted by JS -->
+  <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg space-y-6">
+    <!-- Branding (fetched via subdomain) -->
+    <div class="text-center space-y-2">
+      <img id="businessLogo" class="h-14 mx-auto hidden" />
+      <h1 id="businessName" class="text-2xl font-semibold text-indigo-700">Business</h1>
+      <p class="text-sm text-gray-600">We’d love to hear your feedback!</p>
+    </div>
+
+    <!-- Stars -->
+    <div id="starContainer" class="flex justify-center gap-1">
+      <!-- Stars injected via JS -->
     </div>
 
     <!-- Comment -->
     <textarea
-      id="comment"
+      id="reviewComment"
       rows="4"
-      class="w-full mt-4 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-      placeholder="Your thoughts..."
+      placeholder="Share your experience..."
+      class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
     ></textarea>
 
-    <!-- Submit -->
-    <button
-      id="submitReview"
-      class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold w-full py-3 rounded-lg transition"
-    >
-      Submit Review
-    </button>
-
-    <!-- Success Message -->
-    <div id="successMessage" class="hidden text-green-600 text-center font-semibold">
-      🎉 Thank you for your feedback!
+    <!-- Submit Button -->
+    <div class="text-right">
+      <button
+        id="submitReview"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm transition"
+      >
+        Submit Review
+      </button>
     </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded-lg shadow-md text-sm z-50"></div>
   </div>
+
 </body>
 </html>
