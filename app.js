@@ -111,7 +111,7 @@ app.get(['/login', '/login.html'], (req, res) => {
 
 app.get('/reset-password.html', sendFile('reset-password.html'));
 app.get('/verified.html', sendFile('verified.html'));
-app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin/dashboard.html'));
+app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin-dashboard.html'));
 
 // ==============================
 // 9. 404 Not Found
