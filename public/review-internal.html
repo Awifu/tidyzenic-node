@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50 text-gray-900">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leave a Review – Tidyzenic</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script defer src="/js/review-internal.js"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 py-10">
+  <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 space-y-6">
+    <h1 class="text-2xl font-bold text-indigo-700">We’d love your feedback!</h1>
+    <p class="text-sm text-gray-600">Please rate your experience with us:</p>
+
+    <!-- Rating -->
+    <div class="flex gap-2" id="ratingContainer">
+      <!-- Stars inserted by JS -->
+    </div>
+
+    <!-- Comment -->
+    <textarea
+      id="comment"
+      rows="4"
+      class="w-full mt-4 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+      placeholder="Your thoughts..."
+    ></textarea>
+
+    <!-- Submit -->
+    <button
+      id="submitReview"
+      class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold w-full py-3 rounded-lg transition"
+    >
+      Submit Review
+    </button>
+
+    <!-- Success Message -->
+    <div id="successMessage" class="hidden text-green-600 text-center font-semibold">
+      🎉 Thank you for your feedback!
+    </div>
+  </div>
+</body>
+</html>

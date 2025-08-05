@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./jobs/reviewScheduler');
 
 const express = require('express');
 const path = require('path');
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use('/api/reviews', require('./routes/reviews'));
 
 // ==============================
 // 2. CSP Nonce
