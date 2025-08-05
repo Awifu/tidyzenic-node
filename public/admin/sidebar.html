@@ -27,28 +27,20 @@
     <a href="/admin/availability.html" class="block px-4 py-2 rounded hover:bg-blue-50">⏱ Availability</a>
     <a href="/admin/notifications.html" class="block px-4 py-2 rounded hover:bg-blue-50">🔔 Notifications</a>
 
-    <!-- 🌟 Reviews Dropdown -->
-    <div class="space-y-1">
-      <button
-        type="button"
-        class="w-full flex justify-between items-center px-4 py-2 rounded hover:bg-blue-50 dropdown-toggle"
-      >
-        <span>🌟 Reviews Management</span>
-        <svg
-          class="w-4 h-4 transition-transform transform"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div class="ml-6 mt-1 space-y-1 dropdown-menu hidden">
-        <a href="/admin/reviews.html" class="block px-3 py-1.5 rounded hover:bg-blue-100 text-sm">🛠 Review Settings</a>
-        <a href="/admin/internal-reviews.html" class="block px-3 py-1.5 rounded hover:bg-blue-100 text-sm">📈 Review Analytics</a>
-      </div>
-    </div>
+    <div x-data="{ open: false }" class="space-y-1">
+  <button @click="open = !open" class="w-full flex justify-between items-center px-4 py-2 rounded hover:bg-blue-50">
+    <span>🌟 Reviews Management</span>
+    <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform transform duration-200 ease-in-out"
+      fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+  <div x-show="open" class="ml-6 mt-1 space-y-1">
+    <a href="/admin/reviews.html" class="block px-3 py-1.5 rounded hover:bg-blue-100 text-sm">🛠 Review Settings</a>
+    <a href="/admin/internal-reviews.html" class="block px-3 py-1.5 rounded hover:bg-blue-100 text-sm">📈 Review Analytics</a>
+  </div>
+</div>
+
 
     <a href="/admin/marketing.html" class="block px-4 py-2 rounded hover:bg-blue-50">📣 Marketing</a>
     <a href="/admin/discounts.html" class="block px-4 py-2 rounded hover:bg-blue-50">🏷️ Discounts</a>
