@@ -1,5 +1,3 @@
-// routes/business.js
-
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
@@ -11,13 +9,12 @@ const cache = new LRUCache({
   ttl: 1000 * 60 * 5 // 5 minutes
 });
 
-// ✅ GET /api/business/public – Basic business info by subdomain (no auth)
+// ✅ GET /api/business/public – Public info by subdomain
 router.get('/public', async (req, res) => {
   let subdomain = req.tenant;
 
-  // 🛠 Local fallback for dev environments (e.g., localhost)
   if (!subdomain && process.env.NODE_ENV !== 'production') {
-    subdomain = 'awifu-labs-pro';
+    subdomain = 'awifu-labs-pro'; // for dev fallback
     console.log('⚠️ Using fallback subdomain for local testing:', subdomain);
   }
 
@@ -27,20 +24,15 @@ router.get('/public', async (req, res) => {
 
   const cacheKey = `public-business:${subdomain}`;
   const cached = cache.get(cacheKey);
-  if (cached) {
-    return res.json(cached);
-  }
+  if (cached) return res.json(cached);
 
   try {
-    const [rows] = await pool.query(
-      `
+    const [rows] = await pool.query(`
       SELECT id, business_name, logo_filename
       FROM businesses
       WHERE subdomain = ? AND is_deleted = 0
       LIMIT 1
-      `,
-      [subdomain]
-    );
+    `, [subdomain]);
 
     if (!rows.length) {
       return res.status(404).json({ error: 'Business not found' });
@@ -53,9 +45,39 @@ router.get('/public', async (req, res) => {
     };
 
     cache.set(cacheKey, publicData);
-    console.log('📦 Cached business data for:', subdomain);
-
     res.json(publicData);
+  } catch (err) {
+    console.error('❌ Error fetching public business info:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ✅ GET /api/business/me – Authenticated internal usage (resolves to business ID)
+router.get('/me', async (req, res) => {
+  const subdomain = req.tenant;
+
+  if (!subdomain) {
+    return res.status(400).json({ error: 'Missing subdomain.' });
+  }
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT id, business_name, subdomain
+      FROM businesses
+      WHERE subdomain = ? AND is_deleted = 0
+      LIMIT 1
+    `, [subdomain]);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Business not found for subdomain' });
+    }
+
+    const business = rows[0];
+    res.json({
+      id: business.id,
+      business_name: business.business_name,
+      subdomain: business.subdomain
+    });
   } catch (err) {
     console.error('❌ Error fetching business info:', err);
     res.status(500).json({ error: 'Internal server error' });
