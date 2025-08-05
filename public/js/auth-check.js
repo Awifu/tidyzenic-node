@@ -3,13 +3,16 @@
   const path = window.location.pathname;
   const isLoginPage = path === '/login.html' || path === '/login';
 
+  console.log('[auth-check] Checking authentication...');
+
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
       credentials: 'include',
     });
 
     if (!res.ok) {
-      // User is not logged in
+      console.warn('[auth-check] Not authenticated (HTTP error).');
+
       if (!isLoginPage) {
         window.location.href = '/login.html';
       }
@@ -19,7 +22,8 @@
     const { user } = await res.json();
 
     if (!user || !user.id) {
-      // Invalid session or malformed user
+      console.warn('[auth-check] Invalid or missing user session.');
+
       if (!isLoginPage) {
         window.location.href = '/login.html';
       }
@@ -28,28 +32,29 @@
 
     // ✅ Set user globally
     window.currentUser = user;
+    console.log('[auth-check] Logged in as:', user.name || user.email);
 
-    // ✅ If already logged in and on login page, go to dashboard
+    // ✅ Redirect from login page if already logged in
     if (isLoginPage) {
-      window.location.href = '/admin/dashboard.html';
+      console.log('[auth-check] Already logged in, redirecting to admin dashboard...');
+      window.location.href = '/admin/admin-dashboard.html';
       return;
     }
 
-    // ✅ Update UI with user name
+    // ✅ Populate UI with user name if available
     const nameEl = document.getElementById('userName');
     if (nameEl) {
       nameEl.textContent = user.name || '';
     }
 
-    // ✅ Hide admin-only elements if not an admin
+    // ✅ Hide admin-only sections if not an admin
     if (user.role !== 'admin') {
       document.querySelectorAll('[data-role="admin"]').forEach(el => el.remove());
     }
 
   } catch (err) {
-    console.error('❌ Auth check failed:', err);
+    console.error('[auth-check] Request failed:', err);
 
-    // Redirect to login only if not already there
     if (!isLoginPage) {
       window.location.href = '/login.html';
     }
