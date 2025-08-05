@@ -1,56 +1,69 @@
-<!-- Mobile Backdrop -->
-<div id="sidebarBackdrop" class="fixed inset-0 z-30 bg-black bg-opacity-30 hidden md:hidden"></div>
-
-<!-- Sidebar -->
-<aside id="sidebar" class="fixed md:relative inset-y-0 left-0 z-40 w-72 min-h-screen bg-white shadow-md transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col">
-  <!-- Top: Logo & Info -->
+<aside
+  id="sidebar"
+  class="fixed md:relative inset-y-0 left-0 z-40 w-72 min-h-screen bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col"
+>
+  <!-- Top: Logo & Business Info -->
   <div class="p-6 flex items-center gap-3 bg-white border-b shadow sticky top-0 z-10">
-    <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow-md object-cover" />
+    <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow-md" />
     <div class="overflow-hidden">
       <h1 id="bizName" class="text-lg font-bold uppercase truncate text-blue-600">Business</h1>
       <p id="sidebarUserName" class="text-sm text-gray-500 truncate"></p>
     </div>
   </div>
 
-  <!-- Navigation -->
-  <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-1 text-gray-700 font-medium">
-    <a href="/admin/dashboard.html" class="nav-link">🏠 Dashboard</a>
-    <a href="/admin/services.html" class="nav-link">🧹 Services</a>
-    <a href="/admin/bookings.html" class="nav-link">📆 Bookings</a>
-    <a href="/admin/calendar.html" class="nav-link">🗓️ Calendar</a>
-    <a href="/admin/staff.html" class="nav-link">👥 Staff</a>
-    <a href="/admin/clients.html" class="nav-link">👤 Clients</a>
-    <a href="/admin/invoices.html" class="nav-link">📄 Invoices</a>
-    <a href="/admin/payments.html" class="nav-link">💳 Payments</a>
-    <a href="/admin/availability.html" class="nav-link">⏱ Availability</a>
-    <a href="/admin/notifications.html" class="nav-link">🔔 Notifications</a>
+  <!-- Mobile backdrop (optional for mobile sidebar toggle) -->
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-black bg-opacity-30 hidden z-30 md:hidden"></div>
 
-    <!-- Reviews Dropdown -->
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-1 font-medium text-gray-700">
+    <a href="/admin/dashboard.html" class="block px-4 py-2 rounded hover:bg-blue-50">🏠 Dashboard</a>
+    <a href="/admin/services.html" class="block px-4 py-2 rounded hover:bg-blue-50">🧹 Services</a>
+    <a href="/admin/bookings.html" class="block px-4 py-2 rounded hover:bg-blue-50">📆 Bookings</a>
+    <a href="/admin/calendar.html" class="block px-4 py-2 rounded hover:bg-blue-50">🗓️ Calendar</a>
+    <a href="/admin/staff.html" class="block px-4 py-2 rounded hover:bg-blue-50">👥 Staff</a>
+    <a href="/admin/clients.html" class="block px-4 py-2 rounded hover:bg-blue-50">👤 Clients</a>
+    <a href="/admin/invoices.html" class="block px-4 py-2 rounded hover:bg-blue-50">📄 Invoices</a>
+    <a href="/admin/payments.html" class="block px-4 py-2 rounded hover:bg-blue-50">💳 Payments</a>
+    <a href="/admin/availability.html" class="block px-4 py-2 rounded hover:bg-blue-50">⏱ Availability</a>
+    <a href="/admin/notifications.html" class="block px-4 py-2 rounded hover:bg-blue-50">🔔 Notifications</a>
+
+    <!-- 🌟 Reviews Dropdown -->
     <div class="space-y-1">
-      <button type="button" class="nav-link flex justify-between items-center dropdown-toggle">
-        🌟 Reviews Management
-        <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <button
+        type="button"
+        class="w-full flex justify-between items-center px-4 py-2 rounded hover:bg-blue-50 dropdown-toggle"
+      >
+        <span>🌟 Reviews Management</span>
+        <svg
+          class="w-4 h-4 transition-transform transform"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
           <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       <div class="ml-6 mt-1 space-y-1 dropdown-menu hidden">
-        <a href="/admin/reviews.html" class="submenu-link">🛠 Review Settings</a>
-        <a href="/admin/internal-reviews.html" class="submenu-link">📈 Review Analytics</a>
+        <a href="/admin/reviews.html" class="block px-3 py-1.5 rounded hover:bg-blue-100 text-sm">🛠 Review Settings</a>
+        <a href="/admin/internal-reviews.html" class="block px-3 py-1.5 rounded hover:bg-blue-100 text-sm">📈 Review Analytics</a>
       </div>
     </div>
 
-    <a href="/admin/marketing.html" class="nav-link">📣 Marketing</a>
-    <a href="/admin/discounts.html" class="nav-link">🏷️ Discounts</a>
-    <a href="/admin/settings.html" class="nav-link">⚙️ Settings</a>
-    <a href="/admin/billing.html" class="nav-link">🧾 Billing</a>
-    <a href="/admin/reports.html" class="nav-link" data-role="admin">📊 Reports</a>
-    <a href="/admin/support_ticket.html" class="nav-link">🆘 Support</a>
-    <a href="/admin/zapier.html" class="nav-link">⚡ Automations</a>
-    <a href="/admin/ai-assistant.html" class="nav-link">🤖 AI Assistant</a>
+    <a href="/admin/marketing.html" class="block px-4 py-2 rounded hover:bg-blue-50">📣 Marketing</a>
+    <a href="/admin/discounts.html" class="block px-4 py-2 rounded hover:bg-blue-50">🏷️ Discounts</a>
+    <a href="/admin/settings.html" class="block px-4 py-2 rounded hover:bg-blue-50">⚙️ Settings</a>
+    <a href="/admin/billing.html" class="block px-4 py-2 rounded hover:bg-blue-50">🧾 Billing</a>
+    <a href="/admin/reports.html" class="block px-4 py-2 rounded hover:bg-blue-50" data-role="admin">📊 Reports</a>
+    <a href="/admin/support_ticket.html" class="block px-4 py-2 rounded hover:bg-blue-50">🆘 Support</a>
+    <a href="/admin/zapier.html" class="block px-4 py-2 rounded hover:bg-blue-50">⚡ Automations</a>
+    <a href="/admin/ai-assistant.html" class="block px-4 py-2 rounded hover:bg-blue-50">🤖 AI Assistant</a>
   </nav>
 
   <!-- Bottom: Logout -->
   <div class="p-4 border-t bg-white sticky bottom-0 z-10 shadow-inner">
-    <button id="logoutBtn" class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition">🚪 Logout</button>
+    <button id="logoutBtn" class="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition">
+      🚪 Logout
+    </button>
   </div>
 </aside>

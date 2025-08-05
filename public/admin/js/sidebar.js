@@ -1,5 +1,3 @@
-// public/admin/js/sidebar.js
-
 (async () => {
   const bizNameEl = document.getElementById('bizName');
   const logoEl = document.getElementById('logo');
@@ -24,33 +22,46 @@
     if (logoEl) logoEl.src = '/assets/logo-placeholder.png';
   }
 
-  // Open sidebar (mobile)
+  // 🟢 Mobile: open sidebar
   toggle?.addEventListener('click', () => {
     sidebar?.classList.remove('-translate-x-full');
     backdrop?.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
   });
 
-  // Close sidebar
+  // 🔴 Mobile: close sidebar
   backdrop?.addEventListener('click', () => {
     sidebar?.classList.add('-translate-x-full');
     backdrop?.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
   });
 
-  // Scroll inside sidebar
+  // Enable scroll inside sidebar
   sidebar?.classList.add('overflow-y-auto');
 
-  // Dropdown toggles
+  // ⬇️ Dropdown toggle behavior
   document.querySelectorAll('.dropdown-toggle').forEach(button => {
-    button.addEventListener('click', () => {
-      const menu = button.nextElementSibling;
-      const icon = button.querySelector('svg');
+    const icon = button.querySelector('svg');
+    const menu = button.nextElementSibling;
 
-      if (menu?.classList.contains('dropdown-menu')) {
-        menu.classList.toggle('hidden');
-        icon?.classList.toggle('rotate-180');
-      }
+    button.addEventListener('click', () => {
+      if (!menu?.classList.contains('dropdown-menu')) return;
+
+      menu.classList.toggle('hidden');
+      icon?.classList.toggle('rotate-180');
     });
+  });
+
+  // 🔄 Auto-expand dropdown if current URL matches submenu
+  const currentUrl = window.location.pathname;
+  document.querySelectorAll('.dropdown-menu a').forEach(link => {
+    if (link.getAttribute('href') === currentUrl) {
+      const menu = link.closest('.dropdown-menu');
+      const toggleBtn = menu?.previousElementSibling;
+      const icon = toggleBtn?.querySelector('svg');
+
+      menu?.classList.remove('hidden');
+      icon?.classList.add('rotate-180');
+    }
   });
 })();
