@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reviews – Tidyzenic Admin</title>
+  <title>Review Settings – TidyZenic Admin</title>
   <link rel="stylesheet" href="/styles.css" />
   <script defer src="/admin/js/load-sidebar.js"></script>
   <script defer src="/admin/js/reviews.js"></script>
-
 </head>
 <body class="h-full font-sans bg-gray-100 flex flex-col">
 
@@ -23,22 +22,30 @@
     </div>
   </header>
 
+  <!-- Main Layout -->
   <div class="flex flex-1">
     <div id="sidebar-container"></div>
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
       <div class="max-w-3xl mx-auto space-y-8">
+
+        <!-- Page Title -->
         <h1 class="text-3xl font-bold text-indigo-700">Review Settings</h1>
 
-        <!-- Smart Tips -->
+        <!-- Smart Tip -->
         <div class="p-4 bg-indigo-50 border-l-4 border-indigo-500 text-sm text-indigo-800 rounded-xl">
-          💡 <strong>AI Suggestion:</strong> Set the review request delay between <strong>1–3 hours</strong> after service to ensure it's fresh in the customer's mind but not too soon to feel intrusive.
+          💡 <strong>AI Suggestion:</strong> Set review delay to <strong>1–3 hours</strong> after service completion to maximize response rate.
         </div>
 
         <!-- Google Reviews -->
         <section class="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 class="text-xl font-semibold text-gray-800">Google Reviews</h2>
-          <label class="block text-sm text-gray-600 mb-1">Google My Business Review Link</label>
-          <input type="url" id="googleReviewLink" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="https://g.page/your-business" />
+          <label for="googleReviewLink" class="block text-sm text-gray-600">Google My Business Review Link</label>
+          <input
+            type="url"
+            id="googleReviewLink"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition"
+            placeholder="https://g.page/your-business"
+          />
         </section>
 
         <!-- Internal Reviews -->
@@ -50,15 +57,24 @@
           </label>
         </section>
 
-        <!-- Review Delay Configuration -->
+        <!-- Review Delay -->
         <section class="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 class="text-xl font-semibold text-gray-800">Schedule Review Request</h2>
-          <label class="block text-sm text-gray-600 mb-1">Send request after</label>
-          <input type="number" id="reviewDelayHours" min="1" max="72" class="w-32 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="2" />
-          <span class="text-sm text-gray-500 ml-2">hours after service completion</span>
+          <label for="reviewDelayHours" class="block text-sm text-gray-600">Send request after</label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              id="reviewDelayHours"
+              min="1"
+              max="72"
+              class="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              placeholder="2"
+            />
+            <span class="text-sm text-gray-500">hours after service</span>
+          </div>
         </section>
 
-        <!-- Review Method -->
+        <!-- Delivery Method -->
         <section class="bg-white shadow rounded-2xl p-6 space-y-4">
           <h2 class="text-xl font-semibold text-gray-800">Delivery Method</h2>
           <label class="inline-flex items-center space-x-3">
@@ -73,12 +89,17 @@
 
         <!-- Save Button -->
         <div class="text-right">
-          <button id="saveReviewSettings" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm transition">
+          <button
+            id="saveReviewSettings"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm transition"
+          >
             Save Settings
           </button>
         </div>
+
       </div>
     </main>
   </div>
+
 </body>
 </html>
