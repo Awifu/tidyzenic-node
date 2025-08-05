@@ -12,6 +12,16 @@ fetch('/admin/sidebar.html')
 
     console.log('✅ Sidebar injected');
 
+    // 🧭 Dropdown toggle for submenus
+    document.querySelectorAll('.dropdown-toggle').forEach(button => {
+      button.addEventListener('click', () => {
+        const dropdown = button.nextElementSibling;
+        if (dropdown && dropdown.classList.contains('dropdown-menu')) {
+          dropdown.classList.toggle('hidden');
+        }
+      });
+    });
+
     // Wait until currentUser is ready from auth-check.js
     const waitForUser = setInterval(() => {
       if (!window.currentUser) return;

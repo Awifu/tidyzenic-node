@@ -1,4 +1,3 @@
-<!-- public/admin/sidebar.html -->
 <aside
   id="sidebar"
   class="fixed md:relative inset-y-0 left-0 z-40 w-72 min-h-screen bg-white shadow-lg transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col"
@@ -19,6 +18,7 @@
 
   <!-- Middle: Scrollable Navigation Links -->
   <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-1 font-medium text-gray-700">
+
     <a href="/admin/dashboard.html" class="block px-4 py-2 rounded hover:bg-blue-50">🏠 Dashboard</a>
     <a href="/admin/services.html" class="block px-4 py-2 rounded hover:bg-blue-50">🧹 Services</a>
     <a href="/admin/bookings.html" class="block px-4 py-2 rounded hover:bg-blue-50">📆 Bookings</a>
@@ -29,7 +29,26 @@
     <a href="/admin/payments.html" class="block px-4 py-2 rounded hover:bg-blue-50">💳 Payments</a>
     <a href="/admin/availability.html" class="block px-4 py-2 rounded hover:bg-blue-50">⏱ Availability</a>
     <a href="/admin/notifications.html" class="block px-4 py-2 rounded hover:bg-blue-50">🔔 Notifications</a>
-    <a href="/admin/reviews.html" class="block px-4 py-2 rounded hover:bg-blue-50">🌟 Reviews</a>
+
+    <!-- 🌟 Reviews Management Dropdown -->
+    <div class="space-y-1">
+      <button
+        type="button"
+        class="w-full flex justify-between items-center px-4 py-2 rounded hover:bg-blue-50 dropdown-toggle"
+      >
+        <span>🌟 Reviews Management</span>
+        <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" stroke-width="2"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <div class="pl-6 space-y-1 dropdown-menu hidden">
+        <a href="/admin/reviews.html" class="block px-2 py-1 rounded hover:bg-blue-50">Review Settings</a>
+        <a href="/admin/internal-reviews.html" class="block px-2 py-1 rounded hover:bg-blue-50">Review Analytics</a>
+      </div>
+    </div>
+
     <a href="/admin/marketing.html" class="block px-4 py-2 rounded hover:bg-blue-50">📣 Marketing</a>
     <a href="/admin/discounts.html" class="block px-4 py-2 rounded hover:bg-blue-50">🏷️ Discounts</a>
     <a href="/admin/settings.html" class="block px-4 py-2 rounded hover:bg-blue-50">⚙️ Settings</a>
