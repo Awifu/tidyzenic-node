@@ -30,6 +30,8 @@ app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
 });
+const smsRoutes = require('./routes/sms');
+app.use('/api/sms', smsRoutes);
 
 // ==============================
 // 3. Security Headers with CSP

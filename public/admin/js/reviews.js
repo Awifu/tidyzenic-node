@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const elements = {
+  const el = {
     googleLink: document.getElementById('googleReviewLink'),
     enableGoogle: document.getElementById('enableGoogleReview'),
     enableInternal: document.getElementById('enableInternalReview'),
@@ -19,67 +19,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let businessId = null;
 
-  // ─────────────────────────────────────────────────────────────
-  // 🔹 Get Business ID
-  // ─────────────────────────────────────────────────────────────
-  async function getBusinessId() {
+  // 🔹 Load Business ID
+  async function fetchBusinessId() {
     try {
       const res = await fetch('/api/business/public');
       const data = await res.json();
-      if (!data?.id) throw new Error('No business ID found');
+      if (!data?.id) throw new Error('Business ID not found');
       businessId = data.id;
     } catch (err) {
       console.error('❌ Failed to fetch business ID:', err);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
   // 🔹 Load Review Settings
-  // ─────────────────────────────────────────────────────────────
-  async function loadSettings() {
+  async function loadReviewSettings() {
     try {
       const res = await fetch(`/api/reviews/settings/${businessId}`);
-      const data = await res.json();
-      const settings = data?.settings;
+      const { settings } = await res.json();
       if (!settings) return;
 
-      elements.googleLink.value = settings.google_review_link || '';
-      elements.enableGoogle.checked = !!settings.enable_google;
-      elements.enableInternal.checked = !!settings.enable_internal;
-      elements.reviewDelay.value = Math.floor((settings.delay_minutes || 0) / 60);
-      elements.sendEmail.checked = !!settings.send_email;
-      elements.sendSms.checked = !!settings.send_sms;
+      el.googleLink.value = settings.google_review_link || '';
+      el.enableGoogle.checked = !!settings.enable_google;
+      el.enableInternal.checked = !!settings.enable_internal;
+      el.reviewDelay.value = Math.floor((settings.delay_minutes || 0) / 60);
+      el.sendEmail.checked = !!settings.send_email;
+      el.sendSms.checked = !!settings.send_sms;
 
-      updateGoogleLinkDisabled();
+      toggleGoogleInput();
     } catch (err) {
-      console.error('❌ Error loading settings:', err);
+      console.error('❌ Error loading review settings:', err);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
   // 🔹 Save Review Settings
-  // ─────────────────────────────────────────────────────────────
-  async function saveSettings() {
-    if (!businessId) {
-      alert('Business ID not loaded yet.');
-      return;
-    }
+  async function saveReviewSettings() {
+    if (!businessId) return alert('Business ID is missing');
 
-    const googleReviewLink = elements.googleLink.value.trim();
-    const isValidGoogleLink = googleReviewLink === '' || /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(googleReviewLink);
-    if (!isValidGoogleLink) {
-      alert('❌ Invalid Google Review link');
+    const googleLink = el.googleLink.value.trim();
+    const isValidLink = googleLink === '' || /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(googleLink);
+
+    if (!isValidLink) {
+      alert('❌ Invalid Google review link');
       return;
     }
 
     const payload = {
       business_id: businessId,
-      google_review_link: googleReviewLink,
-      enable_google: elements.enableGoogle.checked,
-      enable_internal: elements.enableInternal.checked,
-      delay_minutes: parseInt(elements.reviewDelay.value || '0') * 60,
-      send_email: elements.sendEmail.checked,
-      send_sms: elements.sendSms.checked,
+      google_review_link: googleLink,
+      enable_google: el.enableGoogle.checked,
+      enable_internal: el.enableInternal.checked,
+      delay_minutes: parseInt(el.reviewDelay.value || '0') * 60,
+      send_email: el.sendEmail.checked,
+      send_sms: el.sendSms.checked,
     };
 
     try {
@@ -90,45 +81,40 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result?.error || 'Failed to save settings');
-
+      if (!res.ok) throw new Error(result?.error || 'Failed to save review settings');
       alert('✅ Review settings saved!');
     } catch (err) {
       console.error('❌ Error saving review settings:', err);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
   // 🔹 Save Twilio Settings
-  // ─────────────────────────────────────────────────────────────
   async function saveTwilioSettings() {
-    const sid = elements.twilioSid.value.trim();
-    const token = elements.twilioToken.value.trim();
-    const phone = elements.twilioPhone.value.trim();
+    const sid = el.twilioSid.value.trim();
+    const token = el.twilioToken.value.trim();
+    const phone = el.twilioPhone.value.trim();
 
     if (!sid || !token || !phone) {
-      alert('Please fill in all Twilio fields');
+      alert('Please complete all Twilio fields');
       return;
     }
 
     try {
-      const res = await fetch('/api/sms-settings', {
+      const res = await fetch('/api/sms/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           business_id: businessId,
-          sid,
-          token,
-          phone,
+          twilio_sid: sid,
+          twilio_auth_token: token,
+          twilio_phone: phone,
         }),
       });
 
-      if (!res.ok) {
-        const result = await res.json();
-        throw new Error(result?.error || 'Failed to save Twilio settings');
-      }
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || 'Failed to save Twilio settings');
 
-      elements.smsModal.classList.add('hidden');
+      el.smsModal.classList.add('hidden');
       alert('✅ Twilio settings saved!');
     } catch (err) {
       console.error('❌ Error saving Twilio settings:', err);
@@ -136,50 +122,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // 🔹 Input Behaviors & Events
-  // ─────────────────────────────────────────────────────────────
+  // 🔹 UI Helpers
   function validateGoogleLink() {
-    const value = elements.googleLink.value.trim();
+    const value = el.googleLink.value.trim();
     const isValid = /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(value);
 
-    elements.googleLink.classList.remove('border-green-500', 'border-red-500');
+    el.googleLink.classList.remove('border-red-500', 'border-green-500');
     if (value === '') return;
-    elements.googleLink.classList.add(isValid ? 'border-green-500' : 'border-red-500');
+    el.googleLink.classList.add(isValid ? 'border-green-500' : 'border-red-500');
   }
 
-  function updateGoogleLinkDisabled() {
-    elements.googleLink.disabled = !elements.enableGoogle.checked;
+  function toggleGoogleInput() {
+    el.googleLink.disabled = !el.enableGoogle.checked;
   }
 
-  // ─────────────────────────────────────────────────────────────
   // 🔹 Modal Events
-  // ─────────────────────────────────────────────────────────────
-  elements.sendSms?.addEventListener('change', () => {
-    if (elements.sendSms.checked && elements.smsModal) {
-      elements.smsModal.classList.remove('hidden');
-    }
-  });
+  function setupModalListeners() {
+    el.sendSms?.addEventListener('change', () => {
+      if (el.sendSms.checked && el.smsModal) {
+        el.smsModal.classList.remove('hidden');
+      }
+    });
 
-  elements.closeSmsModal?.addEventListener('click', () => {
-    elements.smsModal?.classList.add('hidden');
-    elements.sendSms.checked = false;
-  });
+    el.closeSmsModal?.addEventListener('click', () => {
+      el.smsModal.classList.add('hidden');
+      el.sendSms.checked = false;
+    });
 
-  elements.saveTwilioBtn?.addEventListener('click', saveTwilioSettings);
-  elements.googleLink?.addEventListener('input', validateGoogleLink);
-  elements.enableGoogle?.addEventListener('change', () => {
-    updateGoogleLinkDisabled();
-    validateGoogleLink();
-  });
+    el.saveTwilioBtn?.addEventListener('click', saveTwilioSettings);
+  }
 
-  elements.saveBtn?.addEventListener('click', saveSettings);
+  // 🔹 Input Listeners
+  function setupInputListeners() {
+    el.googleLink?.addEventListener('input', validateGoogleLink);
+    el.enableGoogle?.addEventListener('change', () => {
+      toggleGoogleInput();
+      validateGoogleLink();
+    });
 
-  // ─────────────────────────────────────────────────────────────
+    el.saveBtn?.addEventListener('click', saveReviewSettings);
+  }
+
   // 🔹 Init
-  // ─────────────────────────────────────────────────────────────
-  getBusinessId().then(() => {
-    loadSettings();
-    // optionally: loadTwilioSettings(); // if implemented
-  });
+  async function init() {
+    await fetchBusinessId();
+    if (businessId) {
+      await loadReviewSettings();
+    }
+    setupModalListeners();
+    setupInputListeners();
+  }
+
+  init();
 });
