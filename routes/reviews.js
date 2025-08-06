@@ -365,45 +365,114 @@ router.post('/service-orders/:id/complete', async (req, res) => {
 });
 async function sendReviewSmsForOrder(orderId) {
   const [[order]] = await db.execute(
-    `SELECT o.id AS service_order_id, o.business_id, u.name, u.phone, o.review_sent_sms
+    `SELECT o.id AS service_order_id, o.business_id, u.name, u.phone, u.email, o.review_sent_sms, o.review_sent, o.google_review_sent
      FROM service_orders o
      JOIN users u ON o.user_id = u.id
      WHERE o.id = ?`,
     [orderId]
   );
 
-  if (!order || order.review_sent_sms) return;
+  if (!order) return;
+
+  const clientName = order.name || 'there';
+  const reviewLink = `https://${process.env.APP_DOMAIN}/review-internal?o=${order.service_order_id}`;
 
   const [[settings]] = await db.execute(
-    `SELECT send_sms FROM review_settings WHERE business_id = ?`,
+    `SELECT send_sms, enable_internal, enable_google_review, google_review_link
+     FROM review_settings
+     WHERE business_id = ?`,
     [order.business_id]
   );
-  if (!settings?.send_sms) return;
 
   const [[twilioSettings]] = await db.execute(
     `SELECT twilio_sid, twilio_auth_token, twilio_phone FROM sms_settings WHERE business_id = ?`,
     [order.business_id]
   );
-  if (!twilioSettings) return;
 
-  const formattedPhone = formatToE164(order.phone);
-  if (!formattedPhone) return;
-
-  const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
-
-  const reviewLink = `https://${process.env.APP_DOMAIN}/review-internal?o=${order.service_order_id}`;
-  const message = `Hi ${order.name || ''}, please leave a quick review of your recent service: ${reviewLink}`;
-
-  await client.messages.create({
-    from: twilioSettings.twilio_phone,
-    to: formattedPhone,
-    body: message,
-  });
-
-  await db.execute(
-    `UPDATE service_orders SET review_sent_sms = 1 WHERE id = ?`,
-    [order.service_order_id]
+  const [[biz]] = await db.execute(
+    `SELECT business_name FROM businesses WHERE id = ?`,
+    [order.business_id]
   );
+
+  // ✅ Send SMS for internal review
+  if (settings?.send_sms && !order.review_sent_sms && twilioSettings) {
+    const formattedPhone = formatToE164(order.phone);
+
+    if (formattedPhone) {
+      const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
+
+      await client.messages.create({
+        from: twilioSettings.twilio_phone,
+        to: formattedPhone,
+        body: `Hi ${clientName}, please leave a quick review of your recent service: ${reviewLink}`,
+      });
+
+      await db.execute(
+        `UPDATE service_orders SET review_sent_sms = 1 WHERE id = ?`,
+        [order.service_order_id]
+      );
+    }
+  }
+
+  // ✅ Send Email for internal review
+  if (settings?.enable_internal && !order.review_sent && order.email) {
+    await sendMail({
+      to: order.email,
+      subject: `We’d love your feedback – ${biz.business_name}`,
+      html: `
+        <p>Hello ${clientName},</p>
+        <p>We’d appreciate your feedback on your recent service:</p>
+        <p><a href="${reviewLink}" target="_blank">${reviewLink}</a></p>
+        <p>Thanks for your time!</p>
+      `,
+    });
+
+    await db.execute(
+      `UPDATE service_orders SET review_sent = 1 WHERE id = ?`,
+      [order.service_order_id]
+    );
+  }
+
+  // ✅ Send Google Review (email + optional SMS)
+  if (
+    settings?.enable_google_review &&
+    settings?.google_review_link &&
+    !order.google_review_sent
+  ) {
+    const googleMsg = `Hi ${clientName}, we'd love your feedback! Please leave us a Google review here: ${settings.google_review_link}`;
+
+    // 📧 Email
+    if (order.email) {
+      await sendMail({
+        to: order.email,
+        subject: `Your feedback matters – ${biz.business_name}`,
+        html: `
+          <p>Hello ${clientName},</p>
+          <p>We’d love a moment of your time to leave us a Google review:</p>
+          <p><a href="${settings.google_review_link}" target="_blank">${settings.google_review_link}</a></p>
+          <p>Thank you!</p>
+        `,
+      });
+    }
+
+    // 📱 Optional: SMS (if Twilio + formattedPhone is available)
+    if (settings.send_sms && twilioSettings) {
+      const formattedPhone = formatToE164(order.phone);
+      if (formattedPhone) {
+        const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
+        await client.messages.create({
+          from: twilioSettings.twilio_phone,
+          to: formattedPhone,
+          body: googleMsg,
+        });
+      }
+    }
+
+    await db.execute(
+      `UPDATE service_orders SET google_review_sent = 1 WHERE id = ?`,
+      [order.service_order_id]
+    );
+  }
 }
 
 module.exports = router;
