@@ -139,6 +139,30 @@ router.post('/internal/send/:businessId', async (req, res) => {
     res.status(500).json({ error: 'Internal review request failed' });
   }
 });
+// POST: Update review settings for a business
+router.post('/settings', async (req, res) => {
+  const { business_id, enable_internal } = req.body;
+
+  if (!business_id) {
+    return res.status(400).json({ error: 'business_id is required' });
+  }
+
+  try {
+    const [result] = await db.execute(
+      `UPDATE review_settings SET enable_internal = ? WHERE business_id = ?`,
+      [enable_internal ? 1 : 0, business_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Settings not found for that business' });
+    }
+
+    res.json({ success: true, message: 'Review settings updated' });
+  } catch (err) {
+    console.error('❌ Failed to update review settings:', err);
+    res.status(500).json({ error: 'Failed to update review settings' });
+  }
+});
 
 // Export the router
 module.exports = router;
