@@ -248,5 +248,72 @@ router.get('/sms-settings/:business_id', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+const twilio = require('twilio');
+
+router.post('/internal/send-sms/:businessId', async (req, res) => {
+  const { businessId } = req.params;
+
+  try {
+    // ✅ Check if SMS is enabled
+    const [[settings]] = await db.execute(
+      `SELECT send_sms FROM review_settings WHERE business_id = ?`,
+      [businessId]
+    );
+
+    if (!settings?.send_sms) {
+      return res.status(400).json({ error: 'SMS sending is disabled' });
+    }
+
+    // ✅ Get Twilio credentials
+    const [[twilioSettings]] = await db.execute(
+      `SELECT twilio_sid, twilio_auth_token, twilio_phone FROM sms_settings WHERE business_id = ?`,
+      [businessId]
+    );
+
+    if (!twilioSettings) {
+      return res.status(400).json({ error: 'Twilio settings not found' });
+    }
+
+    const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
+
+    // ✅ Get completed service orders that haven't received SMS
+    const [orders] = await db.execute(
+      `SELECT o.id AS service_order_id, u.name, u.phone
+       FROM service_orders o
+       JOIN users u ON o.user_id = u.id
+       WHERE o.business_id = ?
+         AND u.role = 'client'
+         AND u.phone IS NOT NULL
+         AND o.status = 'completed'
+         AND o.review_sent_sms = 0`,
+      [businessId]
+    );
+
+    if (!orders.length) {
+      return res.status(404).json({ error: 'No eligible clients for SMS' });
+    }
+
+    for (const { service_order_id, name, phone } of orders) {
+      const link = `https://${process.env.APP_DOMAIN}/review-internal?o=${service_order_id}`;
+      const message = `Hi ${name || ''}, please leave a quick review of your recent service: ${link}`;
+
+      await client.messages.create({
+        from: twilioSettings.twilio_phone,
+        to: phone,
+        body: message,
+      });
+
+      await db.execute(
+        `UPDATE service_orders SET review_sent_sms = 1 WHERE id = ?`,
+        [service_order_id]
+      );
+    }
+
+    res.json({ success: true, message: `✅ Sent ${orders.length} SMS messages` });
+  } catch (err) {
+    console.error('❌ Failed to send SMS reviews:', err);
+    res.status(500).json({ error: 'Failed to send SMS reviews' });
+  }
+});
 
 module.exports = router;
