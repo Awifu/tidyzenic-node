@@ -27,7 +27,7 @@ router.post('/submit', async (req, res) => {
   }
 });
 
-// GET: Internal reviews with client and service provider info
+// GET: Internal reviews with client, service provider, and service info
 router.get('/internal/:business_id', async (req, res) => {
   const { business_id } = req.params;
 
@@ -118,3 +118,8 @@ router.post('/internal/send/:businessId', async (req, res) => {
     res.status(500).json({ error: 'Internal review request failed' });
   }
 });
+
+// Other routes such as Google reviews, analytics etc. remain unchanged
+
+// Export the router
+module.exports = router;
