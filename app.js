@@ -32,23 +32,42 @@ app.use((req, res, next) => {
 
 // ==============================
 // 3. Security Headers with CSP
-// ==============================
 app.use(helmet({
   contentSecurityPolicy: {
     useDefaults: true,
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://tidyzenic.com', 'https://*.tidyzenic.com']
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'", // ⚠️ Still required if you're injecting scripts manually (e.g., nonce-based inline code)
+        'https://cdn.jsdelivr.net' // ✅ For Chart.js and any other CDN script
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'", // ✅ Necessary for Tailwind, inline styles, etc.
+        'https://fonts.googleapis.com'
+      ],
+      fontSrc: [
+        "'self'",
+        'https://fonts.gstatic.com'
+      ],
+      imgSrc: [
+        "'self'",
+        'data:',
+        'https:' // ✅ allows external charts/images
+      ],
+      connectSrc: [
+        "'self'",
+        'https://tidyzenic.com',
+        'https://*.tidyzenic.com'
+      ],
+      objectSrc: ["'none'"], // ✅ Disable plugins like Flash, etc.
+      upgradeInsecureRequests: [], // ✅ Optional: auto-upgrade all HTTP requests to HTTPS
     }
   },
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
-
 // ==============================
 // 4. CORS Configuration
 // ==============================
