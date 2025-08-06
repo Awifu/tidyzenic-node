@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { sendMail } = require('../utils/mailer');
+const { sendSMS } = require('../utils/sms');
 const analyticsController = require('../controllers/analyticsController');
 
 // ============================
-// GET: Review settings for a business
+// GET: Review settings
 // ============================
 router.get('/settings/:business_id', async (req, res) => {
   const { business_id } = req.params;
@@ -17,7 +18,7 @@ router.get('/settings/:business_id', async (req, res) => {
     );
     res.json({ settings: rows[0] || null });
   } catch (err) {
-    console.error('❌ Failed to get review settings:', err);
+    console.error('❌ Failed to fetch review settings:', err);
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
 });
@@ -28,19 +29,19 @@ router.get('/settings/:business_id', async (req, res) => {
 router.post('/settings', async (req, res) => {
   const {
     business_id,
-    google_review_link,
+    google_review_link = '',
     enable_google,
     enable_internal,
     delay_minutes,
     send_email,
-    send_sms,
+    send_sms
   } = req.body;
 
   if (!business_id) {
     return res.status(400).json({ error: 'Business ID is required' });
   }
 
-  const trimmedLink = (google_review_link || '').trim();
+  const trimmedLink = google_review_link.trim();
   const validGoogleLink =
     trimmedLink === '' || /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(trimmedLink);
 
@@ -86,7 +87,7 @@ router.post('/submit', async (req, res) => {
   const { ticket_id, rating, comment } = req.body;
 
   if (!ticket_id || !rating) {
-    return res.status(400).json({ error: 'Missing ticket ID or rating' });
+    return res.status(400).json({ error: 'Ticket ID and rating are required' });
   }
 
   try {
@@ -104,13 +105,13 @@ router.post('/submit', async (req, res) => {
 });
 
 // ============================
-// GET: Internal reviews by business
+// GET: Internal reviews
 // ============================
 router.get('/internal/:business_id', async (req, res) => {
   const { business_id } = req.params;
 
   try {
-    const [rows] = await db.execute(
+    const [reviews] = await db.execute(
       `SELECT ticket_id, rating, comment, created_at
        FROM internal_reviews
        WHERE ticket_id IN (
@@ -120,53 +121,40 @@ router.get('/internal/:business_id', async (req, res) => {
       [business_id]
     );
 
-    res.json({ reviews: rows });
+    res.json({ reviews });
   } catch (err) {
     console.error('❌ Failed to fetch internal reviews:', err);
-    res.status(500).json({ error: 'Failed to fetch internal reviews' });
+    res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
 
 // ============================
-// GET: Google review analytics
+// POST: Send Internal Review Request (email)
 // ============================
-router.get('/google/analytics/:businessId', analyticsController.googleAnalytics);
-
-// ============================
-// GET: Internal review analytics
-// ============================
-router.get('/internal/analytics/:businessId', analyticsController.internalAnalytics);
-
-// ============================
-// POST: Send Google review request via email
-// ============================
-// ============================
-// POST: Send Google review request via email
-// ============================
-router.post('/google/send/:businessId', async (req, res) => {
+router.post('/internal/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
 
   try {
-    // 1. Get Google review link
     const [[settings]] = await db.execute(
-      `SELECT google_review_link FROM review_settings WHERE business_id = ?`,
+      `SELECT enable_internal FROM review_settings WHERE business_id = ?`,
       [businessId]
     );
 
-    if (!settings?.google_review_link) {
-      return res.status(400).json({ error: 'No Google review link configured for this business' });
+    if (!settings?.enable_internal) {
+      return res.status(400).json({ error: 'Internal reviews are disabled' });
     }
 
-    // 2. Get verified clients with support tickets
     const [clients] = await db.execute(
-      `SELECT DISTINCT u.email
+      `SELECT u.email, u.full_name, t.id AS ticket_id
        FROM users u
        JOIN support_tickets t ON u.id = t.user_id
        WHERE u.business_id = ?
          AND u.role = 'client'
          AND u.is_verified = 1
          AND u.is_deleted = 0
-         AND u.email IS NOT NULL`,
+         AND u.email IS NOT NULL
+         AND (t.review_sent IS NULL OR t.review_sent = 0)
+       ORDER BY t.created_at DESC`,
       [businessId]
     );
 
@@ -174,21 +162,74 @@ router.post('/google/send/:businessId', async (req, res) => {
       return res.status(404).json({ error: 'No eligible clients found' });
     }
 
-    // 3. Send review emails
+    const [[biz]] = await db.execute(
+      `SELECT business_name FROM businesses WHERE id = ?`,
+      [businessId]
+    );
+
+    for (const { email, full_name, ticket_id } of clients) {
+      const reviewLink = `https://${process.env.APP_DOMAIN}/review-internal?t=${ticket_id}`;
+      await sendMail({
+        to: email,
+        subject: `We’d love your feedback – ${biz.business_name}`,
+        html: `
+          <p>Hello ${full_name || 'there'},</p>
+          <p>We’d appreciate your feedback on your recent experience:</p>
+          <p><a href="${reviewLink}" target="_blank">${reviewLink}</a></p>
+          <p>Thanks for your time!</p>
+        `,
+      });
+
+      await db.execute(`UPDATE support_tickets SET review_sent = 1 WHERE id = ?`, [ticket_id]);
+    }
+
+    res.json({ success: true, message: `Sent to ${clients.length} client(s)` });
+  } catch (err) {
+    console.error('❌ Failed to send internal review requests:', err);
+    res.status(500).json({ error: 'Internal review request failed' });
+  }
+});
+
+// ============================
+// POST: Send Google Review via Email
+// ============================
+router.post('/google/send/:businessId', async (req, res) => {
+  const { businessId } = req.params;
+
+  try {
+    const [[settings]] = await db.execute(
+      `SELECT google_review_link FROM review_settings WHERE business_id = ?`,
+      [businessId]
+    );
+
+    if (!settings?.google_review_link) {
+      return res.status(400).json({ error: 'Google review link not configured' });
+    }
+
+    const [clients] = await db.execute(
+      `SELECT DISTINCT email FROM users
+       WHERE business_id = ? AND email IS NOT NULL AND is_verified = 1 AND is_deleted = 0`,
+      [businessId]
+    );
+
+    if (!clients.length) {
+      return res.status(404).json({ error: 'No eligible clients found' });
+    }
+
     for (const { email } of clients) {
       await sendMail({
         to: email,
         subject: 'We’d love your feedback!',
         html: `
           <p>Hello,</p>
-          <p>We’d really appreciate it if you could leave us a quick Google review:</p>
+          <p>Please leave us a quick review:</p>
           <p><a href="${settings.google_review_link}" target="_blank">${settings.google_review_link}</a></p>
-          <p>Thank you! 🙏</p>
+          <p>Thanks! 🙏</p>
         `,
       });
     }
 
-    res.json({ success: true, message: `✅ Sent to ${clients.length} client(s)` });
+    res.json({ success: true, message: `Sent to ${clients.length} client(s)` });
   } catch (err) {
     console.error('❌ Failed to send Google review emails:', err);
     res.status(500).json({ error: 'Failed to send review emails' });
@@ -196,7 +237,7 @@ router.post('/google/send/:businessId', async (req, res) => {
 });
 
 // ============================
-// POST: Send Google review request via SMS
+// POST: Send Google Review via SMS
 // ============================
 router.post('/google/send-sms/:businessId', async (req, res) => {
   const { businessId } = req.params;
@@ -208,7 +249,7 @@ router.post('/google/send-sms/:businessId', async (req, res) => {
     );
 
     if (!settings?.google_review_link) {
-      return res.status(400).json({ error: 'No Google review link configured for this business' });
+      return res.status(400).json({ error: 'Google review link not configured' });
     }
 
     const [[biz]] = await db.execute(
@@ -217,7 +258,7 @@ router.post('/google/send-sms/:businessId', async (req, res) => {
     );
 
     if (!biz?.twilio_sid || !biz?.twilio_auth_token || !biz?.twilio_phone_number) {
-      return res.status(400).json({ error: 'Missing Twilio credentials for this business' });
+      return res.status(400).json({ error: 'Missing Twilio credentials' });
     }
 
     const [users] = await db.execute(
@@ -226,10 +267,8 @@ router.post('/google/send-sms/:businessId', async (req, res) => {
     );
 
     if (!users.length) {
-      return res.status(404).json({ error: 'No verified users with phone numbers found' });
+      return res.status(404).json({ error: 'No verified users with phone numbers' });
     }
-
-    const { sendSMS } = require('../utils/sms');
 
     let sentCount = 0;
     for (const { phone } of users) {
@@ -243,16 +282,21 @@ router.post('/google/send-sms/:businessId', async (req, res) => {
         });
         sentCount++;
       } catch (err) {
-        console.warn(`⚠️ Failed to send SMS to ${phone}:`, err.message);
+        console.warn(`⚠️ SMS failed for ${phone}:`, err.message);
       }
     }
 
     res.json({ success: true, message: `SMS sent to ${sentCount} user(s)` });
   } catch (err) {
-    console.error('❌ Failed to send Google review SMS:', err);
-    res.status(500).json({ error: 'Failed to send SMS review requests' });
+    console.error('❌ Failed to send SMS reviews:', err);
+    res.status(500).json({ error: 'Failed to send SMS reviews' });
   }
 });
 
-// ✅ Export router
+// ============================
+// GET: Analytics routes
+// ============================
+router.get('/google/analytics/:businessId', analyticsController.googleAnalytics);
+router.get('/internal/analytics/:businessId', analyticsController.internalAnalytics);
+
 module.exports = router;
