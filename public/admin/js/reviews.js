@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const el = {
+    // Review Settings
     googleLink: document.getElementById('googleReviewLink'),
     enableGoogle: document.getElementById('enableGoogleReview'),
     enableInternal: document.getElementById('enableInternalReview'),
@@ -8,27 +9,34 @@ document.addEventListener('DOMContentLoaded', () => {
     sendSms: document.getElementById('sendSmsReview'),
     saveBtn: document.getElementById('saveReviewSettings'),
 
+    // Twilio Modal
     smsModal: document.getElementById('smsModal'),
     closeSmsModal: document.getElementById('closeSmsModal'),
     saveTwilioBtn: document.getElementById('saveTwilioSettings'),
-
     twilioSid: document.getElementById('twilioSid'),
     twilioToken: document.getElementById('twilioAuthToken'),
     twilioPhone: document.getElementById('twilioPhone'),
 
-    // New modals
+    // Modals
     openGoogleReviewModal: document.getElementById('openGoogleReviewModal'),
     closeGoogleReviewModal: document.getElementById('closeGoogleReviewModal'),
     googleReviewModal: document.getElementById('googleReviewModal'),
-
     openInternalReviewModal: document.getElementById('openInternalReviewModal'),
     closeInternalReviewModal: document.getElementById('closeInternalReviewModal'),
     internalReviewModal: document.getElementById('internalReviewModal'),
+
+    // Charts
+    googleChart: document.getElementById('googleChart'),
+    internalChart: document.getElementById('internalChart'),
+
+    // Send buttons
+    sendGoogleReview: document.getElementById('sendGoogleReview'),
+    sendInternalReview: document.getElementById('sendInternalReview'),
   };
 
   let businessId = null;
 
-  // 🔹 Load Business ID
+  // 🔹 Fetch Business ID
   async function fetchBusinessId() {
     try {
       const res = await fetch('/api/business/public');
@@ -131,62 +139,159 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🔹 UI Helpers
-  function validateGoogleLink() {
-    const value = el.googleLink.value.trim();
-    const isValid = /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(value);
+  // 🔹 Analytics
+  async function loadGoogleAnalytics() {
+    if (!el.enableGoogle.checked || !el.googleChart) return;
 
-    el.googleLink.classList.remove('border-red-500', 'border-green-500');
-    if (value === '') return;
-    el.googleLink.classList.add(isValid ? 'border-green-500' : 'border-red-500');
+    try {
+      const res = await fetch(`/api/reviews/google/analytics/${businessId}`);
+      const data = await res.json();
+
+      new Chart(el.googleChart, {
+        type: 'line',
+        data: {
+          labels: data.labels || [],
+          datasets: [
+            {
+              label: 'Requests Sent',
+              data: data.sent || [],
+              borderColor: '#6366f1',
+              tension: 0.3,
+            },
+            {
+              label: 'Clicks Received',
+              data: data.clicks || [],
+              borderColor: '#10b981',
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: 'Google Reviews' },
+          },
+        },
+      });
+    } catch (err) {
+      console.error('❌ Failed to load Google analytics:', err);
+    }
   }
 
+  async function loadInternalAnalytics() {
+    if (!el.enableInternal.checked || !el.internalChart) return;
+
+    try {
+      const res = await fetch(`/api/reviews/internal/analytics/${businessId}`);
+      const data = await res.json();
+
+      new Chart(el.internalChart, {
+        type: 'bar',
+        data: {
+          labels: data.labels || [],
+          datasets: [{
+            label: 'Avg Rating',
+            data: data.ratings || [],
+            backgroundColor: '#6366f1',
+            borderRadius: 6,
+          }],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 5
+            }
+          },
+          plugins: {
+            title: { display: true, text: 'Internal Review Ratings' },
+            legend: { display: false }
+          }
+        },
+      });
+    } catch (err) {
+      console.error('❌ Failed to load internal analytics:', err);
+    }
+  }
+
+  // 🔹 Send Requests
+  async function sendGoogleReviewRequest() {
+    if (!el.enableGoogle.checked) return alert('Google reviews are disabled');
+
+    try {
+      const res = await fetch(`/api/reviews/google/send/${businessId}`, { method: 'POST' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || 'Failed');
+      alert('✅ Google review request sent!');
+    } catch (err) {
+      console.error('❌ Send Google review failed:', err);
+    }
+  }
+
+  async function sendInternalReviewRequest() {
+    if (!el.enableInternal.checked) return alert('Internal reviews are disabled');
+
+    try {
+      const res = await fetch(`/api/reviews/internal/send/${businessId}`, { method: 'POST' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || 'Failed');
+      alert('✅ Internal review request sent!');
+    } catch (err) {
+      console.error('❌ Send internal review failed:', err);
+    }
+  }
+
+  // 🔹 Helper Functions
   function toggleGoogleInput() {
     el.googleLink.disabled = !el.enableGoogle.checked;
   }
 
-  // 🔹 Modal Listeners
-  function setupModalListeners() {
-    // SMS Modal
-    el.sendSms?.addEventListener('change', () => {
-      if (el.sendSms.checked && el.smsModal) {
-        el.smsModal.classList.remove('hidden');
-      }
-    });
-
-    el.closeSmsModal?.addEventListener('click', () => {
-      el.smsModal.classList.add('hidden');
-      el.sendSms.checked = false;
-    });
-
-    el.saveTwilioBtn?.addEventListener('click', saveTwilioSettings);
-
-    // Google Review Modal
-    el.openGoogleReviewModal?.addEventListener('click', () => {
-      el.googleReviewModal.classList.remove('hidden');
-    });
-    el.closeGoogleReviewModal?.addEventListener('click', () => {
-      el.googleReviewModal.classList.add('hidden');
-    });
-
-    // Internal Review Modal
-    el.openInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.remove('hidden');
-    });
-    el.closeInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.add('hidden');
-    });
+  function validateGoogleLink() {
+    const value = el.googleLink.value.trim();
+    const isValid = /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(value);
+    el.googleLink.classList.remove('border-red-500', 'border-green-500');
+    if (value !== '') {
+      el.googleLink.classList.add(isValid ? 'border-green-500' : 'border-red-500');
+    }
   }
 
-  // 🔹 Input Listeners
-  function setupInputListeners() {
+  // 🔹 Event Listeners
+  function setupEventListeners() {
     el.googleLink?.addEventListener('input', validateGoogleLink);
     el.enableGoogle?.addEventListener('change', () => {
       toggleGoogleInput();
       validateGoogleLink();
     });
-
     el.saveBtn?.addEventListener('click', saveReviewSettings);
+    el.saveTwilioBtn?.addEventListener('click', saveTwilioSettings);
+
+    el.sendSms?.addEventListener('change', () => {
+      if (el.sendSms.checked) el.smsModal.classList.remove('hidden');
+    });
+    el.closeSmsModal?.addEventListener('click', () => {
+      el.smsModal.classList.add('hidden');
+      el.sendSms.checked = false;
+    });
+
+    el.openGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.remove('hidden');
+      loadGoogleAnalytics();
+    });
+    el.closeGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.add('hidden');
+    });
+
+    el.openInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.remove('hidden');
+      loadInternalAnalytics();
+    });
+    el.closeInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.add('hidden');
+    });
+
+    el.sendGoogleReview?.addEventListener('click', sendGoogleReviewRequest);
+    el.sendInternalReview?.addEventListener('click', sendInternalReviewRequest);
   }
 
   // 🔹 Init
@@ -195,149 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (businessId) {
       await loadReviewSettings();
     }
-    setupModalListeners();
-    setupInputListeners();
+    setupEventListeners();
   }
 
   init();
 });
-  // 🔹 Load Google Analytics
-  async function loadGoogleAnalytics() {
-    if (!el.googleReviewModal || !el.enableGoogle.checked) return;
-
-    try {
-      const res = await fetch(`/api/reviews/google/analytics/${businessId}`);
-      const data = await res.json();
-
-      const ctx = document.getElementById('googleChart');
-      if (!ctx) return;
-
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: data.labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          datasets: [
-            {
-              label: 'Review Requests Sent',
-              data: data.sent || [5, 10, 7, 4, 12, 8, 9],
-              borderWidth: 2,
-              borderColor: '#6366f1',
-              fill: false,
-              tension: 0.3,
-            },
-            {
-              label: 'Clicks Received',
-              data: data.clicks || [2, 6, 4, 1, 7, 3, 5],
-              borderWidth: 2,
-              borderColor: '#10b981',
-              fill: false,
-              tension: 0.3,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Google Reviews Performance' },
-          },
-        },
-      });
-    } catch (err) {
-      console.error('❌ Failed to load Google review analytics:', err);
-    }
-  }
-
-  // 🔹 Load Internal Analytics
-  async function loadInternalAnalytics() {
-    if (!el.internalReviewModal || !el.enableInternal.checked) return;
-
-    try {
-      const res = await fetch(`/api/reviews/internal/analytics/${businessId}`);
-      const data = await res.json();
-
-      const ctx = document.getElementById('internalChart');
-      if (!ctx) return;
-
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: data.labels || ['Service A', 'Service B', 'Service C'],
-          datasets: [
-            {
-              label: 'Avg Rating',
-              data: data.ratings || [4.2, 4.5, 3.8],
-              backgroundColor: '#6366f1',
-              borderRadius: 6,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: 'Internal Review Ratings' },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 5,
-            },
-          },
-        },
-      });
-    } catch (err) {
-      console.error('❌ Failed to load internal review analytics:', err);
-    }
-  }
-
-  // 🔹 Send Google Review Request (trigger manually)
-  async function sendGoogleReviewRequest() {
-    if (!el.enableGoogle.checked) {
-      return alert('Google review requests are disabled.');
-    }
-
-    try {
-      const res = await fetch(`/api/reviews/google/send/${businessId}`, { method: 'POST' });
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result?.error || 'Error sending request');
-      alert('✅ Google review request sent!');
-    } catch (err) {
-      console.error('❌ Failed to send Google review request:', err);
-      alert('❌ Could not send Google review request.');
-    }
-  }
-
-  // 🔹 Send Internal Review Request (trigger manually)
-  async function sendInternalReviewRequest() {
-    if (!el.enableInternal.checked) {
-      return alert('Internal review system is disabled.');
-    }
-
-    try {
-      const res = await fetch(`/api/reviews/internal/send/${businessId}`, { method: 'POST' });
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result?.error || 'Error sending request');
-      alert('✅ Internal review request sent!');
-    } catch (err) {
-      console.error('❌ Failed to send internal review request:', err);
-      alert('❌ Could not send internal review request.');
-    }
-  }
-
-  // 🔹 Register Chart Triggers
-  function setupAnalyticsTriggers() {
-    document.getElementById('openGoogleReviewModal')?.addEventListener('click', loadGoogleAnalytics);
-    document.getElementById('openInternalReviewModal')?.addEventListener('click', loadInternalAnalytics);
-  }
-
-  // 🔹 Register Send Buttons
-  function setupSendButtons() {
-    document.getElementById('sendGoogleReview')?.addEventListener('click', sendGoogleReviewRequest);
-    document.getElementById('sendInternalReview')?.addEventListener('click', sendInternalReviewRequest);
-  }
-
-  setupAnalyticsTriggers();
-  setupSendButtons();
