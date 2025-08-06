@@ -2,18 +2,32 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { encrypt } = require('../utils/encryption');
+const { validateTwilioCredentials } = require('../utils/sms');
 
+/**
+ * POST /sms/settings
+ * Save Twilio credentials securely (after validation)
+ */
 router.post('/settings', async (req, res) => {
   const { business_id, twilio_sid, twilio_auth_token, twilio_phone } = req.body;
 
+  // 🔒 Validate input
   if (!business_id || !twilio_sid || !twilio_auth_token || !twilio_phone) {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
   try {
+    // ✅ Validate credentials before saving
+    const isValid = await validateTwilioCredentials(twilio_sid, twilio_auth_token);
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid Twilio credentials' });
+    }
+
+    // 🔐 Encrypt sensitive credentials
     const encryptedSid = encrypt(twilio_sid);
     const encryptedToken = encrypt(twilio_auth_token);
 
+    // 💾 Insert or update SMS settings in DB
     await db.execute(`
       INSERT INTO sms_settings (business_id, twilio_sid, twilio_auth_token, twilio_phone)
       VALUES (?, ?, ?, ?)
@@ -24,14 +38,17 @@ router.post('/settings', async (req, res) => {
         updated_at = CURRENT_TIMESTAMP
     `, [business_id, encryptedSid, encryptedToken, twilio_phone]);
 
-    res.json({ success: true, message: 'SMS settings saved securely' });
+    res.json({ success: true, message: '✅ Twilio credentials saved!' });
   } catch (err) {
-    console.error('❌ Error saving encrypted SMS settings:', err);
-    res.status(500).json({ error: 'Server error while saving encrypted SMS settings' });
+    console.error('❌ Error saving Twilio credentials:', err);
+    res.status(500).json({ error: 'Server error while saving Twilio credentials' });
   }
 });
-const { validateTwilioCredentials } = require('../utils/sms');
 
+/**
+ * POST /sms/validate
+ * Validate Twilio credentials without saving
+ */
 router.post('/validate', async (req, res) => {
   const { twilio_sid, twilio_auth_token } = req.body;
 
