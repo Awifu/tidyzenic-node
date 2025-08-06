@@ -2,24 +2,24 @@
 
 const db = require('../db');
 const twilio = require('twilio');
+const { encrypt } = require('../utils/encryption'); // Import encryption
 
-/**
- * Save Twilio SMS settings for a business after validating the credentials.
- */
 exports.saveTwilioSettings = async (req, res) => {
-  const { business_id, sid, token, phone } = req.body;
+  const { business_id, twilio_sid, twilio_auth_token, twilio_phone } = req.body;
 
-  // Basic validation
-  if (!business_id || !sid || !token || !phone) {
+  if (!business_id || !twilio_sid || !twilio_auth_token || !twilio_phone) {
     return res.status(400).json({ error: 'All fields (SID, token, phone) are required.' });
   }
 
   try {
-    // ✅ Validate Twilio credentials
-    const client = twilio(sid, token);
-    await client.api.accounts(sid).fetch();
+    // Validate credentials
+    const client = twilio(twilio_sid, twilio_auth_token);
+    await client.api.accounts(twilio_sid).fetch();
 
-    // ✅ Save to DB
+    // Encrypt token
+    const encryptedToken = encrypt(twilio_auth_token);
+
+    // Save to DB
     await db.execute(
       `
         INSERT INTO sms_settings (business_id, twilio_sid, twilio_auth_token, twilio_phone)
@@ -30,7 +30,7 @@ exports.saveTwilioSettings = async (req, res) => {
           twilio_phone = VALUES(twilio_phone),
           updated_at = CURRENT_TIMESTAMP
       `,
-      [business_id, sid, token, phone]
+      [business_id, twilio_sid, encryptedToken, twilio_phone]
     );
 
     return res.status(200).json({ success: true, message: '✅ Twilio settings validated and saved.' });

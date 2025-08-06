@@ -1,7 +1,9 @@
+// utils/encryption.js
+
 const crypto = require('crypto');
 
 const ALGORITHM = 'aes-256-cbc';
-const KEY = Buffer.from(process.env.TWILIO_SECRET_KEY, 'utf8');
+const KEY = Buffer.from(process.env.TWILIO_SECRET_KEY, 'utf8'); // Must be 32 bytes
 const IV_LENGTH = 16;
 
 function encrypt(text) {
