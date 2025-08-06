@@ -141,4 +141,30 @@ router.get('/google/analytics/:businessId', analyticsController.googleAnalytics)
 // ============================
 router.get('/internal/analytics/:businessId', analyticsController.internalAnalytics);
 
+// ============================
+// POST: Send Google review request
+// ============================
+router.post('/google/send/:businessId', async (req, res) => {
+  const { businessId } = req.params;
+
+  try {
+    const [rows] = await db.execute(
+      `SELECT google_review_link FROM review_settings WHERE business_id = ?`,
+      [businessId]
+    );
+
+    if (!rows.length || !rows[0].google_review_link) {
+      return res.status(400).json({ error: 'No Google review link configured for this business' });
+    }
+
+    console.log(`📤 Simulating Google review request to business ${businessId}: ${rows[0].google_review_link}`);
+
+    res.json({ success: true, message: 'Google review request sent!' });
+  } catch (err) {
+    console.error('❌ Failed to send Google review request:', err);
+    res.status(500).json({ error: 'Failed to send Google review request' });
+  }
+});
+
+// ✅ Only once, at the end
 module.exports = router;
