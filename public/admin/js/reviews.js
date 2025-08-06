@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.openGoogleReviewModal?.addEventListener('click', () => {
       el.googleReviewModal.classList.remove('hidden');
-      loadGoogleAnalytics();
+      // loadGoogleAnalytics(); // ← define this if needed
     });
 
     el.closeGoogleReviewModal?.addEventListener('click', () => {
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.openInternalReviewModal?.addEventListener('click', () => {
       el.internalReviewModal.classList.remove('hidden');
-      loadInternalReviews();
+      // loadInternalReviews(); // ← define this if needed
     });
 
     el.closeInternalReviewModal?.addEventListener('click', () => {
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.sendSms?.addEventListener('change', () => {
       if (el.sendSms.checked) {
         el.smsModal.classList.remove('hidden');
-        loadTwilioSettings(); // Optional: preload saved creds
+        // loadTwilioSettings(); // ← optional: only if you're preloading from DB
       }
     });
 
@@ -143,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
       el.sendSms.checked = false;
     });
 
-    // ✅ Twilio Save + Validation
     el.saveTwilioBtn?.addEventListener('click', async () => {
       const sid = el.twilioSid.value.trim();
       const authToken = el.twilioToken.value.trim();
@@ -154,9 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Validate credentials
       try {
-        const res = await fetch('/sms/validate', {
+        const res = await fetch('/api/sms/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ twilio_sid: sid, twilio_auth_token: authToken }),
@@ -172,9 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Save credentials
       try {
-        const res = await fetch('/sms/settings', {
+        const res = await fetch('/api/sms/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
