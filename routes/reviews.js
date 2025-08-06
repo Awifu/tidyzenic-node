@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const analyticsController = require('../controllers/analyticsController');
 
 // ============================
 // GET: Review settings for a business
@@ -39,12 +40,10 @@ router.post('/settings', async (req, res) => {
     send_sms,
   } = req.body;
 
-  // 🔒 Validate required fields
   if (!business_id) {
     return res.status(400).json({ error: 'Business ID is required' });
   }
 
-  // 🔒 Validate Google review link if provided
   const trimmedLink = (google_review_link || '').trim();
   if (
     trimmedLink &&
@@ -131,5 +130,15 @@ router.get('/internal/:business_id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch internal reviews' });
   }
 });
+
+// ============================
+// GET: Google review analytics
+// ============================
+router.get('/google/analytics/:businessId', analyticsController.googleAnalytics);
+
+// ============================
+// GET: Internal review analytics
+// ============================
+router.get('/internal/analytics/:businessId', analyticsController.internalAnalytics);
 
 module.exports = router;

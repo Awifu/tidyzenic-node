@@ -15,6 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
     twilioSid: document.getElementById('twilioSid'),
     twilioToken: document.getElementById('twilioAuthToken'),
     twilioPhone: document.getElementById('twilioPhone'),
+
+    // New modals
+    openGoogleReviewModal: document.getElementById('openGoogleReviewModal'),
+    closeGoogleReviewModal: document.getElementById('closeGoogleReviewModal'),
+    googleReviewModal: document.getElementById('googleReviewModal'),
+
+    openInternalReviewModal: document.getElementById('openInternalReviewModal'),
+    closeInternalReviewModal: document.getElementById('closeInternalReviewModal'),
+    internalReviewModal: document.getElementById('internalReviewModal'),
   };
 
   let businessId = null;
@@ -136,8 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
     el.googleLink.disabled = !el.enableGoogle.checked;
   }
 
-  // 🔹 Modal Events
+  // 🔹 Modal Listeners
   function setupModalListeners() {
+    // SMS Modal
     el.sendSms?.addEventListener('change', () => {
       if (el.sendSms.checked && el.smsModal) {
         el.smsModal.classList.remove('hidden');
@@ -150,6 +160,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     el.saveTwilioBtn?.addEventListener('click', saveTwilioSettings);
+
+    // Google Review Modal
+    el.openGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.remove('hidden');
+    });
+    el.closeGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.add('hidden');
+    });
+
+    // Internal Review Modal
+    el.openInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.remove('hidden');
+    });
+    el.closeInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.add('hidden');
+    });
   }
 
   // 🔹 Input Listeners
@@ -175,3 +201,143 @@ document.addEventListener('DOMContentLoaded', () => {
 
   init();
 });
+  // 🔹 Load Google Analytics
+  async function loadGoogleAnalytics() {
+    if (!el.googleReviewModal || !el.enableGoogle.checked) return;
+
+    try {
+      const res = await fetch(`/api/reviews/google/analytics/${businessId}`);
+      const data = await res.json();
+
+      const ctx = document.getElementById('googleChart');
+      if (!ctx) return;
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [
+            {
+              label: 'Review Requests Sent',
+              data: data.sent || [5, 10, 7, 4, 12, 8, 9],
+              borderWidth: 2,
+              borderColor: '#6366f1',
+              fill: false,
+              tension: 0.3,
+            },
+            {
+              label: 'Clicks Received',
+              data: data.clicks || [2, 6, 4, 1, 7, 3, 5],
+              borderWidth: 2,
+              borderColor: '#10b981',
+              fill: false,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Google Reviews Performance' },
+          },
+        },
+      });
+    } catch (err) {
+      console.error('❌ Failed to load Google review analytics:', err);
+    }
+  }
+
+  // 🔹 Load Internal Analytics
+  async function loadInternalAnalytics() {
+    if (!el.internalReviewModal || !el.enableInternal.checked) return;
+
+    try {
+      const res = await fetch(`/api/reviews/internal/analytics/${businessId}`);
+      const data = await res.json();
+
+      const ctx = document.getElementById('internalChart');
+      if (!ctx) return;
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels || ['Service A', 'Service B', 'Service C'],
+          datasets: [
+            {
+              label: 'Avg Rating',
+              data: data.ratings || [4.2, 4.5, 3.8],
+              backgroundColor: '#6366f1',
+              borderRadius: 6,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Internal Review Ratings' },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 5,
+            },
+          },
+        },
+      });
+    } catch (err) {
+      console.error('❌ Failed to load internal review analytics:', err);
+    }
+  }
+
+  // 🔹 Send Google Review Request (trigger manually)
+  async function sendGoogleReviewRequest() {
+    if (!el.enableGoogle.checked) {
+      return alert('Google review requests are disabled.');
+    }
+
+    try {
+      const res = await fetch(`/api/reviews/google/send/${businessId}`, { method: 'POST' });
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result?.error || 'Error sending request');
+      alert('✅ Google review request sent!');
+    } catch (err) {
+      console.error('❌ Failed to send Google review request:', err);
+      alert('❌ Could not send Google review request.');
+    }
+  }
+
+  // 🔹 Send Internal Review Request (trigger manually)
+  async function sendInternalReviewRequest() {
+    if (!el.enableInternal.checked) {
+      return alert('Internal review system is disabled.');
+    }
+
+    try {
+      const res = await fetch(`/api/reviews/internal/send/${businessId}`, { method: 'POST' });
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result?.error || 'Error sending request');
+      alert('✅ Internal review request sent!');
+    } catch (err) {
+      console.error('❌ Failed to send internal review request:', err);
+      alert('❌ Could not send internal review request.');
+    }
+  }
+
+  // 🔹 Register Chart Triggers
+  function setupAnalyticsTriggers() {
+    document.getElementById('openGoogleReviewModal')?.addEventListener('click', loadGoogleAnalytics);
+    document.getElementById('openInternalReviewModal')?.addEventListener('click', loadInternalAnalytics);
+  }
+
+  // 🔹 Register Send Buttons
+  function setupSendButtons() {
+    document.getElementById('sendGoogleReview')?.addEventListener('click', sendGoogleReviewRequest);
+    document.getElementById('sendInternalReview')?.addEventListener('click', sendInternalReviewRequest);
+  }
+
+  setupAnalyticsTriggers();
+  setupSendButtons();
