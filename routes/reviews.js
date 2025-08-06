@@ -83,18 +83,22 @@ router.post('/submit', async (req, res) => {
 });
 
 // ============================
-// GET: Internal reviews
+// GET: Internal reviews with client and provider names
 // ============================
 router.get('/internal/:business_id', async (req, res) => {
   try {
     const { business_id } = req.params;
     const [reviews] = await db.execute(
-      `SELECT ticket_id, rating, comment, created_at
-       FROM internal_reviews
-       WHERE ticket_id IN (
-         SELECT id FROM support_tickets WHERE business_id = ?
-       )
-       ORDER BY created_at DESC`,
+      `SELECT 
+         r.ticket_id, r.rating, r.comment, r.created_at,
+         client.name AS client_name,
+         sp.name AS service_provider_name
+       FROM internal_reviews r
+       JOIN support_tickets t ON r.ticket_id = t.id
+       JOIN users client ON t.user_id = client.id
+       LEFT JOIN users sp ON t.service_provider_id = sp.id
+       WHERE t.business_id = ?
+       ORDER BY r.created_at DESC`,
       [business_id]
     );
     res.json({ reviews });

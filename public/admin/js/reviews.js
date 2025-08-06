@@ -212,33 +212,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadInternalReviews() {
-    try {
-      const res = await fetch(`/api/reviews/internal/${businessId}`);
-      const data = await res.json();
+  try {
+    const res = await fetch(`/api/reviews/internal/${businessId}`);
+    const data = await res.json();
 
-      const tbody = el.internalReviewTableBody;
-      tbody.innerHTML = ''; // Clear old rows
+    const tbody = document.getElementById('internalReviewTableBody');
+    tbody.innerHTML = ''; // Clear old rows
 
-      if (!data.reviews.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">No reviews yet.</td></tr>`;
-        return;
-      }
-
-      for (const review of data.reviews) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td class="px-4 py-3">Client</td>
-          <td class="px-4 py-3">Service Provider</td>
-          <td class="px-4 py-3">${review.rating}</td>
-          <td class="px-4 py-3">${review.comment || '—'}</td>
-          <td class="px-4 py-3">${new Date(review.created_at).toLocaleString()}</td>
-        `;
-        tbody.appendChild(row);
-      }
-    } catch (err) {
-      console.error('❌ Failed to load internal reviews:', err);
+    if (!data.reviews.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">No reviews yet.</td></tr>`;
+      return;
     }
+
+    for (const review of data.reviews) {
+      // You may want to fetch client and service provider names if available
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-4 py-3">Client Name</td> 
+        <td class="px-4 py-3">Service Provider</td> 
+        <td class="px-4 py-3">${review.rating}</td>
+        <td class="px-4 py-3">${review.message || '—'}</td>
+        <td class="px-4 py-3">${new Date(review.created_at).toLocaleString()}</td>
+      `;
+      tbody.appendChild(row);
+    }
+  } catch (err) {
+    console.error('❌ Failed to load internal reviews:', err);
   }
+}
+
 
   async function sendGoogleReviewRequest() {
     if (!el.enableGoogle.checked) {
