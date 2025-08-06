@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { sendMail } = require('../utils/mailer');
 const analyticsController = require('../controllers/analyticsController');
 
 // ============================
@@ -15,11 +16,7 @@ router.get('/settings/:business_id', async (req, res) => {
       [business_id]
     );
 
-    if (rows.length === 0) {
-      return res.json({ settings: null });
-    }
-
-    res.json({ settings: rows[0] });
+    res.json({ settings: rows[0] || null });
   } catch (err) {
     console.error('❌ Failed to get review settings:', err);
     res.status(500).json({ error: 'Failed to fetch settings' });
@@ -45,26 +42,26 @@ router.post('/settings', async (req, res) => {
   }
 
   const trimmedLink = (google_review_link || '').trim();
-  if (
-    trimmedLink &&
-    !/^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(trimmedLink)
-  ) {
+  const validGoogleLink =
+    trimmedLink === '' || /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(trimmedLink);
+
+  if (!validGoogleLink) {
     return res.status(400).json({ error: 'Invalid Google Review link' });
   }
 
   try {
     await db.execute(
       `INSERT INTO review_settings (
-         business_id, google_review_link, enable_google, enable_internal, delay_minutes, send_email, send_sms
-       ) VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         google_review_link = VALUES(google_review_link),
-         enable_google = VALUES(enable_google),
-         enable_internal = VALUES(enable_internal),
-         delay_minutes = VALUES(delay_minutes),
-         send_email = VALUES(send_email),
-         send_sms = VALUES(send_sms),
-         updated_at = CURRENT_TIMESTAMP`,
+        business_id, google_review_link, enable_google, enable_internal, delay_minutes, send_email, send_sms
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        google_review_link = VALUES(google_review_link),
+        enable_google = VALUES(enable_google),
+        enable_internal = VALUES(enable_internal),
+        delay_minutes = VALUES(delay_minutes),
+        send_email = VALUES(send_email),
+        send_sms = VALUES(send_sms),
+        updated_at = CURRENT_TIMESTAMP`,
       [
         business_id,
         trimmedLink,
@@ -142,29 +139,52 @@ router.get('/google/analytics/:businessId', analyticsController.googleAnalytics)
 router.get('/internal/analytics/:businessId', analyticsController.internalAnalytics);
 
 // ============================
-// POST: Send Google review request
+// POST: Send Google review request via email
 // ============================
 router.post('/google/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
 
   try {
-    const [rows] = await db.execute(
+    // Get review link
+    const [[settings]] = await db.execute(
       `SELECT google_review_link FROM review_settings WHERE business_id = ?`,
       [businessId]
     );
 
-    if (!rows.length || !rows[0].google_review_link) {
+    if (!settings?.google_review_link) {
       return res.status(400).json({ error: 'No Google review link configured for this business' });
     }
 
-    console.log(`📤 Simulating Google review request to business ${businessId}: ${rows[0].google_review_link}`);
+    // Get client emails from latest tickets
+    const [clients] = await db.execute(
+      `SELECT email FROM support_tickets WHERE business_id = ? AND email IS NOT NULL`,
+      [businessId]
+    );
 
-    res.json({ success: true, message: 'Google review request sent!' });
+    if (!clients.length) {
+      return res.status(404).json({ error: 'No client emails found' });
+    }
+
+    // Send to all clients
+    for (const { email } of clients) {
+      await sendMail({
+        to: email,
+        subject: 'We value your feedback!',
+        html: `
+          <p>Hello,</p>
+          <p>We’d really appreciate it if you could leave us a quick Google review.</p>
+          <p><a href="${settings.google_review_link}" target="_blank">${settings.google_review_link}</a></p>
+          <p>Thank you! 🙏</p>
+        `,
+      });
+    }
+
+    res.json({ success: true, message: `Sent review request to ${clients.length} client(s)` });
   } catch (err) {
-    console.error('❌ Failed to send Google review request:', err);
-    res.status(500).json({ error: 'Failed to send Google review request' });
+    console.error('❌ Failed to send Google review emails:', err);
+    res.status(500).json({ error: 'Failed to send review emails' });
   }
 });
 
-// ✅ Only once, at the end
+// ✅ Export router
 module.exports = router;
