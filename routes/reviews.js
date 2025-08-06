@@ -58,6 +58,27 @@ router.get('/internal/:business_id', async (req, res) => {
   }
 });
 
+// GET: Review settings for a business
+router.get('/settings/:business_id', async (req, res) => {
+  const { business_id } = req.params;
+
+  try {
+    const [[settings]] = await db.execute(
+      `SELECT * FROM review_settings WHERE business_id = ?`,
+      [business_id]
+    );
+
+    if (!settings) {
+      return res.status(404).json({ error: 'Settings not found' });
+    }
+
+    res.json({ settings });
+  } catch (err) {
+    console.error('❌ Failed to fetch review settings:', err);
+    res.status(500).json({ error: 'Failed to fetch review settings' });
+  }
+});
+
 // POST: Send Internal Review Request emails
 router.post('/internal/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
@@ -118,8 +139,6 @@ router.post('/internal/send/:businessId', async (req, res) => {
     res.status(500).json({ error: 'Internal review request failed' });
   }
 });
-
-// Other routes such as Google reviews, analytics etc. remain unchanged
 
 // Export the router
 module.exports = router;
