@@ -189,5 +189,42 @@ router.get('/analytics/:business_id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
+// POST: Save Twilio credentials (SMS settings)
+router.post('/sms-settings', async (req, res) => {
+  const { business_id, sid, auth_token, phone_number } = req.body;
+
+  if (!business_id || !sid || !auth_token || !phone_number) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  try {
+    const [existing] = await db.execute(
+      'SELECT id FROM sms_settings WHERE business_id = ?',
+      [business_id]
+    );
+
+    if (existing.length) {
+      // Update if exists
+      await db.execute(
+        `UPDATE sms_settings
+         SET twilio_sid = ?, twilio_auth_token = ?, twilio_phone = ?, updated_at = NOW()
+         WHERE business_id = ?`,
+        [sid, auth_token, phone_number, business_id]
+      );
+    } else {
+      // Insert if new
+      await db.execute(
+        `INSERT INTO sms_settings (business_id, twilio_sid, twilio_auth_token, twilio_phone)
+         VALUES (?, ?, ?, ?)`,
+        [business_id, sid, auth_token, phone_number]
+      );
+    }
+
+    res.json({ success: true, message: 'Twilio settings saved successfully' });
+  } catch (err) {
+    console.error('❌ Failed to save Twilio credentials:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 module.exports = router;
