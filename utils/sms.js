@@ -29,4 +29,24 @@ async function sendSMS({ sid, authToken, from, to, message }) {
   }
 }
 
-module.exports = { sendSMS };
+/**
+ * Validates Twilio credentials by attempting to fetch the account.
+ * @param {string} sid - Twilio Account SID
+ * @param {string} authToken - Twilio Auth Token
+ * @returns {boolean}
+ */
+async function validateTwilioCredentials(sid, authToken) {
+  try {
+    const client = twilio(sid, authToken);
+    const account = await client.api.accounts(sid).fetch();
+    return account.status === 'active';
+  } catch (err) {
+    console.error('❌ Invalid Twilio credentials:', err.message);
+    return false;
+  }
+}
+
+module.exports = {
+  sendSMS,
+  validateTwilioCredentials,
+};
