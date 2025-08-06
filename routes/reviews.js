@@ -345,5 +345,65 @@ await client.messages.create({
     res.status(500).json({ error: 'Failed to send SMS reviews' });
   }
 });
+router.post('/service-orders/:id/complete', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await db.execute(
+      `UPDATE service_orders SET status = 'completed', completed_at = NOW() WHERE id = ?`,
+      [id]
+    );
+
+    // 🔥 Add this line to trigger the SMS review automatically
+    await sendReviewSmsForOrder(id);
+
+    res.json({ success: true, message: 'Order marked as completed and SMS review sent if applicable' });
+  } catch (err) {
+    console.error('❌ Failed to complete service order:', err);
+    res.status(500).json({ error: 'Failed to complete order' });
+  }
+});
+async function sendReviewSmsForOrder(orderId) {
+  const [[order]] = await db.execute(
+    `SELECT o.id AS service_order_id, o.business_id, u.name, u.phone, o.review_sent_sms
+     FROM service_orders o
+     JOIN users u ON o.user_id = u.id
+     WHERE o.id = ?`,
+    [orderId]
+  );
+
+  if (!order || order.review_sent_sms) return;
+
+  const [[settings]] = await db.execute(
+    `SELECT send_sms FROM review_settings WHERE business_id = ?`,
+    [order.business_id]
+  );
+  if (!settings?.send_sms) return;
+
+  const [[twilioSettings]] = await db.execute(
+    `SELECT twilio_sid, twilio_auth_token, twilio_phone FROM sms_settings WHERE business_id = ?`,
+    [order.business_id]
+  );
+  if (!twilioSettings) return;
+
+  const formattedPhone = formatToE164(order.phone);
+  if (!formattedPhone) return;
+
+  const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
+
+  const reviewLink = `https://${process.env.APP_DOMAIN}/review-internal?o=${order.service_order_id}`;
+  const message = `Hi ${order.name || ''}, please leave a quick review of your recent service: ${reviewLink}`;
+
+  await client.messages.create({
+    from: twilioSettings.twilio_phone,
+    to: formattedPhone,
+    body: message,
+  });
+
+  await db.execute(
+    `UPDATE service_orders SET review_sent_sms = 1 WHERE id = ?`,
+    [order.service_order_id]
+  );
+}
 
 module.exports = router;
