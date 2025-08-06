@@ -29,100 +29,88 @@ async function processReviewQueue() {
       const minutesElapsed = (Date.now() - new Date(ticket.ticket_created).getTime()) / 60000;
       if (minutesElapsed < ticket.delay_minutes) continue;
 
-      // 🔹 Fetch business and encrypted Twilio info
-      const [[business]] = await db.execute(
-        `SELECT business_name, logo_filename, twilio_sid, twilio_auth_token, twilio_phone_number
-         FROM businesses WHERE id = ? LIMIT 1`,
-        [ticket.business_id]
-      );
+      // Get business info
+      const [[business]] = await db.execute(`
+        SELECT business_name, logo_filename, twilio_sid, twilio_auth_token, twilio_phone_number
+        FROM businesses
+        WHERE id = ?
+      `, [ticket.business_id]);
 
       if (!business) continue;
 
-      // 🔹 Decrypt Twilio credentials
       let twilioSid, twilioToken;
       try {
         twilioSid = decrypt(business.twilio_sid);
         twilioToken = decrypt(business.twilio_auth_token);
-      } catch (e) {
-        console.error(`❌ Failed to decrypt Twilio credentials for business ${ticket.business_id}`);
+      } catch {
+        console.error(`❌ Could not decrypt Twilio keys for business ${ticket.business_id}`);
         continue;
       }
 
-      const businessName = business.business_name || 'Our Business';
-      const logoHtml = business.logo_filename
-        ? `<tr><td align="center" style="padding-bottom:20px;">
-             <img src="https://your-domain.com/uploads/${business.logo_filename}" alt="${businessName} Logo" style="max-height:80px;" />
-           </td></tr>`
+      const businessName = business.business_name || 'Our Company';
+      const logo = business.logo_filename
+        ? `<img src="https://your-domain.com/uploads/${business.logo_filename}" alt="${businessName} Logo" style="max-height:80px;" />`
         : '';
 
-      // 🔹 Build review links
-      const links = [];
-      const googleReviewLink = ticket.google_review_link;
       const internalReviewLink = `https://your-domain.com/review-internal?t=${ticket.ticket_id}`;
+      const googleReviewLink = ticket.google_review_link;
 
+      // =======================
+      // Build email content
+      // =======================
+      const links = [];
       if (ticket.enable_google && googleReviewLink) {
-        links.push(`
-          <p style="margin: 20px 0;">
-            <a href="${googleReviewLink}" target="_blank" style="background-color:#4F46E5;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block">
-              Leave a Google Review
-            </a>
-          </p>`);
+        links.push(`<a href="${googleReviewLink}" style="background:#4F46E5;color:white;padding:12px 24px;border-radius:6px;text-decoration:none">Leave Google Review</a>`);
       }
-
       if (ticket.enable_internal) {
-        links.push(`
-          <p style="margin: 20px 0;">
-            <a href="${internalReviewLink}" target="_blank" style="background-color:#10B981;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block">
-              Leave an Internal Review
-            </a>
-          </p>`);
+        links.push(`<a href="${internalReviewLink}" style="background:#10B981;color:white;padding:12px 24px;border-radius:6px;text-decoration:none">Leave Internal Review</a>`);
       }
 
-      // 🔹 Build email content
       const emailHtml = `
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;padding:40px 0;">
-          <tr><td align="center">
-            <table width="100%" style="max-width:600px;background-color:#fff;border-radius:8px;padding:40px;font-family:sans-serif;">
-              ${logoHtml}
-              <tr>
-                <td style="font-size:18px;font-weight:bold;color:#333;text-align:center;padding-bottom:10px;">
-                  We'd love your feedback!
-                </td>
-              </tr>
-              <tr>
-                <td style="font-size:15px;color:#555;text-align:center;padding-bottom:20px;">
-                  Thank you for choosing ${businessName}. Please take a moment to share your experience:
-                </td>
-              </tr>
-              <tr><td align="center">${links.join('')}</td></tr>
-              <tr>
-                <td style="font-size:12px;color:#aaa;text-align:center;padding-top:30px;border-top:1px solid #eee;">
-                  Sent by ${businessName}
-                </td>
-              </tr>
-            </table>
-          </td></tr>
-        </table>`;
+        <div style="font-family:sans-serif;text-align:center;padding:40px;background:#f4f4f4">
+          <div style="background:white;padding:40px;border-radius:8px;max-width:600px;margin:auto">
+            ${logo ? `<div style="margin-bottom:20px">${logo}</div>` : ''}
+            <h2>We’d love your feedback!</h2>
+            <p>Thank you for choosing ${businessName}. Please take a moment to leave a review:</p>
+            <div style="margin-top:30px">${links.join('<br><br>')}</div>
+          </div>
+        </div>
+      `;
 
-      // 🔹 Send Email
+      // =======================
+      // Send Email
+      // =======================
+      let sent = false;
+
       if (ticket.send_email && ticket.customer_email) {
         try {
           await sendMail({
             to: ticket.customer_email,
-            subject: `We’d love your feedback – ${businessName}`,
+            subject: `We value your feedback – ${businessName}`,
             html: emailHtml,
           });
-          console.log(`📧 Email sent to ${ticket.customer_email} for ticket ${ticket.ticket_id}`);
-        } catch (e) {
-          console.error(`❌ Failed to send email for ticket ${ticket.ticket_id}:`, e.message);
+          console.log(`📧 Sent email to ${ticket.customer_email}`);
+          sent = true;
+        } catch (err) {
+          console.error(`❌ Email failed to ${ticket.customer_email}:`, err.message);
         }
       }
 
-      // 🔹 Send SMS
-      if (ticket.send_sms && ticket.customer_phone && twilioSid && twilioToken && business.twilio_phone_number) {
-        let smsBody = `We’d love your feedback!`;
-        if (ticket.enable_google && googleReviewLink) smsBody += ` Google: ${googleReviewLink}`;
-        if (ticket.enable_internal) smsBody += ` or here: ${internalReviewLink}`;
+      // =======================
+      // Send SMS
+      // =======================
+      if (
+        ticket.send_sms &&
+        ticket.customer_phone &&
+        business.twilio_phone_number &&
+        twilioSid &&
+        twilioToken
+      ) {
+        const smsBody = `We’d love your feedback!\n${
+          ticket.enable_google && googleReviewLink ? `Google: ${googleReviewLink}\n` : ''
+        }${
+          ticket.enable_internal ? `Internal: ${internalReviewLink}` : ''
+        }`;
 
         try {
           await sendSMS(
@@ -134,20 +122,25 @@ async function processReviewQueue() {
             ticket.customer_phone,
             smsBody
           );
-          console.log(`📱 SMS sent to ${ticket.customer_phone} for ticket ${ticket.ticket_id}`);
-        } catch (e) {
-          console.error(`❌ Failed to send SMS for ticket ${ticket.ticket_id}:`, e.message);
+          console.log(`📱 Sent SMS to ${ticket.customer_phone}`);
+          sent = true;
+        } catch (err) {
+          console.error(`❌ SMS failed to ${ticket.customer_phone}:`, err.message);
         }
       }
 
-      // 🔹 Mark ticket as review_sent
-      await db.execute(`UPDATE support_tickets SET review_sent = 1 WHERE id = ?`, [ticket.ticket_id]);
+      // =======================
+      // Update ticket if sent
+      // =======================
+      if (sent) {
+        await db.execute(`UPDATE support_tickets SET review_sent = 1 WHERE id = ?`, [ticket.ticket_id]);
+      }
     }
   } catch (err) {
     console.error('❌ Error processing review queue:', err);
   }
 }
 
-// 🔁 Run every 10 minutes
+// Run every 10 minutes
 cron.schedule('*/10 * * * *', processReviewQueue);
 console.log('✅ Review scheduler is running every 10 minutes');
