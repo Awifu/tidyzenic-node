@@ -140,6 +140,9 @@ router.get('/internal/analytics/:businessId', analyticsController.internalAnalyt
 // ============================
 // POST: Send Google review request via email
 // ============================
+// ============================
+// POST: Send Google review request via email
+// ============================
 router.post('/google/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
 
@@ -189,6 +192,65 @@ router.post('/google/send/:businessId', async (req, res) => {
   } catch (err) {
     console.error('❌ Failed to send Google review emails:', err);
     res.status(500).json({ error: 'Failed to send review emails' });
+  }
+});
+
+// ============================
+// POST: Send Google review request via SMS
+// ============================
+router.post('/google/send-sms/:businessId', async (req, res) => {
+  const { businessId } = req.params;
+
+  try {
+    const [[settings]] = await db.execute(
+      `SELECT google_review_link FROM review_settings WHERE business_id = ?`,
+      [businessId]
+    );
+
+    if (!settings?.google_review_link) {
+      return res.status(400).json({ error: 'No Google review link configured for this business' });
+    }
+
+    const [[biz]] = await db.execute(
+      `SELECT twilio_sid, twilio_auth_token, twilio_phone_number FROM businesses WHERE id = ?`,
+      [businessId]
+    );
+
+    if (!biz?.twilio_sid || !biz?.twilio_auth_token || !biz?.twilio_phone_number) {
+      return res.status(400).json({ error: 'Missing Twilio credentials for this business' });
+    }
+
+    const [users] = await db.execute(
+      `SELECT phone FROM users WHERE business_id = ? AND phone IS NOT NULL AND is_verified = 1`,
+      [businessId]
+    );
+
+    if (!users.length) {
+      return res.status(404).json({ error: 'No verified users with phone numbers found' });
+    }
+
+    const { sendSMS } = require('../utils/sms');
+
+    let sentCount = 0;
+    for (const { phone } of users) {
+      try {
+        await sendSMS({
+          sid: biz.twilio_sid,
+          authToken: biz.twilio_auth_token,
+          from: biz.twilio_phone_number,
+          to: phone,
+          message: `Hi! Please review us: ${settings.google_review_link}`,
+        });
+        sentCount++;
+      } catch (err) {
+        console.warn(`⚠️ Failed to send SMS to ${phone}:`, err.message);
+      }
+    }
+
+    res.json({ success: true, message: `SMS sent to ${sentCount} user(s)` });
+  } catch (err) {
+    console.error('❌ Failed to send Google review SMS:', err);
+    res.status(500).json({ error: 'Failed to send SMS review requests' });
   }
 });
 
