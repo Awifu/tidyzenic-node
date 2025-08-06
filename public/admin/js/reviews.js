@@ -180,43 +180,79 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupEventListeners() {
-    el.saveBtn?.addEventListener('click', saveReviewSettings);
+  el.saveBtn?.addEventListener('click', saveReviewSettings);
 
-    // Internal Review Modal
-    el.openInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.remove('hidden');
-      loadInternalReviews();
-    });
+  // Internal Review Modal
+  el.openInternalReviewModal?.addEventListener('click', () => {
+    el.internalReviewModal.classList.remove('hidden');
+    loadInternalReviews();
+  });
 
-    el.closeInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.add('hidden');
-    });
+  el.closeInternalReviewModal?.addEventListener('click', () => {
+    el.internalReviewModal.classList.add('hidden');
+  });
 
-    // Google Review Modal
-    el.openGoogleReviewModal?.addEventListener('click', () => {
-      el.googleReviewModal.classList.remove('hidden');
-      loadGoogleAnalytics();
-    });
+  // Google Review Modal
+  el.openGoogleReviewModal?.addEventListener('click', () => {
+    el.googleReviewModal.classList.remove('hidden');
+    loadGoogleAnalytics();
+  });
 
-    el.closeGoogleReviewModal?.addEventListener('click', () => {
-      el.googleReviewModal.classList.add('hidden');
-    });
+  el.closeGoogleReviewModal?.addEventListener('click', () => {
+    el.googleReviewModal.classList.add('hidden');
+  });
 
-    // ✅ SMS Modal
-    el.sendSms?.addEventListener('change', () => {
-      if (el.sendSms.checked) {
-        el.smsModal.classList.remove('hidden');
-      }
-    });
+  // ✅ SMS Modal
+  el.sendSms?.addEventListener('change', () => {
+    if (el.sendSms.checked) {
+      el.smsModal.classList.remove('hidden');
+      loadTwilioSettings();
+    }
+  });
 
-    el.closeSmsModal?.addEventListener('click', () => {
+  el.closeSmsModal?.addEventListener('click', () => {
+    el.smsModal.classList.add('hidden');
+    el.sendSms.checked = false;
+  });
+
+  // Save Twilio Credentials
+  el.saveTwilioBtn?.addEventListener('click', async () => {
+    const sid = el.twilioSid.value.trim();
+    const authToken = el.twilioToken.value.trim();
+    const phone = el.twilioPhone.value.trim();
+
+    if (!sid || !authToken || !phone) {
+      alert('❌ Please fill in all Twilio fields.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/reviews/sms-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_id: businessId,
+          sid,
+          auth_token: authToken,
+          phone_number: phone,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || 'Failed to save Twilio credentials');
+
+      alert('✅ Twilio credentials saved!');
       el.smsModal.classList.add('hidden');
-      el.sendSms.checked = false; // Optional: uncheck on close
-    });
+    } catch (err) {
+      console.error('❌ Failed to save Twilio credentials:', err);
+      alert('❌ Could not save Twilio credentials.');
+    }
+  });
 
-    // Enable/disable input
-    el.enableGoogle?.addEventListener('change', toggleGoogleInput);
-  }
+  // Enable/disable input
+  el.enableGoogle?.addEventListener('change', toggleGoogleInput);
+}
+
 
   async function init() {
     await fetchBusinessId();
