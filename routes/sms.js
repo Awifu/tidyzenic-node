@@ -30,5 +30,26 @@ router.post('/settings', async (req, res) => {
     res.status(500).json({ error: 'Server error while saving encrypted SMS settings' });
   }
 });
+const { validateTwilioCredentials } = require('../utils/sms');
+
+router.post('/validate', async (req, res) => {
+  const { twilio_sid, twilio_auth_token } = req.body;
+
+  if (!twilio_sid || !twilio_auth_token) {
+    return res.status(400).json({ error: 'SID and Auth Token are required' });
+  }
+
+  try {
+    const isValid = await validateTwilioCredentials(twilio_sid, twilio_auth_token);
+    if (isValid) {
+      return res.json({ valid: true });
+    } else {
+      return res.status(400).json({ valid: false, error: 'Invalid Twilio credentials' });
+    }
+  } catch (err) {
+    console.error('❌ Twilio validation failed:', err.message);
+    return res.status(500).json({ error: 'Error validating Twilio credentials' });
+  }
+});
 
 module.exports = router;
