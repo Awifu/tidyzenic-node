@@ -250,6 +250,29 @@ router.get('/sms-settings/:business_id', async (req, res) => {
 });
 const twilio = require('twilio');
 
+function formatToE164(phone) {
+  const digits = phone.replace(/\D/g, '');
+
+  // U.S. number assumed: 10 digits (no country code)
+  if (digits.length === 10) {
+    return '+1' + digits;
+  }
+
+  // If it starts with 1 and has 11 digits (already U.S. with country code)
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return '+' + digits;
+  }
+
+  // Already formatted with plus and >= 11 digits
+  if (digits.length >= 11 && phone.startsWith('+')) {
+    return phone;
+  }
+
+  return null; // Invalid
+}
+
+
+
 router.post('/internal/send-sms/:businessId', async (req, res) => {
   const { businessId } = req.params;
 
@@ -297,11 +320,18 @@ router.post('/internal/send-sms/:businessId', async (req, res) => {
       const link = `https://${process.env.APP_DOMAIN}/review-internal?o=${service_order_id}`;
       const message = `Hi ${name || ''}, please leave a quick review of your recent service: ${link}`;
 
-      await client.messages.create({
-        from: twilioSettings.twilio_phone,
-        to: phone,
-        body: message,
-      });
+   const formattedPhone = formatToE164(phone);
+if (!formattedPhone) {
+  console.warn(`⚠️ Invalid phone number for user: ${name} (${phone})`);
+  continue; // skip this one
+}
+
+await client.messages.create({
+  from: twilioSettings.twilio_phone,
+  to: formattedPhone,
+  body: message,
+});
+
 
       await db.execute(
         `UPDATE service_orders SET review_sent_sms = 1 WHERE id = ?`,
