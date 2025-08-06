@@ -15,13 +15,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ==============================
-// 1. Middleware: Body, Cookies, Logging
+// 1. Middleware
 // ==============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use('/api/reviews', require('./routes/reviews'));
 
 // ==============================
 // 2. CSP Nonce
@@ -30,8 +29,6 @@ app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
 });
-const smsRoutes = require('./routes/sms');
-app.use('/api/sms', smsRoutes);
 
 // ==============================
 // 3. Security Headers with CSP
@@ -53,7 +50,7 @@ app.use(helmet({
 }));
 
 // ==============================
-// 4. CORS
+// 4. CORS Configuration
 // ==============================
 const allowedOrigins = [
   'http://localhost:3000',
@@ -75,13 +72,13 @@ app.use(cors({
 }));
 
 // ==============================
-// 5. Tenant Resolver Middleware
+// 5. Tenant Middleware
 // ==============================
 const tenantResolver = require('./middleware/tenantResolver');
 app.use(tenantResolver);
 
 // ==============================
-// 6. Static Assets
+// 6. Static Files
 // ==============================
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
@@ -94,14 +91,18 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
-app.use('/api/tickets', require('./routes/tickets')); // ✅ Ticket support route
+app.use('/api/tickets', require('./routes/tickets'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/reviews', require('./routes/analytics')); // ✅ Analytics endpoints
+app.use('/api/sms', require('./routes/sms'));
+
+// ==============================
+// 8. Admin HTML Pages
+// ==============================
 app.get('/admin/support.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'support_ticket.html'));
 });
 
-// ==============================
-// 8. HTML Page Routes
-// ==============================
 const sendFile = (file) => (req, res) =>
   res.sendFile(path.join(__dirname, 'public', file));
 
@@ -118,17 +119,14 @@ app.get('/verified.html', sendFile('verified.html'));
 app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin/dashboard.html'));
 
 // ==============================
-// 9. 404 Not Found
+// 9. 404 Handler
 // ==============================
-app.use('/api/review-analytics', require('./routes/reviewAnalytics'));
-
-// 9. 404 Not Found
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
 // ==============================
-// 10. Global Error Handler
+// 10. Error Handler
 // ==============================
 app.use((err, req, res, next) => {
   console.error('🔥 Unhandled Error:', err.stack || err.message);
@@ -140,7 +138,7 @@ app.use((err, req, res, next) => {
 });
 
 // ==============================
-// 11. Start HTTP + Socket.IO Server
+// 11. Start Server with Socket.IO
 // ==============================
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
