@@ -226,5 +226,27 @@ router.post('/sms-settings', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+// GET: Get Twilio credentials for a business
+router.get('/sms-settings/:business_id', async (req, res) => {
+  const { business_id } = req.params;
+
+  try {
+    const [[settings]] = await db.execute(
+      `SELECT twilio_sid, twilio_auth_token, twilio_phone
+       FROM sms_settings
+       WHERE business_id = ?`,
+      [business_id]
+    );
+
+    if (!settings) {
+      return res.status(404).json({ error: 'Twilio settings not found' });
+    }
+
+    res.json({ settings });
+  } catch (err) {
+    console.error('❌ Failed to fetch Twilio settings:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 module.exports = router;
