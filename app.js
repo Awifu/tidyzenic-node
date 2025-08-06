@@ -93,7 +93,7 @@ app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
 app.use('/api/tickets', require('./routes/tickets'));
 app.use('/api/reviews', require('./routes/reviews'));
-app.use('/api/reviews', require('./routes/analytics')); // ✅ Analytics endpoints
+app.use('/api/reviews', require('./routes/reviewAnalytics'));
 app.use('/api/sms', require('./routes/sms'));
 
 // ==============================
