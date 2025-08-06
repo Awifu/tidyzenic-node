@@ -1,10 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const twilio = require('twilio');
 const { sendMail } = require('../utils/mailer');
-const { sendSMS } = require('../utils/sms');
 
-// POST: Submit internal review
+// ----------------------
+// 🔧 Helpers
+// ----------------------
+function formatToE164(phone) {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) return '+1' + digits;
+  if (digits.length === 11 && digits.startsWith('1')) return '+' + digits;
+  if (digits.length >= 11 && phone.startsWith('+')) return phone;
+  return null;
+}
+
+// ----------------------
+// 📩 Submit Internal Review
+// ----------------------
 router.post('/submit', async (req, res) => {
   const { service_order_id, rating, comment } = req.body;
 
@@ -18,46 +31,43 @@ router.post('/submit', async (req, res) => {
        VALUES (?, ?, ?, NOW())`,
       [service_order_id, rating, comment || null]
     );
-
     res.json({ success: true, message: 'Review submitted successfully' });
   } catch (err) {
-    console.error('❌ Failed to submit internal review:', err);
+    console.error('❌ Submit review error:', err);
     res.status(500).json({ error: 'Failed to submit review' });
   }
 });
 
-// GET: Internal reviews with client, service provider, and service info
+// ----------------------
+// 📊 Fetch Internal Reviews
+// ----------------------
 router.get('/internal/:business_id', async (req, res) => {
   const { business_id } = req.params;
 
   try {
     const [reviews] = await db.execute(
-      `SELECT
-        r.ticket_id,
-        r.rating,
-        r.message,
-        r.created_at,
-        client.name AS client_name,
-        sp.name AS service_provider_name,
-        s.name AS service_name
-      FROM internal_reviews r
-      JOIN service_orders o ON r.ticket_id = o.id
-      JOIN users client ON o.user_id = client.id
-      JOIN users sp ON o.service_provider_id = sp.id
-      JOIN services s ON o.service_id = s.id
-      WHERE o.business_id = ?
-      ORDER BY r.created_at DESC`,
+      `SELECT r.ticket_id, r.rating, r.message, r.created_at,
+              client.name AS client_name, sp.name AS service_provider_name, s.name AS service_name
+       FROM internal_reviews r
+       JOIN service_orders o ON r.ticket_id = o.id
+       JOIN users client ON o.user_id = client.id
+       JOIN users sp ON o.service_provider_id = sp.id
+       JOIN services s ON o.service_id = s.id
+       WHERE o.business_id = ?
+       ORDER BY r.created_at DESC`,
       [business_id]
     );
 
     res.json({ reviews });
   } catch (err) {
-    console.error('❌ Failed to fetch internal reviews:', err);
+    console.error('❌ Fetch internal reviews error:', err);
     res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 });
 
-// GET: Review settings for a business
+// ----------------------
+// ⚙️ Review Settings
+// ----------------------
 router.get('/settings/:business_id', async (req, res) => {
   const { business_id } = req.params;
 
@@ -73,12 +83,11 @@ router.get('/settings/:business_id', async (req, res) => {
 
     res.json({ settings });
   } catch (err) {
-    console.error('❌ Failed to fetch review settings:', err);
-    res.status(500).json({ error: 'Failed to fetch review settings' });
+    console.error('❌ Fetch settings error:', err);
+    res.status(500).json({ error: 'Failed to fetch settings' });
   }
 });
 
-// POST: Update review settings
 router.post('/settings', async (req, res) => {
   const { business_id, enable_internal } = req.body;
 
@@ -98,12 +107,14 @@ router.post('/settings', async (req, res) => {
 
     res.json({ success: true, message: 'Review settings updated' });
   } catch (err) {
-    console.error('❌ Failed to update review settings:', err);
-    res.status(500).json({ error: 'Failed to update review settings' });
+    console.error('❌ Update settings error:', err);
+    res.status(500).json({ error: 'Failed to update settings' });
   }
 });
 
-// POST: Send internal review requests
+// ----------------------
+// 📨 Send Internal Reviews via Email
+// ----------------------
 router.post('/internal/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
 
@@ -123,10 +134,8 @@ router.post('/internal/send/:businessId', async (req, res) => {
        JOIN users u ON o.user_id = u.id
        WHERE o.business_id = ?
          AND u.role = 'client'
-         AND u.is_verified = 1
-         AND u.is_deleted = 0
-         AND u.email IS NOT NULL
-         AND o.status = 'completed'
+         AND u.is_verified = 1 AND u.is_deleted = 0
+         AND u.email IS NOT NULL AND o.status = 'completed'
          AND o.review_sent = 0
        ORDER BY o.completed_at DESC`,
       [businessId]
@@ -159,12 +168,14 @@ router.post('/internal/send/:businessId', async (req, res) => {
 
     res.json({ success: true, message: `Sent to ${orders.length} client(s)` });
   } catch (err) {
-    console.error('❌ Failed to send internal review requests:', err);
-    res.status(500).json({ error: 'Internal review request failed' });
+    console.error('❌ Send internal review error:', err);
+    res.status(500).json({ error: 'Failed to send internal reviews' });
   }
 });
 
-// GET: Google analytics (mock example)
+// ----------------------
+// 📈 Google Review Analytics (Mock)
+// ----------------------
 router.get('/analytics/:business_id', async (req, res) => {
   const { business_id } = req.params;
 
@@ -180,16 +191,39 @@ router.get('/analytics/:business_id', async (req, res) => {
 
     const analytics = rows.map(r => ({
       label: `${r.label} Stars`,
-      count: r.count
+      count: r.count,
     }));
 
     res.json({ analytics });
   } catch (err) {
-    console.error('❌ Failed to fetch analytics:', err);
+    console.error('❌ Analytics error:', err);
     res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
-// POST: Save Twilio credentials (SMS settings)
+
+// ----------------------
+// 🔐 Validate Twilio Credentials
+// ----------------------
+router.post('/sms/validate', async (req, res) => {
+  const { twilio_sid, twilio_auth_token } = req.body;
+
+  if (!twilio_sid || !twilio_auth_token) {
+    return res.status(400).json({ valid: false, error: 'Missing credentials' });
+  }
+
+  try {
+    const client = twilio(twilio_sid, twilio_auth_token);
+    await client.api.accounts(twilio_sid).fetch();
+    res.json({ valid: true });
+  } catch (error) {
+    console.error('❌ Twilio validation failed:', error.message);
+    res.status(400).json({ valid: false, error: error.message });
+  }
+});
+
+// ----------------------
+// 💾 Save Twilio Credentials
+// ----------------------
 router.post('/sms-settings', async (req, res) => {
   const { business_id, sid, auth_token, phone_number } = req.body;
 
@@ -204,15 +238,11 @@ router.post('/sms-settings', async (req, res) => {
     );
 
     if (existing.length) {
-      // Update if exists
       await db.execute(
-        `UPDATE sms_settings
-         SET twilio_sid = ?, twilio_auth_token = ?, twilio_phone = ?, updated_at = NOW()
-         WHERE business_id = ?`,
+        `UPDATE sms_settings SET twilio_sid = ?, twilio_auth_token = ?, twilio_phone = ?, updated_at = NOW() WHERE business_id = ?`,
         [sid, auth_token, phone_number, business_id]
       );
     } else {
-      // Insert if new
       await db.execute(
         `INSERT INTO sms_settings (business_id, twilio_sid, twilio_auth_token, twilio_phone)
          VALUES (?, ?, ?, ?)`,
@@ -222,19 +252,21 @@ router.post('/sms-settings', async (req, res) => {
 
     res.json({ success: true, message: 'Twilio settings saved successfully' });
   } catch (err) {
-    console.error('❌ Failed to save Twilio credentials:', err);
+    console.error('❌ Save Twilio error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-// GET: Get Twilio credentials for a business
+
+// ----------------------
+// 📱 Get Twilio Credentials
+// ----------------------
 router.get('/sms-settings/:business_id', async (req, res) => {
   const { business_id } = req.params;
 
   try {
     const [[settings]] = await db.execute(
       `SELECT twilio_sid, twilio_auth_token, twilio_phone
-       FROM sms_settings
-       WHERE business_id = ?`,
+       FROM sms_settings WHERE business_id = ?`,
       [business_id]
     );
 
@@ -244,235 +276,9 @@ router.get('/sms-settings/:business_id', async (req, res) => {
 
     res.json({ settings });
   } catch (err) {
-    console.error('❌ Failed to fetch Twilio settings:', err);
+    console.error('❌ Fetch Twilio settings error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-const twilio = require('twilio');
-
-function formatToE164(phone) {
-  const digits = phone.replace(/\D/g, '');
-
-  // U.S. number assumed: 10 digits (no country code)
-  if (digits.length === 10) {
-    return '+1' + digits;
-  }
-
-  // If it starts with 1 and has 11 digits (already U.S. with country code)
-  if (digits.length === 11 && digits.startsWith('1')) {
-    return '+' + digits;
-  }
-
-  // Already formatted with plus and >= 11 digits
-  if (digits.length >= 11 && phone.startsWith('+')) {
-    return phone;
-  }
-
-  return null; // Invalid
-}
-
-
-
-router.post('/internal/send-sms/:businessId', async (req, res) => {
-  const { businessId } = req.params;
-
-  try {
-    // ✅ Check if SMS is enabled
-    const [[settings]] = await db.execute(
-      `SELECT send_sms FROM review_settings WHERE business_id = ?`,
-      [businessId]
-    );
-
-    if (!settings?.send_sms) {
-      return res.status(400).json({ error: 'SMS sending is disabled' });
-    }
-
-    // ✅ Get Twilio credentials
-    const [[twilioSettings]] = await db.execute(
-      `SELECT twilio_sid, twilio_auth_token, twilio_phone FROM sms_settings WHERE business_id = ?`,
-      [businessId]
-    );
-
-    if (!twilioSettings) {
-      return res.status(400).json({ error: 'Twilio settings not found' });
-    }
-
-    const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
-
-    // ✅ Get completed service orders that haven't received SMS
-    const [orders] = await db.execute(
-      `SELECT o.id AS service_order_id, u.name, u.phone
-       FROM service_orders o
-       JOIN users u ON o.user_id = u.id
-       WHERE o.business_id = ?
-         AND u.role = 'client'
-         AND u.phone IS NOT NULL
-         AND o.status = 'completed'
-         AND o.review_sent_sms = 0`,
-      [businessId]
-    );
-
-    if (!orders.length) {
-      return res.status(404).json({ error: 'No eligible clients for SMS' });
-    }
-
-    for (const { service_order_id, name, phone } of orders) {
-      const link = `https://${process.env.APP_DOMAIN}/review-internal?o=${service_order_id}`;
-      const message = `Hi ${name || ''}, please leave a quick review of your recent service: ${link}`;
-
-   const formattedPhone = formatToE164(phone);
-if (!formattedPhone) {
-  console.warn(`⚠️ Invalid phone number for user: ${name} (${phone})`);
-  continue; // skip this one
-}
-
-await client.messages.create({
-  from: twilioSettings.twilio_phone,
-  to: formattedPhone,
-  body: message,
-});
-
-
-      await db.execute(
-        `UPDATE service_orders SET review_sent_sms = 1 WHERE id = ?`,
-        [service_order_id]
-      );
-    }
-
-    res.json({ success: true, message: `✅ Sent ${orders.length} SMS messages` });
-  } catch (err) {
-    console.error('❌ Failed to send SMS reviews:', err);
-    res.status(500).json({ error: 'Failed to send SMS reviews' });
-  }
-});
-router.post('/service-orders/:id/complete', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    await db.execute(
-      `UPDATE service_orders SET status = 'completed', completed_at = NOW() WHERE id = ?`,
-      [id]
-    );
-
-    // 🔥 Add this line to trigger the SMS review automatically
-    await sendReviewSmsForOrder(id);
-
-    res.json({ success: true, message: 'Order marked as completed and SMS review sent if applicable' });
-  } catch (err) {
-    console.error('❌ Failed to complete service order:', err);
-    res.status(500).json({ error: 'Failed to complete order' });
-  }
-});
-async function sendReviewSmsForOrder(orderId) {
-  const [[order]] = await db.execute(
-    `SELECT o.id AS service_order_id, o.business_id, u.name, u.phone, u.email, o.review_sent_sms, o.review_sent, o.google_review_sent
-     FROM service_orders o
-     JOIN users u ON o.user_id = u.id
-     WHERE o.id = ?`,
-    [orderId]
-  );
-
-  if (!order) return;
-
-  const clientName = order.name || 'there';
-  const reviewLink = `https://${process.env.APP_DOMAIN}/review-internal?o=${order.service_order_id}`;
-
-  const [[settings]] = await db.execute(
-    `SELECT send_sms, enable_internal, enable_google_review, google_review_link
-     FROM review_settings
-     WHERE business_id = ?`,
-    [order.business_id]
-  );
-
-  const [[twilioSettings]] = await db.execute(
-    `SELECT twilio_sid, twilio_auth_token, twilio_phone FROM sms_settings WHERE business_id = ?`,
-    [order.business_id]
-  );
-
-  const [[biz]] = await db.execute(
-    `SELECT business_name FROM businesses WHERE id = ?`,
-    [order.business_id]
-  );
-
-  // ✅ Send SMS for internal review
-  if (settings?.send_sms && !order.review_sent_sms && twilioSettings) {
-    const formattedPhone = formatToE164(order.phone);
-
-    if (formattedPhone) {
-      const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
-
-      await client.messages.create({
-        from: twilioSettings.twilio_phone,
-        to: formattedPhone,
-        body: `Hi ${clientName}, please leave a quick review of your recent service: ${reviewLink}`,
-      });
-
-      await db.execute(
-        `UPDATE service_orders SET review_sent_sms = 1 WHERE id = ?`,
-        [order.service_order_id]
-      );
-    }
-  }
-
-  // ✅ Send Email for internal review
-  if (settings?.enable_internal && !order.review_sent && order.email) {
-    await sendMail({
-      to: order.email,
-      subject: `We’d love your feedback – ${biz.business_name}`,
-      html: `
-        <p>Hello ${clientName},</p>
-        <p>We’d appreciate your feedback on your recent service:</p>
-        <p><a href="${reviewLink}" target="_blank">${reviewLink}</a></p>
-        <p>Thanks for your time!</p>
-      `,
-    });
-
-    await db.execute(
-      `UPDATE service_orders SET review_sent = 1 WHERE id = ?`,
-      [order.service_order_id]
-    );
-  }
-
-  // ✅ Send Google Review (email + optional SMS)
-  if (
-    settings?.enable_google_review &&
-    settings?.google_review_link &&
-    !order.google_review_sent
-  ) {
-    const googleMsg = `Hi ${clientName}, we'd love your feedback! Please leave us a Google review here: ${settings.google_review_link}`;
-
-    // 📧 Email
-    if (order.email) {
-      await sendMail({
-        to: order.email,
-        subject: `Your feedback matters – ${biz.business_name}`,
-        html: `
-          <p>Hello ${clientName},</p>
-          <p>We’d love a moment of your time to leave us a Google review:</p>
-          <p><a href="${settings.google_review_link}" target="_blank">${settings.google_review_link}</a></p>
-          <p>Thank you!</p>
-        `,
-      });
-    }
-
-    // 📱 Optional: SMS (if Twilio + formattedPhone is available)
-    if (settings.send_sms && twilioSettings) {
-      const formattedPhone = formatToE164(order.phone);
-      if (formattedPhone) {
-        const client = twilio(twilioSettings.twilio_sid, twilioSettings.twilio_auth_token);
-        await client.messages.create({
-          from: twilioSettings.twilio_phone,
-          to: formattedPhone,
-          body: googleMsg,
-        });
-      }
-    }
-
-    await db.execute(
-      `UPDATE service_orders SET google_review_sent = 1 WHERE id = ?`,
-      [order.service_order_id]
-    );
-  }
-}
 
 module.exports = router;
