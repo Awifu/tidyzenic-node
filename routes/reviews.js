@@ -3,7 +3,6 @@ const router = express.Router();
 const db = require('../db');
 const { sendMail } = require('../utils/mailer');
 const { sendSMS } = require('../utils/sms');
-const analyticsController = require('../controllers/analyticsController');
 
 // POST: Submit internal review
 router.post('/submit', async (req, res) => {
@@ -79,7 +78,32 @@ router.get('/settings/:business_id', async (req, res) => {
   }
 });
 
-// POST: Send Internal Review Request emails
+// POST: Update review settings
+router.post('/settings', async (req, res) => {
+  const { business_id, enable_internal } = req.body;
+
+  if (!business_id) {
+    return res.status(400).json({ error: 'business_id is required' });
+  }
+
+  try {
+    const [result] = await db.execute(
+      `UPDATE review_settings SET enable_internal = ? WHERE business_id = ?`,
+      [enable_internal ? 1 : 0, business_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Settings not found for that business' });
+    }
+
+    res.json({ success: true, message: 'Review settings updated' });
+  } catch (err) {
+    console.error('❌ Failed to update review settings:', err);
+    res.status(500).json({ error: 'Failed to update review settings' });
+  }
+});
+
+// POST: Send internal review requests
 router.post('/internal/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
 
@@ -139,30 +163,31 @@ router.post('/internal/send/:businessId', async (req, res) => {
     res.status(500).json({ error: 'Internal review request failed' });
   }
 });
-// POST: Update review settings for a business
-router.post('/settings', async (req, res) => {
-  const { business_id, enable_internal } = req.body;
 
-  if (!business_id) {
-    return res.status(400).json({ error: 'business_id is required' });
-  }
+// GET: Google analytics (mock example)
+router.get('/analytics/:business_id', async (req, res) => {
+  const { business_id } = req.params;
 
   try {
-    const [result] = await db.execute(
-      `UPDATE review_settings SET enable_internal = ? WHERE business_id = ?`,
-      [enable_internal ? 1 : 0, business_id]
+    const [rows] = await db.execute(
+      `SELECT rating AS label, COUNT(*) AS count
+       FROM google_reviews
+       WHERE business_id = ?
+       GROUP BY rating
+       ORDER BY rating DESC`,
+      [business_id]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Settings not found for that business' });
-    }
+    const analytics = rows.map(r => ({
+      label: `${r.label} Stars`,
+      count: r.count
+    }));
 
-    res.json({ success: true, message: 'Review settings updated' });
+    res.json({ analytics });
   } catch (err) {
-    console.error('❌ Failed to update review settings:', err);
-    res.status(500).json({ error: 'Failed to update review settings' });
+    console.error('❌ Failed to fetch analytics:', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
 
-// Export the router
 module.exports = router;

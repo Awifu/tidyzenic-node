@@ -143,19 +143,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupEventListeners() {
-    el.saveBtn?.addEventListener('click', saveReviewSettings);
-    el.openInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.remove('hidden');
-      loadInternalReviews();
-      // Load analytics if needed here
-    });
+  el.saveBtn?.addEventListener('click', saveReviewSettings);
 
-    el.closeInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.add('hidden');
-    });
+  // Internal Review Modal
+  el.openInternalReviewModal?.addEventListener('click', () => {
+    el.internalReviewModal.classList.remove('hidden');
+    loadInternalReviews();
+    // Optionally load internal analytics here
+  });
 
-    // Add other event listeners as per your needs...
-  }
+  el.closeInternalReviewModal?.addEventListener('click', () => {
+    el.internalReviewModal.classList.add('hidden');
+  });
+
+  // ✅ Google Review Modal
+  el.openGoogleReviewModal?.addEventListener('click', () => {
+    el.googleReviewModal.classList.remove('hidden');
+    loadGoogleAnalytics(); // if you have this function
+  });
+
+  el.closeGoogleReviewModal?.addEventListener('click', () => {
+    el.googleReviewModal.classList.add('hidden');
+  });
+
+  el.enableGoogle?.addEventListener('change', toggleGoogleInput);
+}
+
 
   async function init() {
     await fetchBusinessId();
