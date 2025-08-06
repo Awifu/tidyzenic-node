@@ -110,12 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setupEventListeners() {
     el.saveBtn?.addEventListener('click', saveReviewSettings);
-
     el.enableGoogle?.addEventListener('change', toggleGoogleInput);
 
     el.openGoogleReviewModal?.addEventListener('click', () => {
       el.googleReviewModal.classList.remove('hidden');
-      // loadGoogleAnalytics(); // ← define this if needed
+      // loadGoogleAnalytics(); // implement if needed
     });
 
     el.closeGoogleReviewModal?.addEventListener('click', () => {
@@ -124,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.openInternalReviewModal?.addEventListener('click', () => {
       el.internalReviewModal.classList.remove('hidden');
-      // loadInternalReviews(); // ← define this if needed
+      // loadInternalReviews(); // implement if needed
     });
 
     el.closeInternalReviewModal?.addEventListener('click', () => {
@@ -134,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
     el.sendSms?.addEventListener('change', () => {
       if (el.sendSms.checked) {
         el.smsModal.classList.remove('hidden');
-        // loadTwilioSettings(); // ← optional: only if you're preloading from DB
       }
     });
 
