@@ -15,7 +15,6 @@ router.get('/settings/:business_id', async (req, res) => {
       `SELECT * FROM review_settings WHERE business_id = ?`,
       [business_id]
     );
-
     res.json({ settings: rows[0] || null });
   } catch (err) {
     console.error('❌ Failed to get review settings:', err);
@@ -145,7 +144,7 @@ router.post('/google/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
 
   try {
-    // Get review link
+    // 1. Get Google review link
     const [[settings]] = await db.execute(
       `SELECT google_review_link FROM review_settings WHERE business_id = ?`,
       [businessId]
@@ -155,31 +154,38 @@ router.post('/google/send/:businessId', async (req, res) => {
       return res.status(400).json({ error: 'No Google review link configured for this business' });
     }
 
-    // Get client emails from latest tickets
+    // 2. Get verified clients with support tickets
     const [clients] = await db.execute(
-      `SELECT email FROM support_tickets WHERE business_id = ? AND email IS NOT NULL`,
+      `SELECT DISTINCT u.email
+       FROM users u
+       JOIN support_tickets t ON u.id = t.user_id
+       WHERE u.business_id = ?
+         AND u.role = 'client'
+         AND u.is_verified = 1
+         AND u.is_deleted = 0
+         AND u.email IS NOT NULL`,
       [businessId]
     );
 
     if (!clients.length) {
-      return res.status(404).json({ error: 'No client emails found' });
+      return res.status(404).json({ error: 'No eligible clients found' });
     }
 
-    // Send to all clients
+    // 3. Send review emails
     for (const { email } of clients) {
       await sendMail({
         to: email,
-        subject: 'We value your feedback!',
+        subject: 'We’d love your feedback!',
         html: `
           <p>Hello,</p>
-          <p>We’d really appreciate it if you could leave us a quick Google review.</p>
+          <p>We’d really appreciate it if you could leave us a quick Google review:</p>
           <p><a href="${settings.google_review_link}" target="_blank">${settings.google_review_link}</a></p>
           <p>Thank you! 🙏</p>
         `,
       });
     }
 
-    res.json({ success: true, message: `Sent review request to ${clients.length} client(s)` });
+    res.json({ success: true, message: `✅ Sent to ${clients.length} client(s)` });
   } catch (err) {
     console.error('❌ Failed to send Google review emails:', err);
     res.status(500).json({ error: 'Failed to send review emails' });
