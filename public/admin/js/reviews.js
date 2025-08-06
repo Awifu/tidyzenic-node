@@ -33,13 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   let businessId = null;
-  let internalChartInstance = null;
 
   async function fetchBusinessId() {
     try {
       const res = await fetch('/api/business/public');
       const data = await res.json();
-      if (!data?.id) throw new Error('Business ID not found');
       businessId = data.id;
     } catch (err) {
       console.error('❌ Error fetching business ID:', err);
@@ -47,9 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadReviewSettings() {
+    if (!businessId) return;
+
     try {
       const res = await fetch(`/api/reviews/settings/${businessId}`);
       const { settings } = await res.json();
+
       if (!settings) return;
 
       el.googleLink.value = settings.google_review_link || '';
@@ -66,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function saveReviewSettings() {
-    if (!businessId) return alert('Business ID is missing');
+    if (!businessId) return alert('Business ID missing');
 
     const googleLink = el.googleLink.value.trim();
     const isValidLink = googleLink === '' || /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(googleLink);
@@ -94,84 +95,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result?.error || 'Failed to save review settings');
+      if (!res.ok) throw new Error(result.error || 'Failed to save');
 
       alert('✅ Review settings saved!');
     } catch (err) {
-      console.error('❌ Error saving review settings:', err);
-      alert('❌ Failed to save settings');
-    }
-  }
-
-  async function loadInternalReviews() {
-    try {
-      const res = await fetch(`/api/reviews/internal/${businessId}`);
-      const data = await res.json();
-
-      const tbody = el.internalReviewTableBody;
-      tbody.innerHTML = '';
-
-      if (!data.reviews || !data.reviews.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">No reviews yet.</td></tr>`;
-        return;
-      }
-
-      for (const review of data.reviews) {
-        const clientName = review.client_name || 'Unknown Client';
-        const providerName = review.service_provider_name || 'Unknown Provider';
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td class="px-4 py-3">${clientName}</td>
-          <td class="px-4 py-3">${providerName}</td>
-          <td class="px-4 py-3">${review.rating}</td>
-          <td class="px-4 py-3">${review.message || '—'}</td>
-          <td class="px-4 py-3">${new Date(review.created_at).toLocaleString()}</td>
-        `;
-        tbody.appendChild(row);
-      }
-    } catch (err) {
-      console.error('❌ Failed to load internal reviews:', err);
-    }
-  }
-
-  async function loadGoogleAnalytics() {
-    try {
-      const res = await fetch(`/api/reviews/analytics/${businessId}`);
-      const { analytics } = await res.json();
-
-      if (!analytics || !analytics.length) {
-        console.warn('No analytics data available');
-        return;
-      }
-
-      const labels = analytics.map(entry => entry.label);
-      const values = analytics.map(entry => entry.count);
-
-      if (window.googleChartInstance) {
-        window.googleChartInstance.destroy();
-      }
-
-      window.googleChartInstance = new Chart(el.googleChart, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Google Review Counts',
-            data: values,
-            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
-    } catch (err) {
-      console.error('❌ Failed to load Google analytics:', err);
+      console.error('❌ Failed to save review settings:', err);
+      alert('❌ Save failed');
     }
   }
 
@@ -180,79 +109,93 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupEventListeners() {
-  el.saveBtn?.addEventListener('click', saveReviewSettings);
+    el.saveBtn?.addEventListener('click', saveReviewSettings);
 
-  // Internal Review Modal
-  el.openInternalReviewModal?.addEventListener('click', () => {
-    el.internalReviewModal.classList.remove('hidden');
-    loadInternalReviews();
-  });
+    el.enableGoogle?.addEventListener('change', toggleGoogleInput);
 
-  el.closeInternalReviewModal?.addEventListener('click', () => {
-    el.internalReviewModal.classList.add('hidden');
-  });
+    el.openGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.remove('hidden');
+      loadGoogleAnalytics();
+    });
 
-  // Google Review Modal
-  el.openGoogleReviewModal?.addEventListener('click', () => {
-    el.googleReviewModal.classList.remove('hidden');
-    loadGoogleAnalytics();
-  });
+    el.closeGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.add('hidden');
+    });
 
-  el.closeGoogleReviewModal?.addEventListener('click', () => {
-    el.googleReviewModal.classList.add('hidden');
-  });
+    el.openInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.remove('hidden');
+      loadInternalReviews();
+    });
 
-  // ✅ SMS Modal
-  el.sendSms?.addEventListener('change', () => {
-    if (el.sendSms.checked) {
-      el.smsModal.classList.remove('hidden');
-      loadTwilioSettings();
-    }
-  });
+    el.closeInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.add('hidden');
+    });
 
-  el.closeSmsModal?.addEventListener('click', () => {
-    el.smsModal.classList.add('hidden');
-    el.sendSms.checked = false;
-  });
+    el.sendSms?.addEventListener('change', () => {
+      if (el.sendSms.checked) {
+        el.smsModal.classList.remove('hidden');
+        loadTwilioSettings(); // Optional: preload saved creds
+      }
+    });
 
-  // Save Twilio Credentials
-  el.saveTwilioBtn?.addEventListener('click', async () => {
-    const sid = el.twilioSid.value.trim();
-    const authToken = el.twilioToken.value.trim();
-    const phone = el.twilioPhone.value.trim();
-
-    if (!sid || !authToken || !phone) {
-      alert('❌ Please fill in all Twilio fields.');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/reviews/sms-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          business_id: businessId,
-          sid,
-          auth_token: authToken,
-          phone_number: phone,
-        }),
-      });
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result?.error || 'Failed to save Twilio credentials');
-
-      alert('✅ Twilio credentials saved!');
+    el.closeSmsModal?.addEventListener('click', () => {
       el.smsModal.classList.add('hidden');
-    } catch (err) {
-      console.error('❌ Failed to save Twilio credentials:', err);
-      alert('❌ Could not save Twilio credentials.');
-    }
-  });
+      el.sendSms.checked = false;
+    });
 
-  // Enable/disable input
-  el.enableGoogle?.addEventListener('change', toggleGoogleInput);
-}
+    // ✅ Twilio Save + Validation
+    el.saveTwilioBtn?.addEventListener('click', async () => {
+      const sid = el.twilioSid.value.trim();
+      const authToken = el.twilioToken.value.trim();
+      const phone = el.twilioPhone.value.trim();
 
+      if (!sid || !authToken || !phone) {
+        alert('❌ Please fill in all Twilio fields.');
+        return;
+      }
+
+      // Validate credentials
+      try {
+        const res = await fetch('/sms/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ twilio_sid: sid, twilio_auth_token: authToken }),
+        });
+
+        const result = await res.json();
+        if (!res.ok || !result.valid) {
+          alert(result.error || 'Invalid Twilio credentials');
+          return;
+        }
+      } catch (err) {
+        alert('❌ Error validating Twilio credentials.');
+        return;
+      }
+
+      // Save credentials
+      try {
+        const res = await fetch('/sms/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            business_id: businessId,
+            twilio_sid: sid,
+            twilio_auth_token: authToken,
+            twilio_phone: phone,
+          }),
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error);
+
+        alert('✅ Twilio credentials saved!');
+        el.smsModal.classList.add('hidden');
+      } catch (err) {
+        console.error('❌ Save failed:', err);
+        alert('❌ Could not save Twilio credentials.');
+      }
+    });
+  }
 
   async function init() {
     await fetchBusinessId();
