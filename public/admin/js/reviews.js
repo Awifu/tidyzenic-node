@@ -135,40 +135,88 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Load other functions like loadGoogleAnalytics, loadInternalAnalytics, send requests etc.
-  // (Use your existing implementations but with businessId injected dynamically)
+  async function loadGoogleAnalytics() {
+    try {
+      const res = await fetch(`/api/reviews/analytics/${businessId}`);
+      const { analytics } = await res.json();
+
+      if (!analytics || !analytics.length) {
+        console.warn('No analytics data available');
+        return;
+      }
+
+      const labels = analytics.map(entry => entry.label);
+      const values = analytics.map(entry => entry.count);
+
+      if (window.googleChartInstance) {
+        window.googleChartInstance.destroy();
+      }
+
+      window.googleChartInstance = new Chart(el.googleChart, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Google Review Counts',
+            data: values,
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    } catch (err) {
+      console.error('❌ Failed to load Google analytics:', err);
+    }
+  }
 
   function toggleGoogleInput() {
     el.googleLink.disabled = !el.enableGoogle.checked;
   }
 
   function setupEventListeners() {
-  el.saveBtn?.addEventListener('click', saveReviewSettings);
+    el.saveBtn?.addEventListener('click', saveReviewSettings);
 
-  // Internal Review Modal
-  el.openInternalReviewModal?.addEventListener('click', () => {
-    el.internalReviewModal.classList.remove('hidden');
-    loadInternalReviews();
-    // Optionally load internal analytics here
-  });
+    // Internal Review Modal
+    el.openInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.remove('hidden');
+      loadInternalReviews();
+    });
 
-  el.closeInternalReviewModal?.addEventListener('click', () => {
-    el.internalReviewModal.classList.add('hidden');
-  });
+    el.closeInternalReviewModal?.addEventListener('click', () => {
+      el.internalReviewModal.classList.add('hidden');
+    });
 
-  // ✅ Google Review Modal
-  el.openGoogleReviewModal?.addEventListener('click', () => {
-    el.googleReviewModal.classList.remove('hidden');
-    loadGoogleAnalytics(); // if you have this function
-  });
+    // Google Review Modal
+    el.openGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.remove('hidden');
+      loadGoogleAnalytics();
+    });
 
-  el.closeGoogleReviewModal?.addEventListener('click', () => {
-    el.googleReviewModal.classList.add('hidden');
-  });
+    el.closeGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.add('hidden');
+    });
 
-  el.enableGoogle?.addEventListener('change', toggleGoogleInput);
-}
+    // ✅ SMS Modal
+    el.sendSms?.addEventListener('change', () => {
+      if (el.sendSms.checked) {
+        el.smsModal.classList.remove('hidden');
+      }
+    });
 
+    el.closeSmsModal?.addEventListener('click', () => {
+      el.smsModal.classList.add('hidden');
+      el.sendSms.checked = false; // Optional: uncheck on close
+    });
+
+    // Enable/disable input
+    el.enableGoogle?.addEventListener('change', toggleGoogleInput);
+  }
 
   async function init() {
     await fetchBusinessId();
