@@ -28,10 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sendGoogleReview: document.getElementById('sendGoogleReview'),
     sendInternalReview: document.getElementById('sendInternalReview'),
+
+    internalReviewTableBody: document.getElementById('internalReviewTableBody'),
   };
 
   let businessId = null;
-let internalChartInstance = null; // Track internal chart instance
+  let internalChartInstance = null; // Track internal chart instance
 
   async function fetchBusinessId() {
     try {
@@ -173,48 +175,70 @@ let internalChartInstance = null; // Track internal chart instance
   }
 
   async function loadInternalAnalytics() {
-  if (!el.enableInternal.checked || !el.internalChart) return;
+    if (!el.enableInternal.checked || !el.internalChart) return;
 
-  try {
-    const res = await fetch(`/api/reviews/internal/analytics/${businessId}`);
-    const data = await res.json();
+    try {
+      const res = await fetch(`/api/reviews/internal/analytics/${businessId}`);
+      const data = await res.json();
 
-    // 🔥 Destroy previous chart if it exists
-    if (internalChartInstance) {
-      internalChartInstance.destroy();
-    }
+      // Destroy previous chart if exists
+      if (internalChartInstance) internalChartInstance.destroy();
 
-    // 🔄 Create a new chart instance
-    internalChartInstance = new Chart(el.internalChart, {
-      type: 'bar',
-      data: {
-        labels: data.labels || [],
-        datasets: [{
-          label: 'Avg Rating',
-          data: data.ratings || [],
-          backgroundColor: '#6366f1',
-          borderRadius: 6,
-        }],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 5,
+      internalChartInstance = new Chart(el.internalChart, {
+        type: 'bar',
+        data: {
+          labels: data.labels || [],
+          datasets: [{
+            label: 'Avg Rating',
+            data: data.ratings || [],
+            backgroundColor: '#6366f1',
+            borderRadius: 6,
+          }],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, max: 5 },
+          },
+          plugins: {
+            title: { display: true, text: 'Internal Review Ratings' },
+            legend: { display: false },
           },
         },
-        plugins: {
-          title: { display: true, text: 'Internal Review Ratings' },
-          legend: { display: false },
-        },
-      },
-    });
-  } catch (err) {
-    console.error('❌ Failed to load internal analytics:', err);
+      });
+    } catch (err) {
+      console.error('❌ Failed to load internal analytics:', err);
+    }
   }
-}
 
+  async function loadInternalReviews() {
+    try {
+      const res = await fetch(`/api/reviews/internal/${businessId}`);
+      const data = await res.json();
+
+      const tbody = el.internalReviewTableBody;
+      tbody.innerHTML = ''; // Clear old rows
+
+      if (!data.reviews.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">No reviews yet.</td></tr>`;
+        return;
+      }
+
+      for (const review of data.reviews) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="px-4 py-3">Client</td>
+          <td class="px-4 py-3">Service Provider</td>
+          <td class="px-4 py-3">${review.rating}</td>
+          <td class="px-4 py-3">${review.comment || '—'}</td>
+          <td class="px-4 py-3">${new Date(review.created_at).toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      }
+    } catch (err) {
+      console.error('❌ Failed to load internal reviews:', err);
+    }
+  }
 
   async function sendGoogleReviewRequest() {
     if (!el.enableGoogle.checked) {
@@ -294,6 +318,7 @@ let internalChartInstance = null; // Track internal chart instance
     el.openInternalReviewModal?.addEventListener('click', () => {
       el.internalReviewModal.classList.remove('hidden');
       loadInternalAnalytics();
+      loadInternalReviews();  // Load recent reviews too
     });
 
     el.closeInternalReviewModal?.addEventListener('click', () => {
