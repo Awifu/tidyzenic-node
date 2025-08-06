@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   let businessId = null;
-  let internalChartInstance = null; // Track internal chart instance
+  let internalChartInstance = null;
 
   async function fetchBusinessId() {
     try {
@@ -148,25 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
         data: {
           labels: data.labels || [],
           datasets: [
-            {
-              label: 'Requests Sent',
-              data: data.sent || [],
-              borderColor: '#6366f1',
-              tension: 0.3,
-            },
-            {
-              label: 'Clicks Received',
-              data: data.clicks || [],
-              borderColor: '#10b981',
-              tension: 0.3,
-            },
+            { label: 'Requests Sent', data: data.sent || [], borderColor: '#6366f1', tension: 0.3 },
+            { label: 'Clicks Received', data: data.clicks || [], borderColor: '#10b981', tension: 0.3 },
           ],
         },
         options: {
           responsive: true,
-          plugins: {
-            title: { display: true, text: 'Google Reviews' },
-          },
+          plugins: { title: { display: true, text: 'Google Reviews' } },
         },
       });
     } catch (err) {
@@ -181,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/reviews/internal/analytics/${businessId}`);
       const data = await res.json();
 
-      // Destroy previous chart if exists
       if (internalChartInstance) internalChartInstance.destroy();
 
       internalChartInstance = new Chart(el.internalChart, {
@@ -197,9 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         options: {
           responsive: true,
-          scales: {
-            y: { beginAtZero: true, max: 5 },
-          },
+          scales: { y: { beginAtZero: true, max: 5 } },
           plugins: {
             title: { display: true, text: 'Internal Review Ratings' },
             legend: { display: false },
@@ -212,42 +197,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadInternalReviews() {
-  try {
-    const res = await fetch(`/api/reviews/internal/${businessId}`);
-    const data = await res.json();
+    try {
+      const res = await fetch(`/api/reviews/internal/${businessId}`);
+      const data = await res.json();
 
-    const tbody = document.getElementById('internalReviewTableBody');
-    tbody.innerHTML = ''; // Clear old rows
+      const tbody = el.internalReviewTableBody;
+      tbody.innerHTML = '';
 
-    if (!data.reviews.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">No reviews yet.</td></tr>`;
-      return;
+      if (!data.reviews || !data.reviews.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-3 text-center text-gray-500">No reviews yet.</td></tr>`;
+        return;
+      }
+
+      for (const review of data.reviews) {
+        const clientName = review.client_name || 'Unknown Client';
+        const providerName = review.service_provider_name || 'Unknown Provider';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="px-4 py-3">${clientName}</td>
+          <td class="px-4 py-3">${providerName}</td>
+          <td class="px-4 py-3">${review.rating}</td>
+          <td class="px-4 py-3">${review.message || '—'}</td>
+          <td class="px-4 py-3">${new Date(review.created_at).toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      }
+    } catch (err) {
+      console.error('❌ Failed to load internal reviews:', err);
     }
-
-    for (const review of data.reviews) {
-      // You may want to fetch client and service provider names if available
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="px-4 py-3">Client Name</td> 
-        <td class="px-4 py-3">Service Provider</td> 
-        <td class="px-4 py-3">${review.rating}</td>
-        <td class="px-4 py-3">${review.message || '—'}</td>
-        <td class="px-4 py-3">${new Date(review.created_at).toLocaleString()}</td>
-      `;
-      tbody.appendChild(row);
-    }
-  } catch (err) {
-    console.error('❌ Failed to load internal reviews:', err);
   }
-}
-
 
   async function sendGoogleReviewRequest() {
     if (!el.enableGoogle.checked) {
       alert('Google reviews are disabled');
       return;
     }
-
     try {
       const res = await fetch(`/api/reviews/google/send/${businessId}`, { method: 'POST' });
       const result = await res.json();
@@ -264,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Internal reviews are disabled');
       return;
     }
-
     try {
       const res = await fetch(`/api/reviews/internal/send/${businessId}`, { method: 'POST' });
       const result = await res.json();
@@ -320,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.openInternalReviewModal?.addEventListener('click', () => {
       el.internalReviewModal.classList.remove('hidden');
       loadInternalAnalytics();
-      loadInternalReviews();  // Load recent reviews too
+      loadInternalReviews();
     });
 
     el.closeInternalReviewModal?.addEventListener('click', () => {
