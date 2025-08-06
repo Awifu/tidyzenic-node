@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
   const el = {
-    // Review Settings
     googleLink: document.getElementById('googleReviewLink'),
     enableGoogle: document.getElementById('enableGoogleReview'),
     enableInternal: document.getElementById('enableInternalReview'),
@@ -9,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sendSms: document.getElementById('sendSmsReview'),
     saveBtn: document.getElementById('saveReviewSettings'),
 
-    // Twilio Modal
     smsModal: document.getElementById('smsModal'),
     closeSmsModal: document.getElementById('closeSmsModal'),
     saveTwilioBtn: document.getElementById('saveTwilioSettings'),
@@ -17,26 +15,23 @@ document.addEventListener('DOMContentLoaded', () => {
     twilioToken: document.getElementById('twilioAuthToken'),
     twilioPhone: document.getElementById('twilioPhone'),
 
-    // Modals
     openGoogleReviewModal: document.getElementById('openGoogleReviewModal'),
     closeGoogleReviewModal: document.getElementById('closeGoogleReviewModal'),
     googleReviewModal: document.getElementById('googleReviewModal'),
+
     openInternalReviewModal: document.getElementById('openInternalReviewModal'),
     closeInternalReviewModal: document.getElementById('closeInternalReviewModal'),
     internalReviewModal: document.getElementById('internalReviewModal'),
 
-    // Charts
     googleChart: document.getElementById('googleChart'),
     internalChart: document.getElementById('internalChart'),
 
-    // Send buttons
     sendGoogleReview: document.getElementById('sendGoogleReview'),
     sendInternalReview: document.getElementById('sendInternalReview'),
   };
 
   let businessId = null;
 
-  // 🔹 Fetch Business ID
   async function fetchBusinessId() {
     try {
       const res = await fetch('/api/business/public');
@@ -44,11 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!data?.id) throw new Error('Business ID not found');
       businessId = data.id;
     } catch (err) {
-      console.error('❌ Failed to fetch business ID:', err);
+      console.error('❌ Error fetching business ID:', err);
     }
   }
 
-  // 🔹 Load Review Settings
   async function loadReviewSettings() {
     try {
       const res = await fetch(`/api/reviews/settings/${businessId}`);
@@ -68,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🔹 Save Review Settings
   async function saveReviewSettings() {
     if (!businessId) return alert('Business ID is missing');
 
@@ -99,20 +92,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const result = await res.json();
       if (!res.ok) throw new Error(result?.error || 'Failed to save review settings');
+
       alert('✅ Review settings saved!');
     } catch (err) {
       console.error('❌ Error saving review settings:', err);
+      alert('❌ Failed to save settings');
     }
   }
 
-  // 🔹 Save Twilio Settings
   async function saveTwilioSettings() {
     const sid = el.twilioSid.value.trim();
     const token = el.twilioToken.value.trim();
     const phone = el.twilioPhone.value.trim();
 
     if (!sid || !token || !phone) {
-      alert('Please complete all Twilio fields');
+      alert('⚠️ Please fill out all Twilio fields');
       return;
     }
 
@@ -139,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🔹 Analytics
   async function loadGoogleAnalytics() {
     if (!el.enableGoogle.checked || !el.googleChart) return;
 
@@ -201,13 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
           scales: {
             y: {
               beginAtZero: true,
-              max: 5
-            }
+              max: 5,
+            },
           },
           plugins: {
             title: { display: true, text: 'Internal Review Ratings' },
-            legend: { display: false }
-          }
+            legend: { display: false },
+          },
         },
       });
     } catch (err) {
@@ -215,9 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🔹 Send Requests
   async function sendGoogleReviewRequest() {
-    if (!el.enableGoogle.checked) return alert('Google reviews are disabled');
+    if (!el.enableGoogle.checked) {
+      alert('Google reviews are disabled');
+      return;
+    }
 
     try {
       const res = await fetch(`/api/reviews/google/send/${businessId}`, { method: 'POST' });
@@ -225,12 +220,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(result?.error || 'Failed');
       alert('✅ Google review request sent!');
     } catch (err) {
-      console.error('❌ Send Google review failed:', err);
+      console.error('❌ Failed to send Google review:', err);
+      alert(`❌ ${err.message}`);
     }
   }
 
   async function sendInternalReviewRequest() {
-    if (!el.enableInternal.checked) return alert('Internal reviews are disabled');
+    if (!el.enableInternal.checked) {
+      alert('Internal reviews are disabled');
+      return;
+    }
 
     try {
       const res = await fetch(`/api/reviews/internal/send/${businessId}`, { method: 'POST' });
@@ -238,11 +237,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(result?.error || 'Failed');
       alert('✅ Internal review request sent!');
     } catch (err) {
-      console.error('❌ Send internal review failed:', err);
+      console.error('❌ Failed to send internal review:', err);
+      alert(`❌ ${err.message}`);
     }
   }
 
-  // 🔹 Helper Functions
   function toggleGoogleInput() {
     el.googleLink.disabled = !el.enableGoogle.checked;
   }
@@ -251,24 +250,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const value = el.googleLink.value.trim();
     const isValid = /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(value);
     el.googleLink.classList.remove('border-red-500', 'border-green-500');
-    if (value !== '') {
+    if (value) {
       el.googleLink.classList.add(isValid ? 'border-green-500' : 'border-red-500');
     }
   }
 
-  // 🔹 Event Listeners
   function setupEventListeners() {
     el.googleLink?.addEventListener('input', validateGoogleLink);
     el.enableGoogle?.addEventListener('change', () => {
       toggleGoogleInput();
       validateGoogleLink();
     });
+
     el.saveBtn?.addEventListener('click', saveReviewSettings);
     el.saveTwilioBtn?.addEventListener('click', saveTwilioSettings);
 
     el.sendSms?.addEventListener('change', () => {
       if (el.sendSms.checked) el.smsModal.classList.remove('hidden');
     });
+
     el.closeSmsModal?.addEventListener('click', () => {
       el.smsModal.classList.add('hidden');
       el.sendSms.checked = false;
@@ -278,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.googleReviewModal.classList.remove('hidden');
       loadGoogleAnalytics();
     });
+
     el.closeGoogleReviewModal?.addEventListener('click', () => {
       el.googleReviewModal.classList.add('hidden');
     });
@@ -286,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.internalReviewModal.classList.remove('hidden');
       loadInternalAnalytics();
     });
+
     el.closeInternalReviewModal?.addEventListener('click', () => {
       el.internalReviewModal.classList.add('hidden');
     });
@@ -294,13 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
     el.sendInternalReview?.addEventListener('click', sendInternalReviewRequest);
   }
 
-  // 🔹 Init
   async function init() {
     await fetchBusinessId();
     if (businessId) {
       await loadReviewSettings();
+      setupEventListeners();
     }
-    setupEventListeners();
   }
 
   init();
