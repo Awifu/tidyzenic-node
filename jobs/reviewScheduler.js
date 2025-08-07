@@ -6,11 +6,12 @@ const cron = require('node-cron');
 
 async function processReviewQueue() {
   try {
-    const [tickets] = await db.execute(`
+    const [orders] = await db.execute(`
       SELECT 
-        t.id AS ticket_id,
-        t.business_id,
-        t.created_at AS ticket_created,
+        o.id AS service_order_id,
+        o.business_id,
+        o.completed_at,
+        o.review_sent,
         u.email AS customer_email,
         u.phone AS customer_phone,
         r.google_review_link,
@@ -19,22 +20,23 @@ async function processReviewQueue() {
         r.delay_minutes,
         r.send_email,
         r.send_sms
-      FROM support_tickets t
-      JOIN review_settings r ON r.business_id = t.business_id
-      JOIN users u ON u.id = t.user_id
-      WHERE t.status = 'Resolved' AND (t.review_sent = 0 OR t.review_sent IS NULL)
+      FROM service_orders o
+      JOIN review_settings r ON r.business_id = o.business_id
+      JOIN users u ON u.id = o.user_id
+      WHERE o.status = 'completed'
+        AND (o.review_sent = 0 OR o.review_sent IS NULL)
     `);
 
-    for (const ticket of tickets) {
-      const minutesElapsed = (Date.now() - new Date(ticket.ticket_created).getTime()) / 60000;
-      if (minutesElapsed < ticket.delay_minutes) continue;
+    for (const order of orders) {
+      const minutesElapsed = (Date.now() - new Date(order.completed_at).getTime()) / 60000;
+      if (minutesElapsed < order.delay_minutes) continue;
 
-      // Get business info
+      // Fetch business info
       const [[business]] = await db.execute(`
-        SELECT business_name, logo_filename, twilio_sid, twilio_auth_token, twilio_phone_number
+        SELECT business_name, logo_filename, twilio_sid, twilio_auth_token, twilio_phone_number, subdomain, custom_domain
         FROM businesses
         WHERE id = ?
-      `, [ticket.business_id]);
+      `, [order.business_id]);
 
       if (!business) continue;
 
@@ -43,26 +45,30 @@ async function processReviewQueue() {
         twilioSid = decrypt(business.twilio_sid);
         twilioToken = decrypt(business.twilio_auth_token);
       } catch {
-        console.error(`❌ Could not decrypt Twilio keys for business ${ticket.business_id}`);
+        console.error(`❌ Could not decrypt Twilio keys for business ${order.business_id}`);
         continue;
       }
 
       const businessName = business.business_name || 'Our Company';
       const logo = business.logo_filename
-        ? `<img src="https://your-domain.com/uploads/${business.logo_filename}" alt="${businessName} Logo" style="max-height:80px;" />`
+        ? `<img src="https://tidyzenic.com/uploads/${business.logo_filename}" alt="${businessName} Logo" style="max-height:80px;" />`
         : '';
 
-      const internalReviewLink = `https://your-domain.com/review-internal?t=${ticket.ticket_id}`;
-      const googleReviewLink = ticket.google_review_link;
+      const domain = business.custom_domain
+        ? `https://${business.custom_domain}`
+        : `https://${business.subdomain}.tidyzenic.com`;
 
-      // =======================
-      // Build email content
-      // =======================
+      const internalReviewLink = `${domain}/review-internal?o=${order.service_order_id}`;
+      const googleReviewLink = order.google_review_link;
+
+      // ------------------------
+      // 📧 Email content
+      // ------------------------
       const links = [];
-      if (ticket.enable_google && googleReviewLink) {
+      if (order.enable_google && googleReviewLink) {
         links.push(`<a href="${googleReviewLink}" style="background:#4F46E5;color:white;padding:12px 24px;border-radius:6px;text-decoration:none">Leave Google Review</a>`);
       }
-      if (ticket.enable_internal) {
+      if (order.enable_internal) {
         links.push(`<a href="${internalReviewLink}" style="background:#10B981;color:white;padding:12px 24px;border-radius:6px;text-decoration:none">Leave Internal Review</a>`);
       }
 
@@ -77,39 +83,39 @@ async function processReviewQueue() {
         </div>
       `;
 
-      // =======================
-      // Send Email
-      // =======================
       let sent = false;
 
-      if (ticket.send_email && ticket.customer_email) {
+      // ------------------------
+      // ✉️ Send Email
+      // ------------------------
+      if (order.send_email && order.customer_email) {
         try {
           await sendMail({
-            to: ticket.customer_email,
+            to: order.customer_email,
             subject: `We value your feedback – ${businessName}`,
             html: emailHtml,
           });
-          console.log(`📧 Sent email to ${ticket.customer_email}`);
+          console.log(`📧 Sent email to ${order.customer_email}`);
           sent = true;
         } catch (err) {
-          console.error(`❌ Email failed to ${ticket.customer_email}:`, err.message);
+          console.error(`❌ Email failed to ${order.customer_email}:`, err.message);
         }
       }
 
-      // =======================
-      // Send SMS
-      // =======================
+      // ------------------------
+      // 📱 Send SMS
+      // ------------------------
       if (
-        ticket.send_sms &&
-        ticket.customer_phone &&
+        order.send_sms &&
+        order.customer_phone &&
         business.twilio_phone_number &&
         twilioSid &&
         twilioToken
       ) {
         const smsBody = `We’d love your feedback!\n${
-          ticket.enable_google && googleReviewLink ? `Google: ${googleReviewLink}\n` : ''
+          order.enable_google && googleReviewLink ? `Google: ${googleReviewLink}\n` : ''
         }${
-          ticket.enable_internal ? `Internal: ${internalReviewLink}` : ''
+          order.enable_internal ? `Internal: ${internalReviewLink}` : ''
         }`;
 
         try {
@@ -119,21 +125,21 @@ async function processReviewQueue() {
               authToken: twilioToken,
               from: business.twilio_phone_number,
             },
-            ticket.customer_phone,
+            order.customer_phone,
             smsBody
           );
-          console.log(`📱 Sent SMS to ${ticket.customer_phone}`);
+          console.log(`📱 Sent SMS to ${order.customer_phone}`);
           sent = true;
         } catch (err) {
-          console.error(`❌ SMS failed to ${ticket.customer_phone}:`, err.message);
+          console.error(`❌ SMS failed to ${order.customer_phone}:`, err.message);
         }
       }
 
-      // =======================
-      // Update ticket if sent
-      // =======================
+      // ------------------------
+      // ✅ Mark as sent
+      // ------------------------
       if (sent) {
-        await db.execute(`UPDATE support_tickets SET review_sent = 1 WHERE id = ?`, [ticket.ticket_id]);
+        await db.execute(`UPDATE service_orders SET review_sent = 1 WHERE id = ?`, [order.service_order_id]);
       }
     }
   } catch (err) {
@@ -141,6 +147,6 @@ async function processReviewQueue() {
   }
 }
 
-// Run every 10 minutes
+// Schedule: every 10 minutes
 cron.schedule('*/10 * * * *', processReviewQueue);
 console.log('✅ Review scheduler is running every 10 minutes');
