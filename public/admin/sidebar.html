@@ -1,18 +1,18 @@
 <aside
   id="sidebar"
-  class="w-64 min-h-screen bg-white border-r shadow-lg fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col"
+  class="w-64 min-h-screen bg-white border-r shadow-lg fixed md:static inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col"
 >
-  <!-- Header: Logo & Business Info -->
+  <!-- Top: Logo + Business Info -->
   <div class="p-6 flex items-center gap-3 bg-white border-b shadow sticky top-0 z-10">
     <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow" />
-    <div class="overflow-hidden">
+    <div>
       <h1 id="bizName" class="text-lg font-bold uppercase truncate text-blue-600">Business</h1>
       <p class="text-sm text-gray-500 truncate">Admin Panel</p>
     </div>
   </div>
 
   <!-- Navigation -->
-  <nav class="flex-1 overflow-y-auto px-4 py-6 text-sm font-medium text-gray-700 space-y-2">
+  <nav class="flex-1 overflow-y-auto px-4 py-6 text-sm font-medium space-y-2 text-gray-700">
     <!-- Dashboard -->
     <a href="/admin/dashboard" class="nav-link">
       <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -46,7 +46,7 @@
       <button class="nav-link w-full justify-between" data-toggle="crmToolsSubmenu">
         <span class="flex items-center gap-3">
           <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M16 11c1.66 0 2.99 1.34 2.99 3L19 18h-2v-4H7v4H5v-4c0-1.66 1.34-3 3-3h8zm0-2H8c-1.1 0-2-.9-2-2s.9-2 2-2h8c1.1 0 2 .9 2 2s-.9 2-2 2z" />
+            <path d="M16 11c1.66 0 2.99 1.34 2.99 3L19 18h-2v-4H7v4H5v-4c0-1.66 1.34-3 3-3h8zm0-2H8c-1.1 0-2-.9-2-2s.9-2 2-2h8c1.1 0 2 .9 2 2s-.9 2-2 2z"/>
           </svg>
           CRM Tools
         </span>
@@ -86,69 +86,3 @@
     </a>
   </div>
 </aside>
-
-<!-- Mobile Hamburger Toggle -->
-<button
-  id="sidebarToggle"
-  class="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md md:hidden"
-  aria-label="Toggle Sidebar"
->
-  <svg class="w-5 h-5 text-gray-800" fill="currentColor" viewBox="0 0 20 20">
-    <path d="M3 5h14a1 1 0 100-2H3a1 1 0 100 2zm14 4H3a1 1 0 000 2h14a1 1 0 000-2zm0 6H3a1 1 0 000 2h14a1 1 0 000-2z" />
-  </svg>
-</button>
-
-<!-- JavaScript (CSP-Safe) -->
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Mobile sidebar toggle
-    document.getElementById("sidebarToggle")?.addEventListener("click", () => {
-      document.getElementById("sidebar").classList.toggle("-translate-x-full");
-    });
-
-    // Submenu toggling
-    document.querySelectorAll("[data-toggle]").forEach(btn => {
-      const targetId = btn.getAttribute("data-toggle");
-      const submenu = document.getElementById(targetId);
-      const icon = document.getElementById("icon-" + targetId);
-
-      btn.addEventListener("click", () => {
-        if (submenu && icon) {
-          submenu.classList.toggle("hidden");
-          icon.classList.toggle("rotate-180");
-        }
-      });
-    });
-
-    // Highlight active link
-    const currentPath = window.location.pathname;
-    document.querySelectorAll("a.nav-link, a.submenu-link").forEach(link => {
-      if (link.getAttribute("href") === currentPath) {
-        link.classList.add("bg-blue-100", "text-blue-700", "font-semibold");
-      }
-    });
-
-    // Business info fetch
-    fetch('/api/business/public')
-      .then(res => res.json())
-      .then(data => {
-        if (data.business_name) {
-          document.getElementById('bizName').textContent = data.business_name;
-        }
-        if (data.logo_filename) {
-          document.getElementById('logo').src = '/uploads/' + data.logo_filename;
-        }
-      })
-      .catch(() => {});
-  });
-</script>
-
-<!-- Tailwind Utility Styles -->
-<style>
-  .nav-link {
-    @apply flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition;
-  }
-  .submenu-link {
-    @apply text-gray-600 hover:text-blue-600 px-3 py-1 rounded transition;
-  }
-</style>
