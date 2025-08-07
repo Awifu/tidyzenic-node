@@ -1,113 +1,126 @@
-<aside id="sidebar" class="w-64 min-h-screen bg-white shadow-md fixed md:relative z-50 transform transition-transform duration-300 -translate-x-full md:translate-x-0 flex flex-col justify-between">
+<aside id="sidebar" class="w-64 min-h-screen bg-white border-r shadow-lg fixed md:relative z-50 transform transition-transform duration-300 -translate-x-full md:translate-x-0 flex flex-col justify-between">
 
-  <!-- Top: Logo & Business Info -->
+  <!-- Logo + Business Info -->
   <div class="p-6 flex items-center gap-3 bg-white border-b shadow sticky top-0 z-10">
     <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow-md" />
     <div class="overflow-hidden">
       <h1 id="bizName" class="text-lg font-bold uppercase truncate text-blue-600">Business</h1>
-      <p id="sidebarUserName" class="text-sm text-gray-500 truncate"></p>
+      <p id="sidebarUserName" class="text-sm text-gray-500 truncate">Admin User</p>
     </div>
   </div>
 
-  <!-- Nav Menu -->
-  <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-2 text-gray-700 text-sm">
-    <a href="/admin/dashboard" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-chart-line w-4"></i> Dashboard
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto px-4 py-5 space-y-1 text-gray-700 text-sm font-medium">
+    
+    <!-- Link Item -->
+    <a href="/admin/dashboard" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 transition-all group">
+      <i class="fas fa-chart-line text-blue-500 w-4 group-hover:scale-110 transition-transform"></i>
+      <span class="text-gray-800 group-hover:text-blue-600">Dashboard</span>
     </a>
 
-    <!-- Domains -->
+    <!-- Group: Domains -->
     <div>
-      <button onclick="toggleSubmenu('domainsSubmenu')" class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100">
-        <span class="flex items-center gap-3"><i class="fas fa-globe w-4"></i> Domains</span>
-        <i class="fas fa-chevron-down text-xs"></i>
+      <button onclick="toggleSubmenu('domainsSubmenu')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-blue-50 transition-all group">
+        <span class="flex items-center gap-3">
+          <i class="fas fa-globe text-blue-500 w-4 group-hover:scale-110"></i>
+          <span class="text-gray-800 group-hover:text-blue-600">Domains</span>
+        </span>
+        <i class="fas fa-chevron-down text-xs text-gray-500 group-hover:text-blue-500"></i>
       </button>
-      <div id="domainsSubmenu" class="hidden ml-6 mt-1 space-y-1">
-        <a href="/admin/domains/subdomains" class="block px-3 py-1 hover:bg-gray-100 rounded">Subdomains</a>
-        <a href="/admin/domains/custom" class="block px-3 py-1 hover:bg-gray-100 rounded">Custom Domains</a>
+      <div id="domainsSubmenu" class="hidden ml-8 mt-1 space-y-1 text-sm">
+        <a href="/admin/domains/subdomains" class="block px-2 py-1 rounded hover:bg-gray-100">Subdomains</a>
+        <a href="/admin/domains/custom" class="block px-2 py-1 rounded hover:bg-gray-100">Custom Domains</a>
       </div>
     </div>
 
-    <!-- Marketing -->
+    <!-- Group: Marketing -->
     <div>
-      <button onclick="toggleSubmenu('marketingSubmenu')" class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100">
-        <span class="flex items-center gap-3"><i class="fas fa-bullhorn w-4"></i> Marketing</span>
-        <i class="fas fa-chevron-down text-xs"></i>
+      <button onclick="toggleSubmenu('marketingSubmenu')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-blue-50 transition-all group">
+        <span class="flex items-center gap-3">
+          <i class="fas fa-bullhorn text-blue-500 w-4 group-hover:scale-110"></i>
+          <span class="text-gray-800 group-hover:text-blue-600">Marketing</span>
+        </span>
+        <i class="fas fa-chevron-down text-xs text-gray-500 group-hover:text-blue-500"></i>
       </button>
-      <div id="marketingSubmenu" class="hidden ml-6 mt-1 space-y-1">
-        <a href="/admin/marketing/coupons" class="block px-3 py-1 hover:bg-gray-100 rounded">Coupons</a>
-        <a href="/admin/marketing/discounts" class="block px-3 py-1 hover:bg-gray-100 rounded">Discounts</a>
-        <a href="/admin/marketing/referrals" class="block px-3 py-1 hover:bg-gray-100 rounded">Referrals</a>
-        <a href="/admin/marketing/giftcards" class="block px-3 py-1 hover:bg-gray-100 rounded">Gift Cards</a>
-        <a href="/admin/marketing/blog" class="block px-3 py-1 hover:bg-gray-100 rounded">Blog</a>
+      <div id="marketingSubmenu" class="hidden ml-8 mt-1 space-y-1">
+        <a href="/admin/marketing/coupons" class="block px-2 py-1 rounded hover:bg-gray-100">Coupons</a>
+        <a href="/admin/marketing/discounts" class="block px-2 py-1 rounded hover:bg-gray-100">Discounts</a>
+        <a href="/admin/marketing/referrals" class="block px-2 py-1 rounded hover:bg-gray-100">Referrals</a>
+        <a href="/admin/marketing/giftcards" class="block px-2 py-1 rounded hover:bg-gray-100">Gift Cards</a>
+        <a href="/admin/marketing/blog" class="block px-2 py-1 rounded hover:bg-gray-100">Blog</a>
       </div>
     </div>
 
     <!-- Website -->
-    <a href="/admin/website" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-laptop-code w-4"></i> Website
+    <a href="/admin/website" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 group">
+      <i class="fas fa-laptop-code text-blue-500 w-4 group-hover:scale-110"></i>
+      <span class="group-hover:text-blue-600">Website</span>
     </a>
 
     <!-- Forms -->
     <div>
-      <button onclick="toggleSubmenu('formsSubmenu')" class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100">
-        <span class="flex items-center gap-3"><i class="fas fa-clipboard-list w-4"></i> Forms</span>
-        <i class="fas fa-chevron-down text-xs"></i>
+      <button onclick="toggleSubmenu('formsSubmenu')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-blue-50 group">
+        <span class="flex items-center gap-3">
+          <i class="fas fa-clipboard-list text-blue-500 w-4 group-hover:scale-110"></i>
+          <span class="group-hover:text-blue-600">Forms</span>
+        </span>
+        <i class="fas fa-chevron-down text-xs text-gray-500 group-hover:text-blue-500"></i>
       </button>
-      <div id="formsSubmenu" class="hidden ml-6 mt-1 space-y-1">
-        <a href="/admin/forms/embed" class="block px-3 py-1 hover:bg-gray-100 rounded">Embed Forms</a>
-        <a href="/admin/forms/create" class="block px-3 py-1 hover:bg-gray-100 rounded">Create Forms</a>
-        <a href="/admin/forms/entries" class="block px-3 py-1 hover:bg-gray-100 rounded">Entries</a>
-        <a href="/admin/forms/logs" class="block px-3 py-1 hover:bg-gray-100 rounded">Logs</a>
-        <a href="/admin/forms/reports" class="block px-3 py-1 hover:bg-gray-100 rounded">Reports</a>
+      <div id="formsSubmenu" class="hidden ml-8 mt-1 space-y-1">
+        <a href="/admin/forms/embed" class="block px-2 py-1 rounded hover:bg-gray-100">Embed Forms</a>
+        <a href="/admin/forms/create" class="block px-2 py-1 rounded hover:bg-gray-100">Create Forms</a>
+        <a href="/admin/forms/entries" class="block px-2 py-1 rounded hover:bg-gray-100">Entries</a>
+        <a href="/admin/forms/logs" class="block px-2 py-1 rounded hover:bg-gray-100">Logs</a>
+        <a href="/admin/forms/reports" class="block px-2 py-1 rounded hover:bg-gray-100">Reports</a>
       </div>
     </div>
 
-    <!-- Support -->
-    <a href="/admin/support_ticket.html" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-headset w-4"></i> Support Tickets
+    <!-- Other Links -->
+    <a href="/admin/support_ticket.html" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 group">
+      <i class="fas fa-headset text-blue-500 w-4 group-hover:scale-110"></i>
+      <span class="group-hover:text-blue-600">Support Tickets</span>
     </a>
 
-    <!-- Staff -->
-    <a href="/admin/staff" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-user-shield w-4"></i> Staff Management
+    <a href="/admin/staff" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 group">
+      <i class="fas fa-user-shield text-blue-500 w-4 group-hover:scale-110"></i>
+      <span class="group-hover:text-blue-600">Staff Management</span>
     </a>
 
-    <!-- Inventory -->
-    <a href="/admin/inventory" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-boxes w-4"></i> Inventory
+    <a href="/admin/inventory" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 group">
+      <i class="fas fa-boxes text-blue-500 w-4 group-hover:scale-110"></i>
+      <span class="group-hover:text-blue-600">Inventory</span>
     </a>
 
-    <!-- AI Assistant -->
-    <a href="/admin/ai" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-robot w-4"></i> AI Assistant
+    <a href="/admin/ai" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 group">
+      <i class="fas fa-robot text-blue-500 w-4 group-hover:scale-110"></i>
+      <span class="group-hover:text-blue-600">AI Assistant</span>
     </a>
 
-    <!-- Calendar -->
-    <a href="/admin/calendar" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-calendar-alt w-4"></i> Calendar
+    <a href="/admin/calendar" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 group">
+      <i class="fas fa-calendar-alt text-blue-500 w-4 group-hover:scale-110"></i>
+      <span class="group-hover:text-blue-600">Calendar</span>
     </a>
 
-    <!-- Settings -->
-    <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-      <i class="fas fa-cog w-4"></i> Settings
+    <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-50 group">
+      <i class="fas fa-cog text-blue-500 w-4 group-hover:scale-110"></i>
+      <span class="group-hover:text-blue-600">Settings</span>
     </a>
   </nav>
 
-  <!-- Bottom CTAs -->
+  <!-- Bottom Section: CTA + Logout -->
   <div class="px-4 py-4 border-t bg-white space-y-2">
-    <a href="/admin/book" class="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
+    <a href="/admin/book" class="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 font-medium transition">
       <i class="fas fa-calendar-check"></i> Book Now
     </a>
-    <a href="/logout" class="flex items-center justify-center gap-2 text-red-500 hover:underline text-sm">
+    <a href="/logout" class="flex items-center justify-center gap-2 text-red-500 hover:underline text-sm transition">
       <i class="fas fa-sign-out-alt"></i> Logout
     </a>
   </div>
 </aside>
 
-<!-- JS for Submenus -->
 <script>
   function toggleSubmenu(id) {
-    const submenu = document.getElementById(id);
-    submenu.classList.toggle('hidden');
+    const el = document.getElementById(id);
+    el.classList.toggle('hidden');
   }
 </script>
