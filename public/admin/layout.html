@@ -4,42 +4,57 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Panel</title>
+
+  <!-- Tailwind Output -->
   <link rel="stylesheet" href="/dist/output.css" />
+
+  <!-- Local Font Awesome (no CDN) -->
+  <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css" />
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex">
 
-  <!-- Mobile Hamburger -->
+  <!-- Mobile Hamburger Toggle -->
   <button
+    id="sidebarToggle"
     class="md:hidden fixed top-4 left-4 z-50 bg-white border p-2 rounded shadow"
-    onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')"
+    aria-label="Toggle Sidebar"
   >
-    ☰
+    <i class="fa-solid fa-bars text-gray-800"></i>
   </button>
 
-  <!-- Sidebar Container (loaded via fetch) -->
+  <!-- Sidebar (loaded via fetch) -->
   <div id="sidebar-container" class="z-40"></div>
 
-  <!-- Main Content -->
+  <!-- Main Content Area -->
   <main class="flex-1 p-6 ml-0 md:ml-64 transition-all">
     <h1 class="text-2xl font-bold mb-4">Welcome to Admin</h1>
     <p>Your main content goes here.</p>
   </main>
 
-  <!-- JS: Load sidebar and highlight active nav -->
+  <!-- JS: Load sidebar + toggle + active highlight -->
   <script>
-    // Dynamically load sidebar
+    // Dynamically load the sidebar HTML
     fetch("/admin/sidebar.html")
       .then(res => res.text())
       .then(html => {
-        document.getElementById("sidebar-container").innerHTML = html;
+        const container = document.getElementById("sidebar-container");
+        container.innerHTML = html;
 
-        // Highlight active page
         const currentPath = window.location.pathname;
         document.querySelectorAll("#sidebar a[href]").forEach(link => {
           if (link.getAttribute("href") === currentPath) {
             link.classList.add("bg-blue-100", "text-blue-700", "font-semibold");
           }
         });
+
+        // Re-attach mobile toggle after sidebar loads
+        const sidebar = document.getElementById("sidebar");
+        const toggle = document.getElementById("sidebarToggle");
+        if (sidebar && toggle) {
+          toggle.addEventListener("click", () => {
+            sidebar.classList.toggle("-translate-x-full");
+          });
+        }
       });
   </script>
 </body>
