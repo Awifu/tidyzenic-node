@@ -5,7 +5,7 @@ const twilio = require('twilio');
 const { sendMail } = require('../utils/mailer');
 
 // ----------------------
-// 🔧 Helpers
+// 🔧 Helper: Format phone
 // ----------------------
 function formatToE164(phone) {
   const digits = phone.replace(/\D/g, '');
@@ -31,7 +31,7 @@ router.post('/submit', async (req, res) => {
        VALUES (?, ?, ?, NOW())`,
       [service_order_id, rating, comment || null]
     );
-    res.json({ success: true, message: 'Review submitted successfully' });
+    res.json({ success: true });
   } catch (err) {
     console.error('❌ Submit review error:', err);
     res.status(500).json({ error: 'Failed to submit review' });
@@ -66,21 +66,14 @@ router.get('/internal/:business_id', async (req, res) => {
 });
 
 // ----------------------
-// ⚙️ Review Settings
+// ⚙️ Get + Update Review Settings
 // ----------------------
 router.get('/settings/:business_id', async (req, res) => {
-  const { business_id } = req.params;
-
   try {
-    const [[settings]] = await db.execute(
-      `SELECT * FROM review_settings WHERE business_id = ?`,
-      [business_id]
-    );
+    const { business_id } = req.params;
+    const [[settings]] = await db.execute(`SELECT * FROM review_settings WHERE business_id = ?`, [business_id]);
 
-    if (!settings) {
-      return res.status(404).json({ error: 'Settings not found' });
-    }
-
+    if (!settings) return res.status(404).json({ error: 'Settings not found' });
     res.json({ settings });
   } catch (err) {
     console.error('❌ Fetch settings error:', err);
@@ -91,9 +84,7 @@ router.get('/settings/:business_id', async (req, res) => {
 router.post('/settings', async (req, res) => {
   const { business_id, enable_internal } = req.body;
 
-  if (!business_id) {
-    return res.status(400).json({ error: 'business_id is required' });
-  }
+  if (!business_id) return res.status(400).json({ error: 'business_id is required' });
 
   try {
     const [result] = await db.execute(
@@ -101,11 +92,8 @@ router.post('/settings', async (req, res) => {
       [enable_internal ? 1 : 0, business_id]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Settings not found for that business' });
-    }
-
-    res.json({ success: true, message: 'Review settings updated' });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Settings not found' });
+    res.json({ success: true });
   } catch (err) {
     console.error('❌ Update settings error:', err);
     res.status(500).json({ error: 'Failed to update settings' });
@@ -113,7 +101,7 @@ router.post('/settings', async (req, res) => {
 });
 
 // ----------------------
-// 📨 Send Internal Reviews via Email
+// 📨 Send Internal Review Emails
 // ----------------------
 router.post('/internal/send/:businessId', async (req, res) => {
   const { businessId } = req.params;
@@ -123,42 +111,31 @@ router.post('/internal/send/:businessId', async (req, res) => {
       `SELECT enable_internal FROM review_settings WHERE business_id = ?`,
       [businessId]
     );
-
-    if (!settings?.enable_internal) {
-      return res.status(400).json({ error: 'Internal reviews are disabled' });
-    }
+    if (!settings?.enable_internal) return res.status(400).json({ error: 'Internal reviews disabled' });
 
     const [orders] = await db.execute(
       `SELECT u.email, u.name, o.id AS service_order_id
        FROM service_orders o
        JOIN users u ON o.user_id = u.id
        WHERE o.business_id = ?
-         AND u.role = 'client'
-         AND u.is_verified = 1 AND u.is_deleted = 0
-         AND u.email IS NOT NULL AND o.status = 'completed'
-         AND o.review_sent = 0
+         AND u.role = 'client' AND u.is_verified = 1 AND u.is_deleted = 0
+         AND u.email IS NOT NULL AND o.status = 'completed' AND o.review_sent = 0
        ORDER BY o.completed_at DESC`,
       [businessId]
     );
 
-    if (!orders.length) {
-      return res.status(404).json({ error: 'No eligible clients found' });
-    }
+    if (!orders.length) return res.status(404).json({ error: 'No eligible clients found' });
 
     const [[biz]] = await db.execute(
-      `SELECT business_name FROM businesses WHERE id = ?`,
+      `SELECT business_name, custom_domain, subdomain FROM businesses WHERE id = ?`,
       [businessId]
     );
 
     for (const { email, name, service_order_id } of orders) {
-const [[biz]] = await db.execute(
-  `SELECT business_name, custom_domain, subdomain FROM businesses WHERE id = ?`,
-  [businessId]
-);
+      const reviewLink = biz.custom_domain
+        ? `https://${biz.custom_domain}/review-internal?o=${service_order_id}`
+        : `https://${biz.subdomain}.tidyzenic.com/review-internal?o=${service_order_id}`;
 
-const reviewLink = biz.custom_domain
-  ? `https://${biz.custom_domain}/review-internal?o=${service_order_id}`
-  : `https://${biz.subdomain}.tidyzenic.com/review-internal?o=${service_order_id}`;
       await sendMail({
         to: email,
         subject: `We’d love your feedback – ${biz.business_name}`,
@@ -175,24 +152,20 @@ const reviewLink = biz.custom_domain
 
     res.json({ success: true, message: `Sent to ${orders.length} client(s)` });
   } catch (err) {
-    console.error('❌ Send internal review error:', err);
-    res.status(500).json({ error: 'Failed to send internal reviews' });
+    console.error('❌ Send review error:', err);
+    res.status(500).json({ error: 'Failed to send reviews' });
   }
 });
 
 // ----------------------
-// 📈 Google Review Analytics (Mock)
+// 📈 Google CTR Analytics
 // ----------------------
-// 📈 Google Review Link Analytics (CTR and Sent)
 router.get('/analytics/google/:business_id', async (req, res) => {
-  const { business_id } = req.params;
-
   try {
+    const { business_id } = req.params;
     const [data] = await db.execute(
-      `SELECT 
-         channel,
-         COUNT(*) AS total_sent,
-         SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) AS total_clicked
+      `SELECT channel, COUNT(*) AS total_sent,
+              SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) AS total_clicked
        FROM review_link_logs
        WHERE business_id = ? AND type = 'google'
        GROUP BY channel`,
@@ -209,16 +182,15 @@ router.get('/analytics/google/:business_id', async (req, res) => {
     res.json({ success: true, data: formatted });
   } catch (err) {
     console.error('❌ Google analytics error:', err);
-    res.status(500).json({ error: 'Failed to fetch Google review analytics' });
+    res.status(500).json({ error: 'Analytics failed' });
   }
 });
 
 // ----------------------
-// 🔐 Validate Twilio Credentials
+// 🔐 Validate Twilio
 // ----------------------
 router.post('/sms/validate', async (req, res) => {
   const { twilio_sid, twilio_auth_token } = req.body;
-
   if (!twilio_sid || !twilio_auth_token) {
     return res.status(400).json({ valid: false, error: 'Missing credentials' });
   }
@@ -227,31 +199,28 @@ router.post('/sms/validate', async (req, res) => {
     const client = twilio(twilio_sid, twilio_auth_token);
     await client.api.accounts(twilio_sid).fetch();
     res.json({ valid: true });
-  } catch (error) {
-    console.error('❌ Twilio validation failed:', error.message);
-    res.status(400).json({ valid: false, error: error.message });
+  } catch (err) {
+    console.error('❌ Twilio validation error:', err.message);
+    res.status(400).json({ valid: false, error: err.message });
   }
 });
 
 // ----------------------
-// 💾 Save Twilio Credentials
+// 💾 Save Twilio Settings
 // ----------------------
 router.post('/sms-settings', async (req, res) => {
   const { business_id, sid, auth_token, phone_number } = req.body;
-
   if (!business_id || !sid || !auth_token || !phone_number) {
-    return res.status(400).json({ error: 'All fields are required' });
+    return res.status(400).json({ error: 'All fields required' });
   }
 
   try {
-    const [existing] = await db.execute(
-      'SELECT id FROM sms_settings WHERE business_id = ?',
-      [business_id]
-    );
+    const [existing] = await db.execute(`SELECT id FROM sms_settings WHERE business_id = ?`, [business_id]);
 
     if (existing.length) {
       await db.execute(
-        `UPDATE sms_settings SET twilio_sid = ?, twilio_auth_token = ?, twilio_phone = ?, updated_at = NOW() WHERE business_id = ?`,
+        `UPDATE sms_settings SET twilio_sid = ?, twilio_auth_token = ?, twilio_phone = ?, updated_at = NOW()
+         WHERE business_id = ?`,
         [sid, auth_token, phone_number, business_id]
       );
     } else {
@@ -262,7 +231,7 @@ router.post('/sms-settings', async (req, res) => {
       );
     }
 
-    res.json({ success: true, message: 'Twilio settings saved successfully' });
+    res.json({ success: true });
   } catch (err) {
     console.error('❌ Save Twilio error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -270,29 +239,28 @@ router.post('/sms-settings', async (req, res) => {
 });
 
 // ----------------------
-// 📱 Get Twilio Credentials
+// 📱 Get Twilio Settings
 // ----------------------
 router.get('/sms-settings/:business_id', async (req, res) => {
-  const { business_id } = req.params;
-
   try {
+    const { business_id } = req.params;
     const [[settings]] = await db.execute(
       `SELECT twilio_sid, twilio_auth_token, twilio_phone
        FROM sms_settings WHERE business_id = ?`,
       [business_id]
     );
 
-    if (!settings) {
-      return res.status(404).json({ error: 'Twilio settings not found' });
-    }
-
+    if (!settings) return res.status(404).json({ error: 'Not found' });
     res.json({ settings });
   } catch (err) {
     console.error('❌ Fetch Twilio settings error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Failed to load settings' });
   }
 });
-// Track when a review link is clicked
+
+// ----------------------
+// 🔗 Track Review Link Click
+// ----------------------
 router.get('/review/click', async (req, res) => {
   const { service_order_id, type, channel } = req.query;
 
@@ -302,33 +270,32 @@ router.get('/review/click', async (req, res) => {
 
   try {
     await db.execute(
-      `UPDATE review_link_logs
-       SET clicked_at = NOW()
+      `UPDATE review_link_logs SET clicked_at = NOW()
        WHERE service_order_id = ? AND type = ? AND channel = ?`,
       [service_order_id, type, channel]
     );
 
-    // Redirect user to the actual review form
     if (type === 'internal') {
-// Fetch business domain
-const [[business]] = await db.execute(
-  `SELECT subdomain, custom_domain FROM businesses 
-   JOIN service_orders ON businesses.id = service_orders.business_id 
-   WHERE service_orders.id = ?`,
-  [service_order_id]
-);
+      const [[biz]] = await db.execute(
+        `SELECT subdomain, custom_domain
+         FROM businesses
+         JOIN service_orders ON businesses.id = service_orders.business_id
+         WHERE service_orders.id = ?`,
+        [service_order_id]
+      );
 
-const domain = business.custom_domain
-  ? `https://${business.custom_domain}`
-  : `https://${business.subdomain}.tidyzenic.com`;
+      const domain = biz.custom_domain
+        ? `https://${biz.custom_domain}`
+        : `https://${biz.subdomain}.tidyzenic.com`;
 
-return res.redirect(`${domain}/review-internal?o=${service_order_id}`);
-    } else if (type === 'google') {
-      // Fetch the stored link
+      return res.redirect(`${domain}/review-internal?o=${service_order_id}`);
+    }
+
+    if (type === 'google') {
       const [[row]] = await db.execute(
         `SELECT link FROM review_link_logs
          WHERE service_order_id = ? AND type = ? AND channel = ? LIMIT 1`,
-        [service_order_id, 'google', channel]
+        [service_order_id, type, channel]
       );
 
       return res.redirect(row?.link || '/');
@@ -337,22 +304,20 @@ return res.redirect(`${domain}/review-internal?o=${service_order_id}`);
     return res.redirect('/');
   } catch (err) {
     console.error('❌ Error tracking review click:', err);
-    return res.status(500).send('Error');
+    res.status(500).send('Error');
   }
 });
+
 // ----------------------
-// 📈 Review Link Analytics
+// 📈 CTR & Hourly Click Analytics
 // ----------------------
 router.get('/analytics/links/:business_id', async (req, res) => {
-  const { business_id } = req.params;
-
   try {
+    const { business_id } = req.params;
     const [data] = await db.execute(
-      `SELECT 
-         type,
-         channel,
-         COUNT(*) AS total_sent,
-         SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) AS total_clicked
+      `SELECT type, channel,
+              COUNT(*) AS total_sent,
+              SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) AS total_clicked
        FROM review_link_logs
        WHERE business_id = ?
        GROUP BY type, channel`,
@@ -370,20 +335,15 @@ router.get('/analytics/links/:business_id', async (req, res) => {
     res.json({ success: true, data: formatted });
   } catch (err) {
     console.error('❌ CTR analytics error:', err);
-    res.status(500).json({ error: 'Failed to load link analytics' });
+    res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
-// ----------------------
-// ⏰ Hourly Click Analytics
-// ----------------------
-router.get('/analytics/clicks/hourly/:business_id', async (req, res) => {
-  const { business_id } = req.params;
 
+router.get('/analytics/clicks/hourly/:business_id', async (req, res) => {
   try {
+    const { business_id } = req.params;
     const [rows] = await db.execute(
-      `SELECT 
-         HOUR(clicked_at) AS hour,
-         COUNT(*) AS clicks
+      `SELECT HOUR(clicked_at) AS hour, COUNT(*) AS clicks
        FROM review_link_logs
        WHERE business_id = ? AND clicked_at IS NOT NULL
        GROUP BY HOUR(clicked_at)
@@ -393,8 +353,8 @@ router.get('/analytics/clicks/hourly/:business_id', async (req, res) => {
 
     res.json({ success: true, data: rows });
   } catch (err) {
-    console.error('❌ Hourly click analytics error:', err);
-    res.status(500).json({ error: 'Failed to fetch hourly click data' });
+    console.error('❌ Hourly analytics error:', err);
+    res.status(500).json({ error: 'Failed to load hourly data' });
   }
 });
 
