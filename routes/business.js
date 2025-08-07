@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const LRUCache = require('lru-cache');
+const { LRUCache } = require('lru-cache'); // ✅ Correct usage for v7+
 
 // 🧠 In-memory cache (5 min)
 const cache = new LRUCache({
