@@ -90,6 +90,55 @@
             <span class="text-sm text-gray-700">Send via SMS</span>
           </label>
         </section>
+<!-- SMS and Email Template Settings -->
+<section class="bg-white shadow rounded-2xl p-6 space-y-4">
+  <div class="flex justify-between items-center">
+    <h2 class="text-xl font-semibold text-gray-800">SMS & Email Template Settings</h2>
+    <button id="toggleTemplateSettings" class="text-sm text-indigo-600 font-medium hover:underline">Toggle View</button>
+  </div>
+
+  <div id="templateSettingsContent" class="space-y-6">
+
+    <!-- Toggle Buttons -->
+    <div class="flex space-x-4">
+      <button id="showEmailTemplate" class="px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 font-medium hover:bg-indigo-200 transition">Email Template</button>
+      <button id="showSmsTemplate" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition">SMS Template</button>
+    </div>
+
+    <!-- Email Template Editor -->
+    <div id="emailTemplateEditor" class="space-y-4">
+      <label class="block text-sm text-gray-600">Email Subject</label>
+      <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="We'd love your feedback!" />
+
+      <label class="block text-sm text-gray-600">Email Body</label>
+      <textarea class="w-full h-40 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Hi {{customer_name}}, we'd appreciate your review..."></textarea>
+
+      <div class="text-sm text-gray-500">
+        <strong>Dynamic Tags:</strong> <code>{{customer_name}}</code>, <code>{{service_name}}</code>, <code>{{review_link}}</code>
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Styling Options</label>
+        <div class="flex flex-wrap gap-2">
+          <button class="bg-gray-200 text-sm px-3 py-1 rounded hover:bg-gray-300">Bold</button>
+          <button class="bg-gray-200 text-sm px-3 py-1 rounded hover:bg-gray-300">Italic</button>
+          <button class="bg-gray-200 text-sm px-3 py-1 rounded hover:bg-gray-300">Underline</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SMS Template Editor (hidden by default) -->
+    <div id="smsTemplateEditor" class="space-y-4 hidden">
+      <label class="block text-sm text-gray-600">SMS Body</label>
+      <textarea class="w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Hi {{customer_name}}, let us know how we did: {{review_link}}"></textarea>
+      <div class="text-sm text-gray-500">
+        <strong>Dynamic Tags:</strong> <code>{{customer_name}}</code>, <code>{{review_link}}</code>
+      </div>
+      <p class="text-xs text-gray-400">💡 SMS must stay under 160 characters to avoid segmentation.</p>
+    </div>
+
+  </div>
+</section>
 
         <!-- Save Button -->
         <div class="text-right">

@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const el = {
+    // Review form fields
     googleLink: document.getElementById('googleReviewLink'),
     enableGoogle: document.getElementById('enableGoogleReview'),
     enableInternal: document.getElementById('enableInternalReview'),
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendSms: document.getElementById('sendSmsReview'),
     saveBtn: document.getElementById('saveReviewSettings'),
 
+    // Twilio modal
     smsModal: document.getElementById('smsModal'),
     closeSmsModal: document.getElementById('closeSmsModal'),
     saveTwilioBtn: document.getElementById('saveTwilioSettings'),
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     twilioToken: document.getElementById('twilioAuthToken'),
     twilioPhone: document.getElementById('twilioPhone'),
 
+    // Modals
     openGoogleReviewModal: document.getElementById('openGoogleReviewModal'),
     closeGoogleReviewModal: document.getElementById('closeGoogleReviewModal'),
     googleReviewModal: document.getElementById('googleReviewModal'),
@@ -27,19 +30,31 @@ document.addEventListener('DOMContentLoaded', () => {
     closeLinkAnalyticsModal: document.getElementById('closeLinkAnalyticsModal'),
     linkAnalyticsModal: document.getElementById('linkAnalyticsModal'),
 
+    // Charts
     googleChart: document.getElementById('googleChart'),
     internalChart: document.getElementById('internalChart'),
     ctrChart: document.getElementById('ctrChart'),
     hourlyChart: document.getElementById('hourlyChart'),
 
+    // Tables
     internalReviewTableBody: document.getElementById('internalReviewTableBody'),
+
+    // Template editor controls
+    showEmailTemplate: document.getElementById('showEmailTemplate'),
+    showSmsTemplate: document.getElementById('showSmsTemplate'),
+    emailTemplateEditor: document.getElementById('emailTemplateEditor'),
+    smsTemplateEditor: document.getElementById('smsTemplateEditor'),
+    toggleTemplateSettings: document.getElementById('toggleTemplateSettings'),
+    templateSettingsContent: document.getElementById('templateSettingsContent'),
   };
 
   let businessId = null;
-  let googleChartInstance = null;
-  let internalChartInstance = null;
-  let ctrChartInstance = null;
-  let hourlyChartInstance = null;
+  let chartInstances = {
+    google: null,
+    internal: null,
+    ctr: null,
+    hourly: null,
+  };
 
   async function fetchBusinessId() {
     try {
@@ -51,6 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function loadChart(ctx, type, data, options) {
+    if (chartInstances[type]) chartInstances[type].destroy();
+    chartInstances[type] = new Chart(ctx, { type, data, options });
+  }
+
   async function loadGoogleAnalytics() {
     try {
       const res = await fetch(`/api/reviews/analytics/${businessId}`);
@@ -59,19 +79,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const labels = analytics.map(a => a.label);
       const data = analytics.map(a => a.count);
-      if (googleChartInstance) googleChartInstance.destroy();
 
-      googleChartInstance = new Chart(el.googleChart, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Google Review Ratings',
-            data,
-            backgroundColor: 'rgba(79, 70, 229, 0.6)',
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+      await loadChart(el.googleChart, 'bar', {
+        labels,
+        datasets: [{
+          label: 'Google Review Ratings',
+          data,
+          backgroundColor: 'rgba(79, 70, 229, 0.6)',
+        }]
+      }, {
+        responsive: true,
+        plugins: { legend: { display: false } }
       });
     } catch (err) {
       console.error('❌ Failed to load Google analytics:', err);
@@ -96,37 +114,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return parseFloat(avg.toFixed(2));
       });
 
-      if (internalChartInstance) internalChartInstance.destroy();
-      internalChartInstance = new Chart(el.internalChart, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Avg Rating',
-            data,
-            backgroundColor: 'rgba(34, 197, 94, 0.6)',
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { min: 0, max: 5, ticks: { stepSize: 1 } }
-          },
-          plugins: { legend: { display: false } }
-        }
+      await loadChart(el.internalChart, 'bar', {
+        labels,
+        datasets: [{
+          label: 'Avg Rating',
+          data,
+          backgroundColor: 'rgba(34, 197, 94, 0.6)',
+        }]
+      }, {
+        responsive: true,
+        scales: { y: { min: 0, max: 5, ticks: { stepSize: 1 } } },
+        plugins: { legend: { display: false } }
       });
 
       el.internalReviewTableBody.innerHTML = '';
       reviews.slice(0, 5).forEach(r => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td class="px-4 py-3">${r.client_name}</td>
-          <td class="px-4 py-3">${r.service_provider_name}</td>
-          <td class="px-4 py-3">${r.rating}</td>
-          <td class="px-4 py-3">${r.message || ''}</td>
-          <td class="px-4 py-3">${new Date(r.created_at).toLocaleDateString()}</td>
-        `;
-        el.internalReviewTableBody.appendChild(row);
+        el.internalReviewTableBody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td class="px-4 py-3">${r.client_name}</td>
+            <td class="px-4 py-3">${r.service_provider_name}</td>
+            <td class="px-4 py-3">${r.rating}</td>
+            <td class="px-4 py-3">${r.message || ''}</td>
+            <td class="px-4 py-3">${new Date(r.created_at).toLocaleDateString()}</td>
+          </tr>
+        `);
       });
     } catch (err) {
       console.error('❌ Failed to load internal reviews:', err);
@@ -135,58 +146,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadLinkAnalytics() {
     try {
-      const ctrRes = await fetch(`/api/reviews/analytics/links/${businessId}`);
-      const hourlyRes = await fetch(`/api/reviews/analytics/clicks/hourly/${businessId}`);
+      const [ctrRes, hourlyRes] = await Promise.all([
+        fetch(`/api/reviews/analytics/links/${businessId}`),
+        fetch(`/api/reviews/analytics/clicks/hourly/${businessId}`)
+      ]);
+
       const { data: ctrData } = await ctrRes.json();
       const { data: hourlyData } = await hourlyRes.json();
 
-      // CTR
       const ctrLabels = ctrData.map(r => `${r.type} (${r.channel})`);
       const sent = ctrData.map(r => r.sent);
       const clicked = ctrData.map(r => r.clicked);
 
-      if (ctrChartInstance) ctrChartInstance.destroy();
-      ctrChartInstance = new Chart(el.ctrChart, {
-        type: 'bar',
-        data: {
-          labels: ctrLabels,
-          datasets: [
-            { label: 'Sent', data: sent, backgroundColor: '#e5e7eb' },
-            { label: 'Clicked', data: clicked, backgroundColor: '#6366f1' }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'top' } },
-          scales: { y: { beginAtZero: true } }
-        }
+      await loadChart(el.ctrChart, 'bar', {
+        labels: ctrLabels,
+        datasets: [
+          { label: 'Sent', data: sent, backgroundColor: '#e5e7eb' },
+          { label: 'Clicked', data: clicked, backgroundColor: '#6366f1' }
+        ]
+      }, {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true } }
       });
 
-      // Hourly
       const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
       const clicks = Array(24).fill(0);
       hourlyData.forEach(({ hour, clicks: c }) => clicks[hour] = c);
 
-      if (hourlyChartInstance) hourlyChartInstance.destroy();
-      hourlyChartInstance = new Chart(el.hourlyChart, {
-        type: 'line',
-        data: {
-          labels: hours,
-          datasets: [{
-            label: 'Clicks per Hour',
-            data: clicks,
-            fill: true,
-            borderColor: '#4f46e5',
-            backgroundColor: 'rgba(99, 102, 241, 0.4)',
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'top' } },
-          scales: { y: { beginAtZero: true } }
-        }
+      await loadChart(el.hourlyChart, 'line', {
+        labels: hours,
+        datasets: [{
+          label: 'Clicks per Hour',
+          data: clicks,
+          fill: true,
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(99, 102, 241, 0.4)',
+          tension: 0.4
+        }]
+      }, {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true } }
       });
+
     } catch (err) {
       console.error('❌ Link analytics error:', err);
     }
@@ -204,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.reviewDelay.value = Math.floor((settings.delay_minutes || 0) / 60);
       el.sendEmail.checked = !!settings.send_email;
       el.sendSms.checked = !!settings.send_sms;
+
       toggleGoogleInput();
     } catch (err) {
       console.error('❌ Error loading review settings:', err);
@@ -212,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function saveReviewSettings() {
     const googleLink = el.googleLink.value.trim();
-    const isValidLink = googleLink === '' || /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(googleLink);
+    const isValidLink = !googleLink || /^https:\/\/(g\.page|search\.google\.com|www\.google\.com)\/.+/.test(googleLink);
     if (!isValidLink) return alert('❌ Invalid Google review link');
 
     const payload = {
@@ -245,6 +249,32 @@ document.addEventListener('DOMContentLoaded', () => {
     el.googleLink.disabled = !el.enableGoogle.checked;
   }
 
+  function setupTemplateEditor() {
+    const { showEmailTemplate, showSmsTemplate, emailTemplateEditor, smsTemplateEditor, toggleTemplateSettings, templateSettingsContent } = el;
+
+    showEmailTemplate?.addEventListener('click', () => {
+      emailTemplateEditor.classList.remove('hidden');
+      smsTemplateEditor.classList.add('hidden');
+      showEmailTemplate.classList.replace('bg-gray-100', 'bg-indigo-100');
+      showEmailTemplate.classList.replace('text-gray-700', 'text-indigo-700');
+      showSmsTemplate.classList.replace('bg-indigo-100', 'bg-gray-100');
+      showSmsTemplate.classList.replace('text-indigo-700', 'text-gray-700');
+    });
+
+    showSmsTemplate?.addEventListener('click', () => {
+      smsTemplateEditor.classList.remove('hidden');
+      emailTemplateEditor.classList.add('hidden');
+      showSmsTemplate.classList.replace('bg-gray-100', 'bg-indigo-100');
+      showSmsTemplate.classList.replace('text-gray-700', 'text-indigo-700');
+      showEmailTemplate.classList.replace('bg-indigo-100', 'bg-gray-100');
+      showEmailTemplate.classList.replace('text-indigo-700', 'text-gray-700');
+    });
+
+    toggleTemplateSettings?.addEventListener('click', () => {
+      templateSettingsContent.classList.toggle('hidden');
+    });
+  }
+
   function setupEventListeners() {
     el.saveBtn?.addEventListener('click', saveReviewSettings);
     el.enableGoogle?.addEventListener('change', toggleGoogleInput);
@@ -254,13 +284,13 @@ document.addEventListener('DOMContentLoaded', () => {
       loadGoogleAnalytics();
     });
 
+    el.closeGoogleReviewModal?.addEventListener('click', () => {
+      el.googleReviewModal.classList.add('hidden');
+    });
+
     el.openInternalReviewModal?.addEventListener('click', () => {
       el.internalReviewModal.classList.remove('hidden');
       loadInternalReviews();
-    });
-
-    el.closeGoogleReviewModal?.addEventListener('click', () => {
-      el.googleReviewModal.classList.add('hidden');
     });
 
     el.closeInternalReviewModal?.addEventListener('click', () => {
@@ -314,9 +344,9 @@ document.addEventListener('DOMContentLoaded', () => {
             twilio_phone: phone
           })
         });
+
         const result = await save.json();
         if (!save.ok) throw new Error(result.error);
-
         alert('✅ Twilio credentials saved!');
         el.smsModal.classList.add('hidden');
       } catch (err) {
@@ -324,14 +354,15 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('❌ Could not save Twilio credentials.');
       }
     });
+
+    setupTemplateEditor();
   }
 
   async function init() {
     await fetchBusinessId();
-    if (businessId) {
-      await loadReviewSettings();
-      setupEventListeners();
-    }
+    if (!businessId) return;
+    await loadReviewSettings();
+    setupEventListeners();
   }
 
   init();
