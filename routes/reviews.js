@@ -183,28 +183,33 @@ const reviewLink = biz.custom_domain
 // ----------------------
 // 📈 Google Review Analytics (Mock)
 // ----------------------
-router.get('/analytics/:business_id', async (req, res) => {
+// 📈 Google Review Link Analytics (CTR and Sent)
+router.get('/analytics/google/:business_id', async (req, res) => {
   const { business_id } = req.params;
 
   try {
-    const [rows] = await db.execute(
-      `SELECT rating AS label, COUNT(*) AS count
-       FROM google_reviews
-       WHERE business_id = ?
-       GROUP BY rating
-       ORDER BY rating DESC`,
+    const [data] = await db.execute(
+      `SELECT 
+         channel,
+         COUNT(*) AS total_sent,
+         SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) AS total_clicked
+       FROM review_link_logs
+       WHERE business_id = ? AND type = 'google'
+       GROUP BY channel`,
       [business_id]
     );
 
-    const analytics = rows.map(r => ({
-      label: `${r.label} Stars`,
-      count: r.count,
+    const formatted = data.map(row => ({
+      channel: row.channel,
+      sent: row.total_sent,
+      clicked: row.total_clicked,
+      ctr: row.total_sent > 0 ? ((row.total_clicked / row.total_sent) * 100).toFixed(2) + '%' : '0%'
     }));
 
-    res.json({ analytics });
+    res.json({ success: true, data: formatted });
   } catch (err) {
-    console.error('❌ Analytics error:', err);
-    res.status(500).json({ error: 'Failed to fetch analytics' });
+    console.error('❌ Google analytics error:', err);
+    res.status(500).json({ error: 'Failed to fetch Google review analytics' });
   }
 });
 
