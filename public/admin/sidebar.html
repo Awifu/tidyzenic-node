@@ -2,7 +2,7 @@
 <aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 shadow-md z-40 flex flex-col">
   <!-- Header -->
   <div class="flex items-center justify-between p-4 border-b border-gray-200">
-    <h1 class="text-xl font-bold text-gray-900">YourSaaS</h1>
+    <h1 id="bizName" class="text-xl font-bold text-gray-900">TidyZenic</h1>
     <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded">
       + Booking
     </button>
@@ -12,99 +12,43 @@
   <nav class="flex-1 overflow-y-auto p-4">
     <ul class="space-y-1 text-sm text-gray-800">
 
-      <!-- Dashboard -->
-      <li>
-        <a href="/admin/dashboard" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
-          <!-- Icon -->
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-               viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/>
-          </svg>
-          Dashboard
-        </a>
-      </li>
+      <!-- Bookings Section -->
+      <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Bookings</li>
+      <li><a href="/admin/bookings" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📅 Booking List</a></li>
+      <li><a href="/admin/calendar" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🗓️ Calendar View</a></li>
+      <li><a href="/admin/map" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🗺️ Map View</a></li>
+      <li><a href="/admin/templates" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📋 Booking Templates</a></li>
 
-      <!-- Views -->
-      <li><a href="/admin/calendar" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        Calendar View
-      </a></li>
-
-      <li><a href="/admin/listing" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <line x1="8" y1="6" x2="21" y2="6"/>
-          <line x1="8" y1="12" x2="21" y2="12"/>
-          <line x1="8" y1="18" x2="21" y2="18"/>
-          <line x1="3" y1="6" x2="3.01" y2="6"/>
-          <line x1="3" y1="12" x2="3.01" y2="12"/>
-          <line x1="3" y1="18" x2="3.01" y2="18"/>
-        </svg>
-        Listing View
-      </a></li>
-
-      <li><a href="/admin/map" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/>
-          <line x1="9" y1="3" x2="9" y2="18"/>
-          <line x1="15" y1="6" x2="15" y2="21"/>
-        </svg>
-        Map View
-      </a></li>
-
-      <!-- Bookings -->
-      <li><a href="/admin/bookings" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M4 4h16v16H4z"/>
-          <path d="M8 2v4"/>
-        </svg>
-        Bookings
-      </a></li>
-
-      <!-- Leads, Customers, Providers -->
-      <li><a href="/admin/leads" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Leads</a></li>
+      <!-- Clients -->
+      <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Clients</li>
       <li><a href="/admin/customers" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🧑 Customers</a></li>
+      <li><a href="/admin/leads" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Leads</a></li>
+      <li><a href="/admin/tags" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🏷️ CRM Tags</a></li>
+
+      <!-- Team -->
+      <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Team</li>
       <li><a href="/admin/providers" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">💼 Providers</a></li>
       <li><a href="/admin/hiring" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🤝 Hiring</a></li>
-      <li><a href="/admin/marketing" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📣 Marketing</a></li>
-      <li><a href="/admin/reports" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📊 Reports</a></li>
-      <li><a href="/admin/logs" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📄 Logs</a></li>
+      <li><a href="/admin/staff" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Staff</a></li>
 
-      <!-- Submenu: Account -->
-      <li class="pt-4 text-gray-500 uppercase text-xs tracking-wide">Account</li>
-      <li>
-        <a href="/admin/settings" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">⚙️ Settings</a>
-      </li>
-      <li>
-        <a href="/admin/account" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👤 General</a>
-      </li>
-      <li>
-        <a href="/admin/translation" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🌐 Translation</a>
-      </li>
-      <li>
-        <a href="/admin/design" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🖌️ Design</a>
-      </li>
-      <li>
-        <a href="/admin/industries" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🏭 Industries</a>
-      </li>
-      <li>
-        <a href="/admin/staff" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Staff</a>
-      </li>
-      <li>
-        <a href="/admin/spots" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📍 Booking Spots</a>
-      </li>
-      <li>
-        <a href="/admin/notifications" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🔔 Notifications</a>
-      </li>
+      <!-- Tools -->
+      <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Tools</li>
+      <li><a href="/admin/marketing" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📣 Marketing</a></li>
+      <li><a href="/admin/campaigns" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🎯 Campaigns</a></li>
+      <li><a href="/admin/reports" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📊 Reports</a></li>
+      <li><a href="/admin/logs" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📝 Activity Logs</a></li>
+
+      <!-- Settings -->
+      <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Settings</li>
+      <li><a href="/admin/account" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">⚙️ General Settings</a></li>
+      <li><a href="/admin/notifications" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🔔 Notifications</a></li>
+      <li><a href="/admin/design" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🎨 Appearance</a></li>
+      <li><a href="/admin/translation" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🌍 Languages</a></li>
+
+      <!-- Profile & Logout -->
+      <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Account</li>
+      <li><a href="/admin/profile" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👤 My Profile</a></li>
+      <li><a href="#" id="logoutBtn" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 text-red-600">🚪 Logout</a></li>
     </ul>
   </nav>
 </aside>
