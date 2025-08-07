@@ -1,77 +1,77 @@
 <!-- public/admin/sidebar.html -->
 <aside
   id="sidebar"
-  class="w-64 min-h-screen bg-white border-r shadow-xl fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col"
+  class="w-64 min-h-screen bg-white border-r shadow-lg fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col"
 >
-  <!-- Logo & Business Info -->
-  <div class="p-6 flex items-center gap-4 border-b shadow-sm bg-white">
+  <!-- Logo + Business Info -->
+  <div class="p-5 flex items-center gap-3 border-b bg-white shadow-sm">
     <img
       src="/assets/logo-placeholder.png"
       alt="Logo"
-      class="w-12 h-12 rounded-full shadow object-cover"
+      class="w-12 h-12 rounded-full object-cover shadow"
     />
     <div>
-      <h1 class="text-base font-extrabold text-primary uppercase tracking-wide">LADYGREENER</h1>
+      <h1 class="text-base font-bold text-primary uppercase tracking-wide">LADYGREENER</h1>
       <p class="text-xs text-gray-400 truncate">Admin</p>
     </div>
   </div>
 
-  <!-- Navigation -->
-  <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-2 text-sm font-medium">
-    <a href="/admin/dashboard" class="nav-link">
+  <!-- Navigation Links -->
+  <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1 text-sm font-medium">
+    <a href="/admin/dashboard" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-home text-primary w-5"></i>
       Dashboard
     </a>
-    <a href="/admin/domains" class="nav-link">
+    <a href="/admin/domains" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-globe text-primary w-5"></i>
       Domains
     </a>
-    <a href="/admin/marketing" class="nav-link">
+    <a href="/admin/marketing" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-bullhorn text-primary w-5"></i>
       Marketing
     </a>
-    <a href="/admin/website" class="nav-link">
+    <a href="/admin/website" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-laptop-code text-primary w-5"></i>
       Website
     </a>
-    <a href="/admin/forms" class="nav-link">
+    <a href="/admin/forms" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-clipboard-list text-primary w-5"></i>
       Forms
     </a>
-    <a href="/admin/support_ticket.html" class="nav-link">
+    <a href="/admin/support_ticket.html" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-headset text-primary w-5"></i>
       Support Tickets
     </a>
-    <a href="/admin/staff" class="nav-link">
+    <a href="/admin/staff" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-user-shield text-primary w-5"></i>
       Staff Management
     </a>
-    <a href="/admin/inventory" class="nav-link">
+    <a href="/admin/inventory" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-boxes-stacked text-primary w-5"></i>
       Inventory
     </a>
-    <a href="/admin/ai" class="nav-link">
+    <a href="/admin/ai" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-robot text-primary w-5"></i>
       AI Assistant
     </a>
-    <a href="/admin/calendar" class="nav-link">
+    <a href="/admin/calendar" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-calendar-days text-primary w-5"></i>
       Calendar
     </a>
-    <a href="/admin/settings" class="nav-link">
+    <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition">
       <i class="fa-solid fa-gear text-primary w-5"></i>
       Settings
     </a>
   </nav>
 
-  <!-- CTA & Logout -->
+  <!-- Bottom CTA + Logout -->
   <div class="px-4 py-4 border-t bg-white space-y-2">
     <a
       href="/admin/book"
-      class="btn btn-success w-full flex justify-center items-center gap-2"
+      class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-medium shadow"
     >
       <i class="fa-solid fa-calendar-check"></i>
-      Book Now
+      Add Booking
     </a>
     <a
       href="/logout"
@@ -83,10 +83,10 @@
   </div>
 </aside>
 
-<!-- Optional: Sidebar Toggle for Mobile -->
+<!-- Sidebar Toggle (Mobile Only) -->
 <button
   id="sidebarToggle"
-  class="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-lg md:hidden"
+  class="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md md:hidden"
   aria-label="Toggle Sidebar"
 >
   <i class="fa-solid fa-bars text-gray-800"></i>
