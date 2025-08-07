@@ -23,3 +23,9 @@
     @apply w-64 min-h-screen bg-white border-r shadow-lg fixed inset-y-0 left-0 z-40 transform md:translate-x-0 transition-transform duration-300 flex flex-col;
   }
 }
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition text-left w-full;
+  }
+  .submenu-link {
+    @apply text-gray-600 hover:text-blue-600 px-3 py-1 rounded transition;
+  }
