@@ -9,6 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     sendSms: document.getElementById('sendSmsReview'),
     saveBtn: document.getElementById('saveReviewSettings'),
 
+    // Template editor controls
+    emailPreview: document.getElementById('emailPreview'),
+    smsPreview: document.getElementById('smsPreview'),
+    showEmailTemplate: document.getElementById('showEmailTemplate'),
+    showSmsTemplate: document.getElementById('showSmsTemplate'),
+    emailTemplateEditor: document.getElementById('emailTemplateEditor'),
+    smsTemplateEditor: document.getElementById('smsTemplateEditor'),
+    toggleTemplateSettings: document.getElementById('toggleTemplateSettings'),
+    templateSettingsContent: document.getElementById('templateSettingsContent'),
+
     // Twilio modal
     smsModal: document.getElementById('smsModal'),
     closeSmsModal: document.getElementById('closeSmsModal'),
@@ -38,17 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Tables
     internalReviewTableBody: document.getElementById('internalReviewTableBody'),
-
-    // Template editor controls
-    showEmailTemplate: document.getElementById('showEmailTemplate'),
-    showSmsTemplate: document.getElementById('showSmsTemplate'),
-    emailTemplateEditor: document.getElementById('emailTemplateEditor'),
-    smsTemplateEditor: document.getElementById('smsTemplateEditor'),
-    toggleTemplateSettings: document.getElementById('toggleTemplateSettings'),
-    templateSettingsContent: document.getElementById('templateSettingsContent'),
   };
 
   let businessId = null;
+
   let chartInstances = {
     google: null,
     internal: null,
@@ -56,17 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
     hourly: null,
   };
 
-  async function fetchBusinessId() {
-    try {
-      const res = await fetch('/api/business/public');
-      const data = await res.json();
-      businessId = data.id;
-    } catch (err) {
-      console.error('❌ Error fetching business ID:', err);
-    }
-  }
 
-  async function loadChart(ctx, type, data, options) {
+    async function loadChart(ctx, type, data, options) {
     if (chartInstances[type]) chartInstances[type].destroy();
     chartInstances[type] = new Chart(ctx, { type, data, options });
   }
@@ -225,6 +219,8 @@ async function loadTemplates() {
   } catch (err) {
     console.error('❌ Failed to load templates:', err);
   }
+updatePreviews();
+
 }
 async function saveTemplates() {
   const emailSubject = document.querySelector('#emailTemplateEditor input')?.value.trim();
@@ -366,6 +362,7 @@ el.saveBtn?.addEventListener('click', async () => {
       el.sendSms.checked = false;
     });
 
+
     el.saveTwilioBtn?.addEventListener('click', async () => {
       const sid = el.twilioSid.value.trim();
       const authToken = el.twilioToken.value.trim();
@@ -408,6 +405,27 @@ el.saveBtn?.addEventListener('click', async () => {
 
     setupTemplateEditor();
   }
+function updatePreviews() {
+  const emailSubject = document.querySelector('#emailTemplateEditor input')?.value || '';
+  const emailBody = document.querySelector('#emailTemplateEditor textarea')?.value || '';
+  const smsBody = document.querySelector('#smsTemplateEditor textarea')?.value || '';
+
+  const exampleData = {
+    client_name: 'Jane Doe',
+    business_name: 'Zenic Spa',
+    review_link: 'https://zenicspa.com/review?o=123',
+  };
+
+  const inject = (template) => {
+    return template
+      .replace(/{{\s*client_name\s*}}/gi, exampleData.client_name)
+      .replace(/{{\s*business_name\s*}}/gi, exampleData.business_name)
+      .replace(/{{\s*review_link\s*}}/gi, exampleData.review_link);
+  };
+
+  el.emailPreview.innerHTML = `📨 <strong>${inject(emailSubject)}</strong><br><br>${inject(emailBody)}`;
+  el.smsPreview.innerHTML = inject(smsBody);
+}
 
 async function init() {
   await fetchBusinessId();
