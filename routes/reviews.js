@@ -151,7 +151,14 @@ router.post('/internal/send/:businessId', async (req, res) => {
     );
 
     for (const { email, name, service_order_id } of orders) {
-      const reviewLink = `https://${process.env.APP_DOMAIN}/review-internal?o=${service_order_id}`;
+const [[biz]] = await db.execute(
+  `SELECT business_name, custom_domain, subdomain FROM businesses WHERE id = ?`,
+  [businessId]
+);
+
+const reviewLink = biz.custom_domain
+  ? `https://${biz.custom_domain}/review-internal?o=${service_order_id}`
+  : `https://${biz.subdomain}.tidyzenic.com/review-internal?o=${service_order_id}`;
       await sendMail({
         to: email,
         subject: `We’d love your feedback – ${biz.business_name}`,
