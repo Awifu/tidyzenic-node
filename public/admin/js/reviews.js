@@ -43,6 +43,113 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('❌ Error fetching business ID:', err);
     }
   }
+let googleChartInstance = null;
+let internalChartInstance = null;
+
+async function loadGoogleAnalytics() {
+  if (!businessId) return;
+
+  try {
+    const res = await fetch(`/api/reviews/analytics/${businessId}`);
+    const { analytics } = await res.json();
+
+    if (!analytics || !Array.isArray(analytics)) return;
+
+    const labels = analytics.map((a) => a.label);
+    const data = analytics.map((a) => a.count);
+
+    if (googleChartInstance) googleChartInstance.destroy();
+
+    googleChartInstance = new Chart(el.googleChart, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Google Review Ratings',
+          data,
+          backgroundColor: 'rgba(79, 70, 229, 0.6)',
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+        },
+      },
+    });
+  } catch (err) {
+    console.error('❌ Failed to load Google analytics:', err);
+  }
+}
+
+async function loadInternalReviews() {
+  if (!businessId) return;
+
+  try {
+    const res = await fetch(`/api/reviews/internal/${businessId}`);
+    const { reviews } = await res.json();
+
+    // 🌟 Populate chart
+    const serviceRatings = {};
+    reviews.forEach(({ service_name, rating }) => {
+      if (!serviceRatings[service_name]) {
+        serviceRatings[service_name] = [];
+      }
+      serviceRatings[service_name].push(rating);
+    });
+
+    const labels = Object.keys(serviceRatings);
+    const data = labels.map((label) => {
+      const ratings = serviceRatings[label];
+      const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+      return parseFloat(avg.toFixed(2));
+    });
+
+    if (internalChartInstance) internalChartInstance.destroy();
+
+    internalChartInstance = new Chart(el.internalChart, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Avg Rating',
+          data,
+          backgroundColor: 'rgba(34, 197, 94, 0.6)',
+        }],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            min: 0,
+            max: 5,
+            ticks: { stepSize: 1 },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+        },
+      },
+    });
+
+    // 🌟 Optionally, populate the internal reviews table
+    el.internalReviewTableBody.innerHTML = '';
+    reviews.slice(0, 5).forEach((r) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-4 py-3">${r.client_name}</td>
+        <td class="px-4 py-3">${r.service_provider_name}</td>
+        <td class="px-4 py-3">${r.rating}</td>
+        <td class="px-4 py-3">${r.message || ''}</td>
+        <td class="px-4 py-3">${new Date(r.created_at).toLocaleDateString()}</td>
+      `;
+      el.internalReviewTableBody.appendChild(row);
+    });
+
+  } catch (err) {
+    console.error('❌ Failed to load internal reviews:', err);
+  }
+}
 
   async function loadReviewSettings() {
     if (!businessId) return;
@@ -112,23 +219,19 @@ document.addEventListener('DOMContentLoaded', () => {
     el.saveBtn?.addEventListener('click', saveReviewSettings);
     el.enableGoogle?.addEventListener('change', toggleGoogleInput);
 
-    el.openGoogleReviewModal?.addEventListener('click', () => {
-      el.googleReviewModal.classList.remove('hidden');
-      // loadGoogleAnalytics(); // implement if needed
-    });
+el.openGoogleReviewModal?.addEventListener('click', () => {
+  el.googleReviewModal.classList.remove('hidden');
+  loadGoogleAnalytics(); // ✅ now it's active
+});
 
-    el.closeGoogleReviewModal?.addEventListener('click', () => {
-      el.googleReviewModal.classList.add('hidden');
-    });
+el.openInternalReviewModal?.addEventListener('click', () => {
+  el.internalReviewModal.classList.remove('hidden');
+  loadInternalReviews(); // ✅ now it's active
+});
 
-    el.openInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.remove('hidden');
-      // loadInternalReviews(); // implement if needed
-    });
-
-    el.closeInternalReviewModal?.addEventListener('click', () => {
-      el.internalReviewModal.classList.add('hidden');
-    });
+ el.closeGoogleReviewModal?.addEventListener('click', () => {
+  el.googleReviewModal.classList.add('hidden');
+});
 
     el.sendSms?.addEventListener('change', () => {
       if (el.sendSms.checked) {
