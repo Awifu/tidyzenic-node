@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/dist/output.css" />
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex">
+
+  <!-- Mobile Hamburger -->
+  <button
+    class="md:hidden fixed top-4 left-4 z-50 bg-white border p-2 rounded shadow"
+    onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')"
+  >
+    ☰
+  </button>
+
+  <!-- Sidebar -->
+  <%- include('partials/sidebar') %>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6 ml-0 md:ml-64 transition-all">
+    <%- body %>
+  </main>
+
+  <!-- Highlight active link -->
+  <script>
+    const path = window.location.pathname;
+    document.querySelectorAll(".nav-link").forEach(link => {
+      if (link.getAttribute("href") === path) {
+        link.classList.add("bg-blue-100", "text-blue-700", "font-semibold");
+      }
+    });
+  </script>
+</body>
+</html>
