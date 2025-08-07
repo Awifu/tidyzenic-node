@@ -1,68 +1,110 @@
 <!-- public/admin/sidebar.html -->
-<!-- Include Lucide Icons -->
-<script src="https://unpkg.com/lucide@latest"></script>
-
-<aside class="w-64 min-h-screen bg-white text-gray-800 shadow-lg fixed top-0 left-0 border-r border-gray-200">
+<aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 shadow-md z-40 flex flex-col">
+  <!-- Header -->
   <div class="flex items-center justify-between p-4 border-b border-gray-200">
-    <h1 class="text-xl font-bold tracking-tight text-gray-900">YourSaaS</h1>
-    <!-- Add Booking Button -->
-    <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition">
-      + Add Booking
+    <h1 class="text-xl font-bold text-gray-900">YourSaaS</h1>
+    <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1.5 rounded">
+      + Booking
     </button>
   </div>
 
-  <nav class="mt-4 px-4">
-    <ul class="space-y-1 text-sm font-medium">
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto p-4">
+    <ul class="space-y-1 text-sm text-gray-800">
 
-      <!-- Main Navigation -->
-      <li><a href="/admin/dashboard" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard</a></li>
-      <li><a href="/admin/calendar" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="calendar" class="w-4 h-4"></i> Calendar View</a></li>
-      <li><a href="/admin/listing" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="list" class="w-4 h-4"></i> Listing View</a></li>
-      <li><a href="/admin/map" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="map" class="w-4 h-4"></i> Map View</a></li>
-      <li><a href="/admin/bookings" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="book" class="w-4 h-4"></i> Bookings</a></li>
-      <li><a href="/admin/leads" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="user-plus" class="w-4 h-4"></i> Leads</a></li>
-      <li><a href="/admin/customers" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="users" class="w-4 h-4"></i> Customers</a></li>
-      <li><a href="/admin/providers" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="briefcase" class="w-4 h-4"></i> Providers</a></li>
-      <li><a href="/admin/hiring" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="handshake" class="w-4 h-4"></i> Hiring</a></li>
-      <li><a href="/admin/marketing" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="megaphone" class="w-4 h-4"></i> Marketing</a></li>
-      <li><a href="/admin/reports" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="bar-chart" class="w-4 h-4"></i> Reports</a></li>
-      <li><a href="/admin/logs" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="file-text" class="w-4 h-4"></i> Logs</a></li>
+      <!-- Dashboard -->
+      <li>
+        <a href="/admin/dashboard" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+          <!-- Icon -->
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/>
+          </svg>
+          Dashboard
+        </a>
+      </li>
 
-      <!-- Account & Settings -->
+      <!-- Views -->
+      <li><a href="/admin/calendar" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        Calendar View
+      </a></li>
+
+      <li><a href="/admin/listing" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <line x1="8" y1="6" x2="21" y2="6"/>
+          <line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/>
+          <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Listing View
+      </a></li>
+
+      <li><a href="/admin/map" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"/>
+          <line x1="9" y1="3" x2="9" y2="18"/>
+          <line x1="15" y1="6" x2="15" y2="21"/>
+        </svg>
+        Map View
+      </a></li>
+
+      <!-- Bookings -->
+      <li><a href="/admin/bookings" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M4 4h16v16H4z"/>
+          <path d="M8 2v4"/>
+        </svg>
+        Bookings
+      </a></li>
+
+      <!-- Leads, Customers, Providers -->
+      <li><a href="/admin/leads" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Leads</a></li>
+      <li><a href="/admin/customers" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🧑 Customers</a></li>
+      <li><a href="/admin/providers" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">💼 Providers</a></li>
+      <li><a href="/admin/hiring" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🤝 Hiring</a></li>
+      <li><a href="/admin/marketing" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📣 Marketing</a></li>
+      <li><a href="/admin/reports" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📊 Reports</a></li>
+      <li><a href="/admin/logs" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📄 Logs</a></li>
+
+      <!-- Submenu: Account -->
       <li class="pt-4 text-gray-500 uppercase text-xs tracking-wide">Account</li>
-
-      <li><a href="/admin/settings" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="settings" class="w-4 h-4"></i> Settings</a></li>
-      <li><a href="/admin/account" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="user-cog" class="w-4 h-4"></i> General</a></li>
-      <li><a href="/admin/translation" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="languages" class="w-4 h-4"></i> Translation</a></li>
-      <li><a href="/admin/design" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="pen-tool" class="w-4 h-4"></i> Design Forms & Website</a></li>
-      <li><a href="/admin/industries" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="building-2" class="w-4 h-4"></i> Industries</a></li>
-      <li><a href="/admin/staff" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="users-round" class="w-4 h-4"></i> Staff</a></li>
-      <li><a href="/admin/spots" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="map-pin" class="w-4 h-4"></i> Booking Spots</a></li>
-      <li><a href="/admin/notifications" class="flex items-center gap-2 py-2 px-3 rounded hover:bg-gray-100">
-        <i data-lucide="bell" class="w-4 h-4"></i> Notifications</a></li>
+      <li>
+        <a href="/admin/settings" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">⚙️ Settings</a>
+      </li>
+      <li>
+        <a href="/admin/account" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👤 General</a>
+      </li>
+      <li>
+        <a href="/admin/translation" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🌐 Translation</a>
+      </li>
+      <li>
+        <a href="/admin/design" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🖌️ Design</a>
+      </li>
+      <li>
+        <a href="/admin/industries" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🏭 Industries</a>
+      </li>
+      <li>
+        <a href="/admin/staff" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Staff</a>
+      </li>
+      <li>
+        <a href="/admin/spots" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📍 Booking Spots</a>
+      </li>
+      <li>
+        <a href="/admin/notifications" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🔔 Notifications</a>
+      </li>
     </ul>
   </nav>
 </aside>
-
-<script>
-  lucide.createIcons(); // Load all Lucide icons after the page loads
-</script>
