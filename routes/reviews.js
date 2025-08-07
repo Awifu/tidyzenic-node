@@ -280,5 +280,110 @@ router.get('/sms-settings/:business_id', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+// Track when a review link is clicked
+router.get('/review/click', async (req, res) => {
+  const { service_order_id, type, channel } = req.query;
+
+  if (!service_order_id || !type || !channel) {
+    return res.status(400).send('Missing required parameters');
+  }
+
+  try {
+    await db.execute(
+      `UPDATE review_link_logs
+       SET clicked_at = NOW()
+       WHERE service_order_id = ? AND type = ? AND channel = ?`,
+      [service_order_id, type, channel]
+    );
+
+    // Redirect user to the actual review form
+    if (type === 'internal') {
+// Fetch business domain
+const [[business]] = await db.execute(
+  `SELECT subdomain, custom_domain FROM businesses 
+   JOIN service_orders ON businesses.id = service_orders.business_id 
+   WHERE service_orders.id = ?`,
+  [service_order_id]
+);
+
+const domain = business.custom_domain
+  ? `https://${business.custom_domain}`
+  : `https://${business.subdomain}.tidyzenic.com`;
+
+return res.redirect(`${domain}/review-internal?o=${service_order_id}`);
+    } else if (type === 'google') {
+      // Fetch the stored link
+      const [[row]] = await db.execute(
+        `SELECT link FROM review_link_logs
+         WHERE service_order_id = ? AND type = ? AND channel = ? LIMIT 1`,
+        [service_order_id, 'google', channel]
+      );
+
+      return res.redirect(row?.link || '/');
+    }
+
+    return res.redirect('/');
+  } catch (err) {
+    console.error('❌ Error tracking review click:', err);
+    return res.status(500).send('Error');
+  }
+});
+// ----------------------
+// 📈 Review Link Analytics
+// ----------------------
+router.get('/analytics/links/:business_id', async (req, res) => {
+  const { business_id } = req.params;
+
+  try {
+    const [data] = await db.execute(
+      `SELECT 
+         type,
+         channel,
+         COUNT(*) AS total_sent,
+         SUM(CASE WHEN clicked_at IS NOT NULL THEN 1 ELSE 0 END) AS total_clicked
+       FROM review_link_logs
+       WHERE business_id = ?
+       GROUP BY type, channel`,
+      [business_id]
+    );
+
+    const formatted = data.map(row => ({
+      type: row.type,
+      channel: row.channel,
+      sent: row.total_sent,
+      clicked: row.total_clicked,
+      ctr: row.total_sent > 0 ? ((row.total_clicked / row.total_sent) * 100).toFixed(2) + '%' : '0%'
+    }));
+
+    res.json({ success: true, data: formatted });
+  } catch (err) {
+    console.error('❌ CTR analytics error:', err);
+    res.status(500).json({ error: 'Failed to load link analytics' });
+  }
+});
+// ----------------------
+// ⏰ Hourly Click Analytics
+// ----------------------
+router.get('/analytics/clicks/hourly/:business_id', async (req, res) => {
+  const { business_id } = req.params;
+
+  try {
+    const [rows] = await db.execute(
+      `SELECT 
+         HOUR(clicked_at) AS hour,
+         COUNT(*) AS clicks
+       FROM review_link_logs
+       WHERE business_id = ? AND clicked_at IS NOT NULL
+       GROUP BY HOUR(clicked_at)
+       ORDER BY hour`,
+      [business_id]
+    );
+
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('❌ Hourly click analytics error:', err);
+    res.status(500).json({ error: 'Failed to fetch hourly click data' });
+  }
+});
 
 module.exports = router;
