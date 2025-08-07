@@ -61,6 +61,9 @@
             <h2 class="text-xl font-semibold text-gray-800">Internal Reviews</h2>
             <button id="openInternalReviewModal" class="text-sm text-indigo-600 font-medium hover:underline">View Details →</button>
           </div>
+<button id="openLinkAnalyticsModal" class="text-sm text-indigo-600 font-medium hover:underline">
+  View Link Analytics →
+</button>
 
           <label class="inline-flex items-center space-x-3">
             <input type="checkbox" id="enableInternalReview" class="form-checkbox h-5 w-5 text-indigo-600" />
@@ -117,6 +120,40 @@
       </div>
     </div>
   </div>
+<!-- Link Analytics Modal -->
+<div id="linkAnalyticsModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl shadow-2xl p-6 w-[95%] max-w-5xl max-h-[90vh] overflow-y-auto relative space-y-6">
+    <button id="closeLinkAnalyticsModal" class="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+    <h2 class="text-2xl font-bold text-gray-800">🔗 Review Link Analytics</h2>
+
+    <!-- CTR Table -->
+    <div class="mt-4">
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">Click Through Rate (CTR)</h3>
+      <div class="overflow-auto rounded-lg shadow border border-gray-200">
+        <table class="min-w-full bg-white text-sm">
+          <thead class="bg-gray-50 text-gray-600 font-semibold text-left">
+            <tr>
+              <th class="px-4 py-3">Type</th>
+              <th class="px-4 py-3">Channel</th>
+              <th class="px-4 py-3">Sent</th>
+              <th class="px-4 py-3">Clicked</th>
+              <th class="px-4 py-3">CTR</th>
+            </tr>
+          </thead>
+          <tbody id="linkAnalyticsTableBody" class="text-gray-700">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Hourly Click Chart -->
+    <div class="mt-8">
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">Hourly Click Distribution</h3>
+      <canvas id="hourlyClickChart" class="w-full h-64"></canvas>
+    </div>
+  </div>
+</div>
 
   <!-- Internal Review Modal -->
 <div id="internalReviewModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
