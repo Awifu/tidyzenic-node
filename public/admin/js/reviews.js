@@ -213,6 +213,54 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('❌ Error loading review settings:', err);
     }
   }
+async function loadTemplates() {
+  try {
+    const res = await fetch(`/api/templates/${businessId}`);
+    const { template } = await res.json();
+    if (!template) return;
+
+    document.querySelector('#emailTemplateEditor input')?.value = template.email_subject || '';
+    document.querySelector('#emailTemplateEditor textarea')?.value = template.email_body || '';
+    document.querySelector('#smsTemplateEditor textarea')?.value = template.sms_body || '';
+  } catch (err) {
+    console.error('❌ Failed to load templates:', err);
+  }
+}
+async function saveTemplates() {
+  const emailSubject = document.querySelector('#emailTemplateEditor input')?.value.trim();
+  const emailBody = document.querySelector('#emailTemplateEditor textarea')?.value.trim();
+  const smsBody = document.querySelector('#smsTemplateEditor textarea')?.value.trim();
+
+  if (!emailSubject || !emailBody) {
+    alert('❌ Email subject and body are required.');
+    return;
+  }
+
+  if (smsBody.length > 160) {
+    alert(`❌ SMS body is too long (${smsBody.length}/160 characters).`);
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        business_id: businessId,
+        email_subject: emailSubject,
+        email_body: emailBody,
+        sms_body: smsBody,
+      }),
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+    alert('✅ Templates saved successfully!');
+  } catch (err) {
+    console.error('❌ Failed to save templates:', err);
+    alert('❌ Could not save templates.');
+  }
+}
 
   async function saveReviewSettings() {
     const googleLink = el.googleLink.value.trim();
@@ -276,7 +324,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupEventListeners() {
-    el.saveBtn?.addEventListener('click', saveReviewSettings);
+el.saveBtn?.addEventListener('click', async () => {
+  await saveReviewSettings();
+  await saveTemplates(); // ✅ Save the templates too
+});
     el.enableGoogle?.addEventListener('change', toggleGoogleInput);
 
     el.openGoogleReviewModal?.addEventListener('click', () => {
@@ -358,12 +409,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTemplateEditor();
   }
 
-  async function init() {
-    await fetchBusinessId();
-    if (!businessId) return;
-    await loadReviewSettings();
-    setupEventListeners();
-  }
+async function init() {
+  await fetchBusinessId();
+  if (!businessId) return;
+  await loadReviewSettings();
+  await loadTemplates(); // ✅ Moved here correctly
+  setupEventListeners();
+}
 
   init();
 });
