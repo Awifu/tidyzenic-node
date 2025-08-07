@@ -39,6 +39,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function updateEmailPreview() {
+    const body = el.emailTemplateEditor.querySelector('textarea')?.value || '';
+    const preview = body
+      .replace(/{{customer_name}}/g, 'John Doe')
+      .replace(/{{service_name}}/g, 'Window Cleaning')
+      .replace(/{{review_link}}/g, 'https://example.com/review');
+
+    document.getElementById('emailPreview').textContent = preview;
+  }
+
+  function updateSmsPreview() {
+    const body = el.smsTemplateEditor.querySelector('textarea')?.value || '';
+    const preview = body
+      .replace(/{{customer_name}}/g, 'John')
+      .replace(/{{review_link}}/g, 'https://link');
+
+    document.getElementById('smsPreview').textContent = preview;
+  }
+
+  function setupResetButtons() {
+    const emailSubject = el.emailTemplateEditor.querySelector('input');
+    const emailBody = el.emailTemplateEditor.querySelector('textarea');
+    const smsBody = el.smsTemplateEditor.querySelector('textarea');
+
+    const defaultEmailSubject = "We'd love your feedback!";
+    const defaultEmailBody = "Hi {{customer_name}},\n\nWe'd really appreciate your feedback on your recent service: {{review_link}}\n\nThanks!";
+    const defaultSmsBody = "Hi {{customer_name}}, let us know how we did: {{review_link}}";
+
+    document.getElementById('resetEmailTemplate')?.addEventListener('click', () => {
+      emailSubject.value = defaultEmailSubject;
+      emailBody.value = defaultEmailBody;
+      updateEmailPreview();
+    });
+
+    document.getElementById('resetSmsTemplate')?.addEventListener('click', () => {
+      smsBody.value = defaultSmsBody;
+      updateSmsPreview();
+    });
+
+    emailBody.addEventListener('input', updateEmailPreview);
+    smsBody.addEventListener('input', updateSmsPreview);
+  }
+
   function updateTemplateToggleUI() {
     if (!el.showEmailTemplate || !el.showSmsTemplate) return;
 
@@ -74,6 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
       el.emailTemplateEditor.querySelector('input').value = template.email_subject || '';
       el.emailTemplateEditor.querySelector('textarea').value = template.email_body || '';
       el.smsTemplateEditor.querySelector('textarea').value = template.sms_body || '';
+
+      updateEmailPreview();
+      updateSmsPreview();
     } catch (err) {
       console.error('❌ Failed to load templates:', err);
     }
@@ -93,8 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function init() {
     await fetchBusinessId();
     if (!businessId) return;
+
     updateTemplateToggleUI();
     setupSmsModal();
+    setupResetButtons();
     await loadTemplates();
   }
 
