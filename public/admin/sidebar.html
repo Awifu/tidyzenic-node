@@ -12,12 +12,20 @@
   <nav class="flex-1 overflow-y-auto p-4">
     <ul class="space-y-1 text-sm text-gray-800">
 
-      <!-- Bookings Section -->
-      <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Bookings</li>
-      <li><a href="/admin/bookings" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📅 Booking List</a></li>
-      <li><a href="/admin/calendar" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🗓️ Calendar View</a></li>
-      <li><a href="/admin/map" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🗺️ Map View</a></li>
-      <li><a href="/admin/templates" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📋 Booking Templates</a></li>
+      <!-- Bookings (dropdown) -->
+      <li>
+        <button class="w-full flex justify-between items-center px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2">📅 Bookings</span>
+          <svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/bookings" class="block px-3 py-2 rounded hover:bg-gray-100">Booking List</a></li>
+          <li><a href="/admin/calendar" class="block px-3 py-2 rounded hover:bg-gray-100">Calendar View</a></li>
+          <li><a href="/admin/map" class="block px-3 py-2 rounded hover:bg-gray-100">Map View</a></li>
+          <li><a href="/admin/templates" class="block px-3 py-2 rounded hover:bg-gray-100">Booking Templates</a></li>
+        </ul>
+      </li>
 
       <!-- Clients -->
       <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Clients</li>
@@ -31,10 +39,38 @@
       <li><a href="/admin/hiring" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🤝 Hiring</a></li>
       <li><a href="/admin/staff" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Staff</a></li>
 
+      <!-- Marketing (dropdown) -->
+      <li>
+        <button class="w-full flex justify-between items-center px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2">📣 Marketing</span>
+          <svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/marketing" class="block px-3 py-2 rounded hover:bg-gray-100">Marketing Dashboard</a></li>
+          <li><a href="/admin/campaigns" class="block px-3 py-2 rounded hover:bg-gray-100">Campaigns</a></li>
+          <li><a href="/admin/ads" class="block px-3 py-2 rounded hover:bg-gray-100">Ad Manager</a></li>
+          <li><a href="/admin/seo" class="block px-3 py-2 rounded hover:bg-gray-100">SEO Tools</a></li>
+          <li><a href="/admin/social" class="block px-3 py-2 rounded hover:bg-gray-100">Social Scheduler</a></li>
+        </ul>
+      </li>
+
+      <!-- AI Tools -->
+      <li>
+        <button class="w-full flex justify-between items-center px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2">🤖 AI Tools</span>
+          <svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/ai-assistant" class="block px-3 py-2 rounded hover:bg-gray-100">AI Assistant</a></li>
+          <li><a href="/admin/ai-responses" class="block px-3 py-2 rounded hover:bg-gray-100">Smart Replies</a></li>
+          <li><a href="/admin/ai-generator" class="block px-3 py-2 rounded hover:bg-gray-100">Content Generator</a></li>
+        </ul>
+      </li>
+
       <!-- Tools -->
       <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Tools</li>
-      <li><a href="/admin/marketing" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📣 Marketing</a></li>
-      <li><a href="/admin/campaigns" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🎯 Campaigns</a></li>
       <li><a href="/admin/reports" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📊 Reports</a></li>
       <li><a href="/admin/logs" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">📝 Activity Logs</a></li>
 
@@ -45,10 +81,11 @@
       <li><a href="/admin/design" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🎨 Appearance</a></li>
       <li><a href="/admin/translation" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🌍 Languages</a></li>
 
-      <!-- Profile & Logout -->
+      <!-- Account -->
       <li class="text-xs uppercase text-gray-500 font-semibold mt-4 mb-1">Account</li>
       <li><a href="/admin/profile" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👤 My Profile</a></li>
       <li><a href="#" id="logoutBtn" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 text-red-600">🚪 Logout</a></li>
+
     </ul>
   </nav>
 </aside>
