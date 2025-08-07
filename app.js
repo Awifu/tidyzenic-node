@@ -25,6 +25,8 @@ app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
 });
+const templateRoutes = require('./routes/templates');
+app.use('/api/templates', templateRoutes);
 
 // 3. Security Headers with Helmet and CSP
 app.use(
