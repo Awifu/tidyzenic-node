@@ -1,140 +1,91 @@
-<!-- Navigation -->
-<nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1 text-sm font-medium">
-  <a href="/admin/dashboard" class="nav-link">
-    <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M10.707 1.293a1 1 0 00-1.414 0L1 9.586V18a2 2 0 002 2h5v-6h4v6h5a2 2 0 002-2V9.586l-8.293-8.293z" />
-    </svg>
-    Dashboard
-  </a>
-
-  <!-- Website Tools Submenu -->
-  <div class="space-y-1">
-    <button class="nav-link w-full justify-between" onclick="toggleSubmenu('websiteToolsSubmenu')">
-      <span class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M4 5h16v14H4V5zm2 2v2h12V7H6zm0 4v6h12v-6H6z" />
-        </svg>
-        Website Tools
-      </span>
-      <svg id="icon-websiteToolsSubmenu" class="w-4 h-4 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M6 8l4 4 4-4" />
-      </svg>
-    </button>
-    <div id="websiteToolsSubmenu" class="ml-7 space-y-1 hidden">
-      <a href="/admin/website" class="submenu-link">Website Builder</a>
-      <a href="/admin/forms" class="submenu-link">Forms</a>
-      <a href="/admin/domains" class="submenu-link">Domains</a>
+<aside
+  id="sidebar"
+  class="w-64 min-h-screen bg-white border-r shadow-lg fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col"
+>
+  <!-- Top: Logo + Business Info -->
+  <div class="p-6 flex items-center gap-3 bg-white border-b shadow sticky top-0 z-10">
+    <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="w-10 h-10 rounded-full shadow" />
+    <div class="overflow-hidden">
+      <h1 id="bizName" class="text-lg font-bold uppercase truncate text-blue-600">Business</h1>
+      <p class="text-sm text-gray-500 truncate">Admin</p>
     </div>
   </div>
 
-  <!-- CRM Tools Submenu -->
-  <div class="space-y-1">
-    <button class="nav-link w-full justify-between" onclick="toggleSubmenu('crmToolsSubmenu')">
-      <span class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M16 11c1.66 0 2.99 1.34 2.99 3L19 18h-2v-4H7v4H5v-4c0-1.66 1.34-3 3-3h8zm0-2H8c-1.1 0-2-.9-2-2s.9-2 2-2h8c1.1 0 2 .9 2 2s-.9 2-2 2z"/>
-        </svg>
-        CRM Tools
-      </span>
-      <svg id="icon-crmToolsSubmenu" class="w-4 h-4 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M6 8l4 4 4-4" />
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1 text-sm font-medium">
+    <a href="/admin/dashboard" class="nav-link">
+      <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10.707 1.293a1 1 0 00-1.414 0L1 9.586V18a2 2 0 002 2h5v-6h4v6h5a2 2 0 002-2V9.586l-8.293-8.293z" />
       </svg>
-    </button>
-    <div id="crmToolsSubmenu" class="ml-7 space-y-1 hidden">
-      <a href="/admin/contacts" class="submenu-link">Contacts</a>
-      <a href="/admin/leads" class="submenu-link">Leads</a>
-      <a href="/admin/pipelines" class="submenu-link">Pipelines</a>
-    </div>
-  </div>
+      Dashboard
+    </a>
 
-  <!-- Analytics Submenu -->
-  <div class="space-y-1">
-    <button class="nav-link w-full justify-between" onclick="toggleSubmenu('analyticsSubmenu')">
-      <span class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M4 6h2v12H4zm14 0h2v12h-2zM10 10h2v8h-2zm4-4h2v12h-2zM6 18h12v2H6z"/>
+    <!-- Submenu (e.g., Website Tools) -->
+    <div class="space-y-1">
+      <button
+        class="nav-link w-full justify-between"
+        onclick="toggleSubmenu('websiteToolsSubmenu')"
+      >
+        <span class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4 5h16v14H4V5zm2 2v2h12V7H6zm0 4v6h12v-6H6z" />
+          </svg>
+          Website Tools
+        </span>
+        <svg id="icon-websiteToolsSubmenu" class="w-4 h-4 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M6 8l4 4 4-4" />
         </svg>
-        Analytics
-      </span>
-      <svg id="icon-analyticsSubmenu" class="w-4 h-4 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M6 8l4 4 4-4" />
-      </svg>
-    </button>
-    <div id="analyticsSubmenu" class="ml-7 space-y-1 hidden">
-      <a href="/admin/reports" class="submenu-link">Reports</a>
-      <a href="/admin/traffic" class="submenu-link">Traffic</a>
-      <a href="/admin/conversions" class="submenu-link">Conversions</a>
+      </button>
+      <div id="websiteToolsSubmenu" class="ml-7 space-y-1 hidden">
+        <a href="/admin/website" class="submenu-link">Website Builder</a>
+        <a href="/admin/forms" class="submenu-link">Forms</a>
+        <a href="/admin/domains" class="submenu-link">Domains</a>
+      </div>
     </div>
-  </div>
 
-  <!-- Automations Submenu -->
-  <div class="space-y-1">
-    <button class="nav-link w-full justify-between" onclick="toggleSubmenu('automationsSubmenu')">
-      <span class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6a6.001 6.001 0 01-5.917-5H4.062c.508 4.198 4.07 7.5 7.938 7.5 4.418 0 8-3.582 8-8s-3.582-8-8-8z"/>
-        </svg>
-        Automations
-      </span>
-      <svg id="icon-automationsSubmenu" class="w-4 h-4 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M6 8l4 4 4-4" />
+    <a href="/admin/settings" class="nav-link">
+      <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-6a2 2 0 012 2v1.1c.7.1 1.4.3 2 .6l.8-.8a2 2 0 112.8 2.8l-.8.8c.3.6.5 1.3.6 2H20a2 2 0 012 2v1a2 2 0 01-2 2h-1.1a7.6 7.6 0 01-.6 2l.8.8a2 2 0 11-2.8 2.8l-.8-.8a7.6 7.6 0 01-2 .6V20a2 2 0 01-2 2h-1a2 2 0 01-2-2v-1.1a7.6 7.6 0 01-2-.6l-.8.8a2 2 0 11-2.8-2.8l.8-.8a7.6 7.6 0 01-.6-2H4a2 2 0 01-2-2v-1a2 2 0 012-2h1.1c.1-.7.3-1.4.6-2l-.8-.8a2 2 0 112.8-2.8l.8.8c.6-.3 1.3-.5 2-.6V4a2 2 0 012-2h1z" />
       </svg>
-    </button>
-    <div id="automationsSubmenu" class="ml-7 space-y-1 hidden">
-      <a href="/admin/flows" class="submenu-link">Flows</a>
-      <a href="/admin/triggers" class="submenu-link">Triggers</a>
-      <a href="/admin/emails" class="submenu-link">Email Sequences</a>
-    </div>
-  </div>
+      Settings
+    </a>
+  </nav>
 
-  <!-- Billing Submenu -->
-  <div class="space-y-1">
-    <button class="nav-link w-full justify-between" onclick="toggleSubmenu('billingSubmenu')">
-      <span class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M21 7H3V5a2 2 0 012-2h14a2 2 0 012 2v2zm0 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9h18zM8 13h2v2H8v-2z"/>
-        </svg>
-        Billing & Payments
-      </span>
-      <svg id="icon-billingSubmenu" class="w-4 h-4 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M6 8l4 4 4-4" />
+  <!-- Bottom CTA -->
+  <div class="px-4 py-4 border-t bg-white space-y-2">
+    <a
+      href="/admin/book"
+      class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-medium shadow"
+    >
+      <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 8h12v8H4V8z" />
       </svg>
-    </button>
-    <div id="billingSubmenu" class="ml-7 space-y-1 hidden">
-      <a href="/admin/invoices" class="submenu-link">Invoices</a>
-      <a href="/admin/subscriptions" class="submenu-link">Subscriptions</a>
-      <a href="/admin/payments" class="submenu-link">Payment History</a>
-    </div>
-  </div>
-
-  <!-- Support Center Submenu -->
-  <div class="space-y-1">
-    <button class="nav-link w-full justify-between" onclick="toggleSubmenu('supportSubmenu')">
-      <span class="flex items-center gap-3">
-        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2a10 10 0 00-3.516 19.408c.555.102.758-.241.758-.535 0-.265-.01-1.122-.015-2.036-3.088.671-3.738-1.49-3.738-1.49-.504-1.282-1.231-1.623-1.231-1.623-1.007-.689.077-.675.077-.675 1.115.078 1.703 1.145 1.703 1.145.99 1.695 2.598 1.205 3.233.922.1-.718.387-1.206.705-1.483-2.466-.28-5.056-1.233-5.056-5.49 0-1.213.432-2.204 1.142-2.978-.115-.281-.495-1.414.108-2.95 0 0 .933-.299 3.06 1.14A10.678 10.678 0 0112 6.845c.945.004 1.896.128 2.784.375 2.125-1.44 3.055-1.14 3.055-1.14.605 1.536.226 2.669.11 2.95.713.774 1.14 1.765 1.14 2.978 0 4.27-2.595 5.205-5.067 5.477.398.342.753 1.017.753 2.052 0 1.48-.014 2.675-.014 3.038 0 .296.2.64.765.53A10.002 10.002 0 0012 2z"/>
-        </svg>
-        Support
-      </span>
-      <svg id="icon-supportSubmenu" class="w-4 h-4 transform transition-transform" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M6 8l4 4 4-4" />
+      Add Booking
+    </a>
+    <a
+      href="/logout"
+      class="flex items-center justify-center gap-2 text-red-500 hover:underline text-sm transition"
+    >
+      <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M3 3a1 1 0 011-1h6a1 1 0 110 2H5v12h5a1 1 0 110 2H4a1 1 0 01-1-1V3zm11.293 2.293a1 1 0 011.414 0L20 10l-4.293 4.707a1 1 0 01-1.414-1.414L16.586 11H9a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" />
       </svg>
-    </button>
-    <div id="supportSubmenu" class="ml-7 space-y-1 hidden">
-      <a href="/admin/help-center" class="submenu-link">Help Center</a>
-      <a href="/admin/tickets" class="submenu-link">Support Tickets</a>
-      <a href="/admin/chat" class="submenu-link">Live Chat</a>
-    </div>
+      Logout
+    </a>
   </div>
+</aside>
 
-  <!-- Settings -->
-  <a href="/admin/settings" class="nav-link">
-    <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 8a4 4 0 100 8 4 4 0 000-8z..." />
-    </svg>
-    Settings
-  </a>
-</nav>
+<!-- Toggle for mobile -->
+<button
+  id="sidebarToggle"
+  class="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md md:hidden"
+  aria-label="Toggle Sidebar"
+>
+  <svg class="w-5 h-5 text-gray-800" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M3 5h14a1 1 0 100-2H3a1 1 0 100 2zm14 4H3a1 1 0 000 2h14a1 1 0 000-2zm0 6H3a1 1 0 000 2h14a1 1 0 000-2z" />
+  </svg>
+</button>
+
+<!-- Scripts -->
 <script>
   // Toggle sidebar (mobile)
   document.getElementById("sidebarToggle").addEventListener("click", () => {
@@ -145,21 +96,11 @@
   function toggleSubmenu(id) {
     const submenu = document.getElementById(id);
     const icon = document.getElementById("icon-" + id);
-    if (submenu && icon) {
-      submenu.classList.toggle("hidden");
-      icon.classList.toggle("rotate-180");
-    }
+    submenu.classList.toggle("hidden");
+    icon.classList.toggle("rotate-180");
   }
 
-  // Highlight active link
-  const currentPath = window.location.pathname;
-  document.querySelectorAll("a.nav-link, a.submenu-link").forEach(link => {
-    if (link.getAttribute("href") === currentPath) {
-      link.classList.add("bg-blue-100", "text-blue-700", "font-semibold");
-    }
-  });
-
-  // Fetch business info and logo
+  // Fetch business info
   fetch('/api/business/public')
     .then(res => res.json())
     .then(data => {
@@ -171,4 +112,22 @@
       }
     })
     .catch(() => {});
+
+  // Highlight active link
+  const currentPath = window.location.pathname;
+  document.querySelectorAll("a.nav-link, a.submenu-link").forEach(link => {
+    if (link.getAttribute("href") === currentPath) {
+      link.classList.add("bg-blue-100", "text-blue-700", "font-semibold");
+    }
+  });
 </script>
+
+<!-- Styles (only used classes) -->
+<style>
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 transition;
+  }
+  .submenu-link {
+    @apply block text-gray-600 hover:text-blue-600 transition px-3 py-1 rounded;
+  }
+</style>
