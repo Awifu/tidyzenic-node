@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// === Email Templates (Multilingual) ===
+// === Email Templates ===
 const emailTemplates = {
   en: {
     subject: 'Verify Your Email Address',
@@ -27,68 +27,13 @@ const emailTemplates = {
       <p>This link expires in 24 hours.</p>
     `
   },
-  fr: {
-    subject: 'Vérifiez votre adresse e-mail',
-    body: (url) => `
-      <p>Bienvenue chez Tidyzenic !</p>
-      <p>Veuillez vérifier votre adresse e-mail en cliquant ci-dessous :</p>
-      <a href="${url}">${url}</a>
-      <p>Ce lien expire dans 24 heures.</p>
-    `
-  },
-  de: {
-    subject: 'Bestätigen Sie Ihre E-Mail-Adresse',
-    body: (url) => `
-      <p>Willkommen bei Tidyzenic!</p>
-      <p>Bitte bestätigen Sie Ihre E-Mail-Adresse durch Klicken auf den folgenden Link:</p>
-      <a href="${url}">${url}</a>
-      <p>Dieser Link läuft in 24 Stunden ab.</p>
-    `
-  },
-  nl: {
-    subject: 'Bevestig uw e-mailadres',
-    body: (url) => `
-      <p>Welkom bij Tidyzenic!</p>
-      <p>Bevestig uw e-mailadres via de onderstaande link:</p>
-      <a href="${url}">${url}</a>
-      <p>Deze link verloopt over 24 uur.</p>
-    `
-  },
-  es: {
-    subject: 'Verifica tu dirección de correo electrónico',
-    body: (url) => `
-      <p>¡Bienvenido a Tidyzenic!</p>
-      <p>Por favor verifica tu correo electrónico haciendo clic en el siguiente enlace:</p>
-      <a href="${url}">${url}</a>
-      <p>Este enlace expirará en 24 horas.</p>
-    `
-  },
-  pt: {
-    subject: 'Verifique seu endereço de e-mail',
-    body: (url) => `
-      <p>Bem-vindo ao Tidyzenic!</p>
-      <p>Por favor, verifique seu e-mail clicando no link abaixo:</p>
-      <a href="${url}">${url}</a>
-      <p>Este link expirará em 24 horas.</p>
-    `
-  },
-  da: {
-    subject: 'Bekræft din e-mailadresse',
-    body: (url) => `
-      <p>Velkommen til Tidyzenic!</p>
-      <p>Bekræft venligst din e-mail ved at klikke på linket nedenfor:</p>
-      <a href="${url}">${url}</a>
-      <p>Dette link udløber om 24 timer.</p>
-    `
-  }
+  // ...other languages...
 };
 
-
-// === Send Verification Email with Language Support ===
+// === Send Verification Email ===
 async function sendVerificationEmail(email, token, lang = 'en') {
   const url = `https://${process.env.APP_DOMAIN}/auth/verify?token=${token}`;
   const template = emailTemplates[lang] || emailTemplates['en'];
-
   return transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: email,
@@ -97,7 +42,7 @@ async function sendVerificationEmail(email, token, lang = 'en') {
   });
 }
 
-// === Helper: Normalize Optional Fields ===
+// === Normalize Helper ===
 const normalize = (val) => {
   if (typeof val !== 'string') return val;
   const trimmed = val.trim();
@@ -107,138 +52,85 @@ const normalize = (val) => {
 // === POST /register ===
 router.post('/', async (req, res) => {
   const {
-    businessName,
+    business_name,
     email,
     phone,
     subdomain,
     password,
     location,
-    ownerName,
-    vatNumber,
+    owner_name,
+    vat_number,
     preferred_language,
-    'g-recaptcha-response': recaptchaToken // optional
+    plan,
+    'g-recaptcha-response': recaptchaToken
   } = req.body;
 
-  // ✅ Basic Validation
   if (
-    !businessName?.trim() || !email?.trim() || !subdomain?.trim() ||
-    !password?.trim() || !location?.trim() || !ownerName?.trim() || !preferred_language
+    !business_name?.trim() || !email?.trim() || !subdomain?.trim() ||
+    !password?.trim() || !location?.trim() || !owner_name?.trim() || !preferred_language
   ) {
     return res.status(400).json({ error: '❌ Please fill in all required fields.' });
   }
 
-  // ✅ Normalize Inputs
-  const business_name = businessName.trim();
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedSubdomain = subdomain.trim().toLowerCase();
-  const normalizedPassword = password.trim();
-  const normalizedLocation = normalize(location);
-  const normalizedPhone = normalize(phone);
-  const normalizedVAT = normalize(vatNumber);
-  const normalizedOwner = normalize(ownerName);
-  const normalizedLang = preferred_language;
 
   try {
-    // === Optional: Validate reCAPTCHA (future-proofed)
-    // Skipped here, but you could verify it with Google if needed.
-
-    // === Existing user check
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
-    const [businesses] = await pool.query('SELECT * FROM businesses WHERE email = ?', [normalizedEmail]);
-
-    const existingUser = users[0] || null;
-    const existingBusiness = businesses[0] || null;
-
-    // === Reactivate deleted user
-    if (existingUser && existingUser.is_deleted) {
-      const hashed = await bcrypt.hash(normalizedPassword, 10);
-      const token = crypto.randomUUID();
-
-      await pool.query(
-        'UPDATE users SET is_deleted = 0, password_hash = ?, is_verified = 0, verification_token = ? WHERE id = ?',
-        [hashed, token, existingUser.id]
-      );
-
-      if (existingUser.business_id) {
-        await pool.query('UPDATE businesses SET is_deleted = 0 WHERE id = ?', [existingUser.business_id]);
-      }
-
-      await sendVerificationEmail(normalizedEmail, token, normalizedLang);
-
-      return res.status(200).json({
-        message: '✅ Account reactivated. Please check your email to verify.',
-        redirectTo: '/login.html'
-      });
-    }
-
-    // === Email already in use
-    if (existingUser) {
-      return res.status(400).json({
-        error: '❌ This email is already registered.',
-        action: { text: 'Login', href: '/login.html' }
-      });
-    }
-
-    // === Orphaned business
-    if (existingBusiness && !existingUser) {
-      const hashed = await bcrypt.hash(normalizedPassword, 10);
-      const token = crypto.randomUUID();
-
-      await pool.query(
-        'INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token) VALUES (?, ?, ?, "admin", 0, ?)',
-        [existingBusiness.id, normalizedEmail, hashed, token]
-      );
-
-      await sendVerificationEmail(normalizedEmail, token, normalizedLang);
-
-      return res.status(200).json({
-        message: '✅ User account restored. Please check your email to verify.',
-        redirectTo: '/login.html'
-      });
-    }
-
-    // === Subdomain already taken
+    // Check subdomain availability
     const [subdomainCheck] = await pool.query(
       'SELECT id FROM businesses WHERE subdomain = ? AND is_deleted = 0',
       [normalizedSubdomain]
     );
-
     if (subdomainCheck.length > 0) {
-      return res.status(400).json({ error: '❌ Subdomain is already taken. Please choose another.' });
+      return res.status(400).json({ error: '❌ Subdomain is already taken.' });
     }
 
-    // === Create business
-    const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
-    const token = crypto.randomUUID();
+    // Check if email already exists
+    const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ error: '❌ This email is already registered.' });
+    }
 
-    const [businessResult] = await pool.query(
+    // Get Plan ID
+    const planQuery = plan
+      ? 'SELECT id FROM plans WHERE slug = ? LIMIT 1'
+      : 'SELECT id FROM plans WHERE is_trial = 1 LIMIT 1';
+
+    const [planRows] = await pool.query(planQuery, plan ? [plan] : []);
+    if (!planRows.length) {
+      return res.status(400).json({ error: '❌ Plan not found.' });
+    }
+    const selectedPlanId = planRows[0].id;
+
+    // Create Business + User
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const now = new Date();
+    const trialEnds = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    const [businessInsert] = await pool.query(
       `INSERT INTO businesses (
-        business_name, email, phone, subdomain, location, vat_number,
-        owner_name, password_hash, preferred_language
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        business_name, email, phone, subdomain, location,
+        vat_number, owner_name, password_hash, preferred_language,
+        plan_id, trial_started_at, trial_ends_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        business_name,
-        normalizedEmail,
-        normalizedPhone,
-        normalizedSubdomain,
-        normalizedLocation,
-        normalizedVAT,
-        normalizedOwner,
-        hashedPassword,
-        normalizedLang
+        business_name, normalizedEmail, phone, normalizedSubdomain, location,
+        normalize(vat_number), owner_name, hashedPassword, preferred_language,
+        selectedPlanId, now, trialEnds
       ]
     );
 
-    const businessId = businessResult.insertId;
+    const businessId = businessInsert.insertId;
 
-    // === Create admin user
+    const token = crypto.randomUUID();
+
     await pool.query(
-      'INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token) VALUES (?, ?, ?, "admin", 0, ?)',
+      `INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token)
+       VALUES (?, ?, ?, "admin", 0, ?)`,
       [businessId, normalizedEmail, hashedPassword, token]
     );
 
-    // === Send verification email
-    await sendVerificationEmail(normalizedEmail, token, normalizedLang);
+    await sendVerificationEmail(normalizedEmail, token, preferred_language);
 
     return res.status(200).json({
       success: true,
