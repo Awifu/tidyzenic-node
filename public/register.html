@@ -90,6 +90,7 @@
           <option value="de">Deutsch</option>
         </select>
       </div>
+<input type="hidden" id="plan" name="plan" />
 
       <div class="g-recaptcha" data-sitekey="6Le_Qp8rAAAAAD3guWei5iGfTSkiPkbStxxO_PQm"></div>
 
@@ -125,6 +126,17 @@
       const subdomainStatus = document.getElementById('subdomainStatus');
       const modal = document.getElementById('successModal');
       const modalMessage = document.getElementById('modalMessage');
+// Auto-fill plan and email from URL
+const urlParams = new URLSearchParams(window.location.search);
+const planFromURL = urlParams.get('plan');
+const emailFromURL = urlParams.get('email');
+
+if (planFromURL) {
+  document.getElementById('plan').value = planFromURL;
+}
+if (emailFromURL) {
+  email.value = emailFromURL;
+}
 
       // Autofill country
       (async () => {
