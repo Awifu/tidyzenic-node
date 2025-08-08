@@ -38,10 +38,11 @@ async function sendVerificationEmail(email, token, subject = 'Verify Your Email 
 router.post('/', async (req, res) => {
   const {
     businessName, email, phone, subdomain,
-    password, location, ownerName, vatNumber
+    password, location, ownerName, vatNumber,
+    preferred_language, custom_domain
   } = req.body;
 
-  if (!businessName || !email || !subdomain || !password || !location || !ownerName) {
+  if (!businessName || !email || !subdomain || !password || !location || !ownerName || !preferred_language) {
     return res.status(400).json({ error: '❌ Please fill in all required fields.' });
   }
 
@@ -104,14 +105,23 @@ router.post('/', async (req, res) => {
 
     // === 5. Create New Business & User ===
     const hashedPassword = await bcrypt.hash(password, 10);
+    const token = crypto.randomUUID();
 
+    // ✅ INSERT with all fields
     const [businessResult] = await pool.query(`
-      INSERT INTO businesses (business_name, email, phone, subdomain, location, vat_number, owner_name, password_hash)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [businessName, email, phone, subdomain, location, vatNumber || null, ownerName, hashedPassword]);
+      INSERT INTO businesses (
+        business_name, email, phone, subdomain, location,
+        vat_number, owner_name, password_hash,
+        preferred_language, custom_domain
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      businessName, email, phone, subdomain, location,
+      vatNumber || null, ownerName, hashedPassword,
+      preferred_language, custom_domain || null
+    ]);
 
     const businessId = businessResult.insertId;
-    const token = crypto.randomUUID();
 
     await pool.query(`
       INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token)
