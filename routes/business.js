@@ -78,6 +78,7 @@ router.get('/me', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 // ✅ GET /api/business/preferences – Return preferred language
 router.get('/preferences', async (req, res) => {
   const subdomain = req.tenant;
@@ -103,6 +104,28 @@ router.get('/preferences', async (req, res) => {
     });
   } catch (err) {
     console.error('❌ Error fetching preferred language:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ✅ GET /api/business/check-subdomain – Check if subdomain already exists
+router.get('/check-subdomain', async (req, res) => {
+  const { subdomain } = req.query;
+
+  if (!subdomain || subdomain.length < 3) {
+    return res.status(400).json({ error: 'Subdomain is too short or missing' });
+  }
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT COUNT(*) as count
+      FROM businesses
+      WHERE subdomain = ? AND is_deleted = 0
+    `, [subdomain]);
+
+    res.json({ exists: rows[0].count > 0 });
+  } catch (err) {
+    console.error('❌ Error checking subdomain:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
