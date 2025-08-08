@@ -91,7 +91,6 @@
         </select>
       </div>
 
-      <!-- reCAPTCHA -->
       <div class="g-recaptcha" data-sitekey="6Le_Qp8rAAAAAD3guWei5iGfTSkiPkbStxxO_PQm"></div>
 
       <button type="submit" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">✅ Register Business</button>
@@ -119,7 +118,6 @@
       const passwordFeedback = document.getElementById('passwordFeedback');
       const phone = document.getElementById('phone');
       const phoneFeedback = document.getElementById('phoneFeedback');
-      const email = document.getElementById('email');
       const location = document.getElementById('location');
       const language = document.getElementById('preferred_language');
       const businessName = document.getElementById('business_name');
@@ -128,73 +126,66 @@
       const modal = document.getElementById('successModal');
       const modalMessage = document.getElementById('modalMessage');
 
-      // Auto-fill country
+      // Autofill country
       (async () => {
         try {
           const res = await fetch('https://ipapi.co/json/');
           const data = await res.json();
-          const country = data.country_name;
           for (let opt of location.options) {
-            if (opt.value === country) {
+            if (opt.value === data.country_name) {
               opt.selected = true;
               break;
             }
           }
         } catch (err) {
-          console.warn('Geo lookup failed:', err);
+          console.warn('Geo IP lookup failed.');
         }
       })();
 
-      // Language preference cookie
+      // Load preferred language from cookie
       const getCookie = (name) => document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1];
       const setCookie = (name, value) => document.cookie = `${name}=${value}; path=/; max-age=31536000`;
 
       const savedLang = getCookie('lang');
       if (savedLang) {
-        for (let opt of language.options) {
-          if (opt.value === savedLang) {
-            opt.selected = true;
-            break;
-          }
-        }
+        [...language.options].forEach(opt => {
+          if (opt.value === savedLang) opt.selected = true;
+        });
       }
 
       language.addEventListener('change', () => {
         setCookie('lang', language.value);
       });
 
-      // Subdomain generation and check
-      let debounceTimer;
+      // Subdomain generation and validation
+      let debounce;
       businessName.addEventListener('input', () => {
-        const sub = businessName.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
+        const sub = businessName.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
         subdomain.value = sub;
-        clearTimeout(debounceTimer);
+        clearTimeout(debounce);
         if (sub.length >= 3) {
-          debounceTimer = setTimeout(() => checkSubdomain(sub), 400);
+          debounce = setTimeout(() => {
+            axios.get('/register/check-subdomain', { params: { subdomain: sub } }).then(res => {
+              if (res.data.exists) {
+                subdomainStatus.textContent = `❌ ${sub}.tidyzenic.com is taken`;
+                subdomainStatus.className = 'text-sm text-red-500';
+              } else {
+                subdomainStatus.textContent = `✅ ${sub}.tidyzenic.com is available`;
+                subdomainStatus.className = 'text-sm text-green-600';
+              }
+            }).catch(() => {
+              subdomainStatus.textContent = '⚠️ Could not check subdomain';
+              subdomainStatus.className = 'text-sm text-yellow-600';
+            });
+          }, 300);
         } else {
           subdomainStatus.textContent = 'Subdomain too short';
           subdomainStatus.className = 'text-sm text-red-500';
         }
       });
 
-      async function checkSubdomain(sub) {
-        try {
-          const res = await axios.get('/register/check-subdomain', { params: { subdomain: sub } });
-          if (res.data.exists) {
-            subdomainStatus.textContent = `❌ ${sub}.tidyzenic.com is taken`;
-            subdomainStatus.className = 'text-sm text-red-500';
-          } else {
-            subdomainStatus.textContent = `✅ ${sub}.tidyzenic.com is available`;
-            subdomainStatus.className = 'text-sm text-green-600';
-          }
-        } catch (err) {
-          subdomainStatus.textContent = '⚠️ Could not check subdomain';
-          subdomainStatus.className = 'text-sm text-yellow-600';
-        }
-      }
-
-      // Validate password match
-      function validatePasswords() {
+      // Password match validation
+      const validatePasswords = () => {
         if (password.value && confirmPassword.value) {
           if (password.value === confirmPassword.value) {
             passwordFeedback.textContent = '✅ Passwords match';
@@ -203,25 +194,17 @@
             passwordFeedback.textContent = '❌ Passwords do not match';
             passwordFeedback.className = 'text-sm text-red-500';
           }
-        } else {
-          passwordFeedback.textContent = 'Passwords must match';
-          passwordFeedback.className = 'text-sm text-gray-500';
         }
-      }
+      };
 
       password.addEventListener('input', validatePasswords);
       confirmPassword.addEventListener('input', validatePasswords);
 
       // Phone validation
       phone.addEventListener('input', () => {
-        const pattern = /^\+\d{1,4}[\d\s\-]{4,}$/;
-        if (pattern.test(phone.value)) {
-          phoneFeedback.textContent = '✅ Valid phone number';
-          phoneFeedback.className = 'text-sm text-green-600';
-        } else {
-          phoneFeedback.textContent = '❌ Must start with country code (e.g. +44)';
-          phoneFeedback.className = 'text-sm text-red-500';
-        }
+        const valid = /^\+\d{1,4}[\d\s\-]{4,}$/.test(phone.value);
+        phoneFeedback.textContent = valid ? '✅ Valid phone number' : '❌ Must start with country code (e.g. +44)';
+        phoneFeedback.className = `text-sm ${valid ? 'text-green-600' : 'text-red-500'}`;
       });
 
       // Submit
@@ -246,7 +229,7 @@
           const res = await fetch('/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
+            body: JSON.stringify(data)
           });
           const result = await res.json();
 
@@ -258,8 +241,8 @@
             alert(result.error || '❌ Registration failed.');
           }
         } catch (err) {
-          console.error('Registration error:', err);
-          alert('❌ Server error. Please try again later.');
+          console.error(err);
+          alert('❌ Server error.');
         }
       });
     });
