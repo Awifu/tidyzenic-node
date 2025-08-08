@@ -78,5 +78,33 @@ router.get('/me', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+// ✅ GET /api/business/preferences – Return preferred language
+router.get('/preferences', async (req, res) => {
+  const subdomain = req.tenant;
+
+  if (!subdomain) {
+    return res.status(400).json({ error: 'Missing subdomain.' });
+  }
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT preferred_language
+      FROM businesses
+      WHERE subdomain = ? AND is_deleted = 0
+      LIMIT 1
+    `, [subdomain]);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Business not found' });
+    }
+
+    res.json({
+      preferred_language: rows[0].preferred_language || 'en'
+    });
+  } catch (err) {
+    console.error('❌ Error fetching preferred language:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 module.exports = router;
