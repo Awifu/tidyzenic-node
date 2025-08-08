@@ -1,6 +1,7 @@
 <!-- public/admin/sidebar.html -->
 <aside class="fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 shadow-md z-40 flex flex-col">
-  <!-- Header -->
+
+  <!-- Header: Business Logo + Name -->
   <div class="flex items-center justify-between px-4 py-3 pt-10 sm:pt-4 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm">
     <div class="flex items-center gap-2">
       <img id="logo" src="/assets/logo-placeholder.png" alt="Logo" class="h-7 w-7 rounded-full object-cover shadow-sm" />
@@ -12,63 +13,224 @@
 
   <!-- Call to Action -->
   <div class="px-4 py-3">
-    <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition" data-i18n="add_booking">
-      + Add Booking
+    <button class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded transition">
+      <span data-i18n="sidebar.add_booking">+ Add Booking</span>
     </button>
   </div>
 
   <!-- Navigation -->
   <nav class="flex-1 overflow-y-auto px-4 pb-4">
     <ul class="space-y-1 text-sm text-gray-800">
+
       <li>
         <a href="/admin/dashboard" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
-  🏠 <span data-i18n="sidebar.dashboard">Dashboard</span>
-</a>
-
+          🏠 <span data-i18n="sidebar.dashboard">Dashboard</span>
+        </a>
       </li>
 
       <!-- Bookings Dropdown -->
       <li>
         <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
-          <span class="flex items-center gap-2" data-i18n="bookings">📅 Bookings</span>
+          <span class="flex items-center gap-2" data-i18n="sidebar.bookings">📅 Bookings</span>
           <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
         <ul class="dropdown-menu hidden ml-4 space-y-1">
-          <li><a href="/admin/bookings/upcoming" data-i18n="upcoming_bookings" class="block px-3 py-2 rounded hover:bg-gray-100">🔜 Upcoming Bookings</a></li>
-          <li><a href="/admin/bookings/today" data-i18n="todays_bookings" class="block px-3 py-2 rounded hover:bg-gray-100">📆 Today's Bookings</a></li>
-          <li><a href="/admin/bookings/unassigned" data-i18n="unassigned_bookings" class="block px-3 py-2 rounded hover:bg-gray-100">🧩 Unassigned Bookings</a></li>
-          <li><a href="/admin/bookings/quotes" data-i18n="quotes_estimates" class="block px-3 py-2 rounded hover:bg-gray-100">💬 Quotes & Estimates</a></li>
-          <li><a href="/admin/bookings/cancellations" data-i18n="cancellations" class="block px-3 py-2 rounded hover:bg-gray-100">❌ Cancellations</a></li>
-          <li><a href="/admin/bookings/history" data-i18n="booking_history" class="block px-3 py-2 rounded hover:bg-gray-100">📖 Booking History</a></li>
-          <li><a href="/admin/bookings/drafts" data-i18n="draft_bookings" class="block px-3 py-2 rounded hover:bg-gray-100">📝 Draft Bookings</a></li>
-          <li><a href="/admin/calendar" data-i18n="calendar_view" class="block px-3 py-2 rounded hover:bg-gray-100">🗓️ Calendar View</a></li>
-          <li><a href="/admin/map" data-i18n="map_view" class="block px-3 py-2 rounded hover:bg-gray-100">🗺️ Map View</a></li>
+          <li><a href="/admin/bookings/upcoming" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.upcoming">🔜 Upcoming Bookings</span></a></li>
+          <li><a href="/admin/bookings/today" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.today">📆 Today's Bookings</span></a></li>
+          <li><a href="/admin/bookings/unassigned" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.unassigned">🧩 Unassigned Bookings</span></a></li>
+          <li><a href="/admin/bookings/quotes" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.quotes">💬 Quotes & Estimates</span></a></li>
+          <li><a href="/admin/bookings/cancellations" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.cancellations">❌ Cancellations</span></a></li>
+          <li><a href="/admin/bookings/history" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.history">📖 Booking History</span></a></li>
+          <li><a href="/admin/bookings/drafts" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.drafts">📝 Draft Bookings</span></a></li>
+          <li><a href="/admin/calendar" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.calendar">🗓️ Calendar View</span></a></li>
+          <li><a href="/admin/map" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.map">🗺️ Map View</span></a></li>
         </ul>
       </li>
 
-      <!-- Continue the same pattern -->
-      <li><a href="/admin/customers" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100" data-i18n="customer_management">🧑 Customer Management</a></li>
-      <li><a href="/admin/tags" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100" data-i18n="crm">🏷️ CRM</a></li>
+      <!-- Customers & CRM -->
+      <li>
+        <a href="/admin/customers" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+          🧑 <span data-i18n="sidebar.customers">Customer Management</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/tags" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+          🏷️ <span data-i18n="sidebar.crm">CRM</span>
+        </a>
+      </li>
 
-      <!-- 🌍 Language Dropdown -->
+      <!-- Websites & Forms Dropdown -->
       <li>
         <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
-          <span class="flex items-center gap-2" data-i18n="language">🌍 Language</span>
+          <span class="flex items-center gap-2" data-i18n="sidebar.websites">🖥️ Websites & Forms</span>
           <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
         <ul class="dropdown-menu hidden ml-4 space-y-1">
-          <li><a href="/admin/translation?lang=en" class="block px-3 py-2 rounded hover:bg-gray-100">🇬🇧 English</a></li>
-          <li><a href="/admin/translation?lang=fr" class="block px-3 py-2 rounded hover:bg-gray-100">🇫🇷 French</a></li>
-          <li><a href="/admin/translation?lang=nl" class="block px-3 py-2 rounded hover:bg-gray-100">🇳🇱 Dutch</a></li>
-          <li><a href="/admin/translation?lang=es" class="block px-3 py-2 rounded hover:bg-gray-100">🇪🇸 Spanish</a></li>
-          <li><a href="/admin/translation?lang=pt" class="block px-3 py-2 rounded hover:bg-gray-100">🇵🇹 Portuguese</a></li>
-          <li><a href="/admin/translation?lang=de" class="block px-3 py-2 rounded hover:bg-gray-100">🇩🇪 German</a></li>
+          <li><a href="/admin/forms" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.forms">📝 Forms Builder</span></a></li>
+          <li><a href="/admin/webpages" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.pages">🧾 Website Pages</span></a></li>
         </ul>
       </li>
+
+      <!-- Inventory Management (starts) -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="sidebar.inventory">📦 Inventory Management</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/inventory" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.inventoryDashboard">📋 Inventory Dashboard</span></a></li>
+          <li class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wide" data-i18n="sidebar.products">Products</li>
+          <li><a href="/admin/products" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.productListings">📦 Product Listings</span></a></li>
+          <li><a href="/admin/product-requests" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.productRequests">📝 Product Requests</span></a></li>
+          <li class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wide" data-i18n="sidebar.suppliers">Suppliers</li>
+          <li><a href="/admin/suppliers" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.suppliers">🏭 Supplier Directory</span></a></li>
+          <li class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wide" data-i18n="sidebar.stock">Stock</li>
+          <li><a href="/admin/stock-levels" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.stockLevels">📊 Stock Levels</span></a></li>
+          <li><a href="/admin/purchase-orders" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.purchaseOrders">🧾 Purchase Orders</span></a></li>
+          <li class="px-3 pt-2 text-xs text-gray-500 uppercase tracking-wide" data-i18n="sidebar.reports">Reports</li>
+          <li><a href="/admin/inventory-reports" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.inventoryReports">📈 Inventory Reports</span></a></li>
+        </ul>
+      </li>
+
+      <!-- Providers Management -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="sidebar.providers">💼 Providers Management</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/providers" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.viewProviders">📋 View Providers</span></a></li>
+          <li><a href="/admin/providers/add" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.addProvider">➕ Add Provider</span></a></li>
+          <li><a href="/admin/providers/schedule" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.providerSchedules">📆 Provider Schedules</span></a></li>
+        </ul>
+      </li>
+
+      <!-- Staff Management (end of part 1) -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="sidebar.staff">🧑‍💼 Staff Management</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/staff" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.staffList">👥 Staff</span></a></li>
+          <li><a href="/admin/hire" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.hiring">🤝 Hiring</span></a></li>
+          <li><a href="/admin/scheduler" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.scheduler">⏱️ Scheduler</span></a></li>
+          <li><a href="/admin/shifts" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.shifts">📆 Shifts</span></a></li>
+          <li><a href="/admin/checkin" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.checkin">🕓 Check In / Out</span></a></li>
+          <li><a href="/admin/time-tracking" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.timetracking">📋 Time Tracking</span></a></li>
+        </ul>
+      </li>
+      <!-- Marketing Dropdown -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="sidebar.marketing">📣 Marketing</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/marketing" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.marketingDashboard">📊 Marketing Dashboard</span></a></li>
+          <li><a href="/admin/leads" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.leads">👥 Leads</span></a></li>
+          <li><a href="/admin/campaigns" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.campaigns">🎯 Campaign Builder</span></a></li>
+          <li><a href="/admin/automations" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.automations">⚙️ Automation Flows</span></a></li>
+          <li><a href="/admin/retargeting" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.retargeting">🎯 Retargeting & Funnels</span></a></li>
+          <li><a href="/admin/discounts" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.discounts">🏷️ Discounts</span></a></li>
+          <li><a href="/admin/coupons" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.coupons">🎟️ Coupon Codes</span></a></li>
+          <li><a href="/admin/referrals" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.referrals">🤝 Referral Program</span></a></li>
+          <li><a href="/admin/gift-cards" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.giftCards">🎁 Gift Cards</span></a></li>
+          <li><a href="/admin/ads" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.ads">📢 Ad Manager</span></a></li>
+          <li><a href="/admin/sms" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.sms">📲 SMS Campaigns</span></a></li>
+          <li><a href="/admin/email" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.email">📧 Email Blasts</span></a></li>
+          <li><a href="/admin/social" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.social">📅 Social Scheduler</span></a></li>
+          <li><a href="/admin/seo" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.seo">🔍 SEO Tools</span></a></li>
+          <li><a href="/admin/blog" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.blog">✍️ Blog & Content</span></a></li>
+          <li><a href="/admin/reviews" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.reviews">⭐ Customer Reviews</span></a></li>
+        </ul>
+      </li>
+
+      <!-- AI Tools -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="sidebar.ai">🤖 AI Tools</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/ai-chatbot" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiChatbot">💬 AI Chatbot</span></a></li>
+          <li><a href="/admin/ai-responses" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiResponses">⚡ Smart Replies</span></a></li>
+          <li><a href="/admin/ai-campaigns" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiCampaigns">🧠 Campaign Generator</span></a></li>
+          <li><a href="/admin/ai-content" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiContent">✍️ Content Creator</span></a></li>
+          <li><a href="/admin/ai-workflows" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiWorkflows">⚙️ Workflow Builder</span></a></li>
+          <li><a href="/admin/ai-predict" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiPredict">🔮 Smart Predictions</span></a></li>
+          <li><a href="/admin/ai-insights" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiInsights">📈 Customer Insights</span></a></li>
+          <li><a href="/admin/ai-segmentation" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.aiSegmentation">🧬 Auto Segmentation</span></a></li>
+        </ul>
+      </li>
+
+      <!-- Reports & Logs -->
+      <li>
+        <a href="/admin/reports" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+          📊 <span data-i18n="sidebar.reports">Reports</span>
+        </a>
+      </li>
+      <li>
+        <a href="/admin/logs" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">
+          📝 <span data-i18n="sidebar.logs">Activity Logs</span>
+        </a>
+      </li>
+
+      <!-- Settings -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="sidebar.settings">⚙️ Settings</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/account" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.generalSettings">🛠️ General Settings</span></a></li>
+          <li><a href="/admin/notifications" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.notifications">🔔 Notifications</span></a></li>
+          <li><a href="/admin/preferences" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.preferences">⚙️ User Preferences</span></a></li>
+          <li><a href="/admin/design" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.appearance">🎨 Appearance</span></a></li>
+          <li><a href="/admin/domains" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.domains">🌐 Domain Management</span></a></li>
+          <li><a href="/admin/timezones" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.timezones">🕒 Timezones</span></a></li>
+          <li><a href="/admin/industries" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.industries">🏭 Industries</span></a></li>
+          <li><a href="/admin/api-keys" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.apiKeys">🔑 API Keys</span></a></li>
+          <!-- Language Submenu -->
+          <li>
+            <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100" data-i18n="sidebar.language">🌍 Language</a>
+          </li>
+        </ul>
+      </li>
+
+      <!-- Account -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 mt-4 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="sidebar.account">👤 Account</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/profile" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.myProfile">👤 My Profile</span></a></li>
+          <li><a href="/admin/billing" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.billing">💳 Billing</span></a></li>
+          <li><a href="/admin/security" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.security">🔐 Security</span></a></li>
+          <li><a href="/admin/team-switch" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.teamSwitch">🔁 Switch Team</span></a></li>
+          <li><a href="#" id="logoutBtn" class="block px-3 py-2 rounded hover:bg-gray-100 text-red-600"><span data-i18n="sidebar.logout">🚪 Logout</span></a></li>
+        </ul>
+      </li>
+
     </ul>
   </nav>
 </aside>
