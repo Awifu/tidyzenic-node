@@ -18,9 +18,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// Load translations per request
 const languageMiddleware = require('./middleware/language');
 app.use(languageMiddleware);
+// Load translations per request
+
 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
