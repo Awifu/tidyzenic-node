@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register | Tidyzenic</title>
   <link rel="stylesheet" href="/styles.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <body class="min-h-screen bg-gray-100 flex items-center justify-center font-sans">
@@ -67,6 +68,11 @@
       </div>
 
       <div>
+        <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
         <label for="preferred_language" class="block text-sm font-medium text-gray-700">Preferred Language</label>
         <select id="preferred_language" name="preferred_language" required class="w-full mt-1 p-2 border rounded-md">
           <option value="en">English</option>
@@ -78,8 +84,8 @@
         </select>
       </div>
 
-      <button type="submit" id="submitBtn" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
-        Register Business
+      <button type="submit" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+        ✅ Register Business
       </button>
     </form>
 
@@ -89,154 +95,126 @@
     </p>
   </div>
 
- <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registerForm');
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('registerForm');
 
-    // Fields
-    const businessName = document.getElementById('business_name');
-    const subdomainInput = document.getElementById('subdomain');
-    const subdomainStatus = document.getElementById('subdomainStatus');
-    const password = document.getElementById('password');
-    const confirmPassword = document.getElementById('confirm_password');
+      const fields = [
+        'business_name', 'owner_name', 'email', 'phone', 'subdomain',
+        'industry', 'location', 'password', 'confirm_password', 'preferred_language'
+      ];
 
-    const requiredFields = [
-      'business_name', 'owner_name', 'email', 'phone', 'subdomain',
-      'industry', 'location', 'password', 'confirm_password', 'preferred_language'
-    ];
+      const businessName = document.getElementById('business_name');
+      const subdomainInput = document.getElementById('subdomain');
+      const subdomainStatus = document.getElementById('subdomainStatus');
+      const password = document.getElementById('password');
+      const confirmPassword = document.getElementById('confirm_password');
 
-  requiredFields.forEach(id => {
-  const field = document.getElementById(id);
-  if (!field) {
-    console.warn(`Field with ID "${id}" not found in the DOM.`);
-    return;
-  }
+      const passwordMatchStatus = document.createElement('p');
+      passwordMatchStatus.className = 'text-sm mt-1';
+      confirmPassword.parentNode.appendChild(passwordMatchStatus);
 
-  const error = document.createElement('p');
-  error.className = 'text-sm text-red-500 mt-1 hidden';
-  error.id = `${id}_error`;
-  field.parentNode.appendChild(error);
-});
-
-
-    // Password Match Status
-    const passwordMatchStatus = document.createElement('p');
-    passwordMatchStatus.className = 'text-sm mt-1';
-    confirmPassword.parentNode.appendChild(passwordMatchStatus);
-
-    // === Autofill Subdomain ===
-    businessName.addEventListener('input', () => {
-      const name = businessName.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
-      subdomainInput.value = name;
-      checkSubdomain(name);
-    });
-
-    subdomainInput.addEventListener('input', (e) => {
-      const sub = e.target.value.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
-      subdomainInput.value = sub;
-      checkSubdomain(sub);
-    });
-
-    async function checkSubdomain(subdomain) {
-      if (subdomain.length < 3) {
-        subdomainStatus.textContent = 'Subdomain too short';
-        subdomainStatus.className = 'text-sm text-red-500';
-        return;
-      }
-
-      try {
-        const res = await axios.get(`/api/business/check-subdomain?subdomain=${subdomain}`);
-        if (res.data.exists) {
-          subdomainStatus.textContent = `❌ Unavailable: ${subdomain}.tidyzenic.com is already taken`;
-          subdomainStatus.className = 'text-sm text-red-500';
-        } else {
-          subdomainStatus.textContent = `✅ Available: ${subdomain}.tidyzenic.com`;
-          subdomainStatus.className = 'text-sm text-green-600';
-        }
-      } catch (err) {
-        subdomainStatus.textContent = '⚠️ Could not verify subdomain';
-        subdomainStatus.className = 'text-sm text-yellow-600';
-      }
-    }
-
-    // === Real-time Field Validation ===
-    requiredFields.forEach(id => {
-      const field = document.getElementById(id);
-      const errorEl = document.getElementById(`${id}_error`);
-
-      field.addEventListener('input', () => {
-        if (!field.value.trim()) {
-          errorEl.textContent = 'This field is required';
-          errorEl.classList.remove('hidden');
-          field.classList.add('border-red-500');
-        } else {
-          errorEl.textContent = '';
-          errorEl.classList.add('hidden');
-          field.classList.remove('border-red-500');
-        }
-
-        // Also revalidate password match if password fields change
-        if (id === 'password' || id === 'confirm_password') {
-          validatePasswordMatch();
-        }
-      });
-    });
-
-    // === Password Match Feedback ===
-    function validatePasswordMatch() {
-      if (!password.value || !confirmPassword.value) {
-        passwordMatchStatus.textContent = '';
-        return;
-      }
-
-      if (password.value !== confirmPassword.value) {
-        passwordMatchStatus.textContent = '❌ Passwords do not match';
-        passwordMatchStatus.className = 'text-sm text-red-500 mt-1';
-        confirmPassword.classList.add('border-red-500');
-      } else {
-        passwordMatchStatus.textContent = '✅ Passwords match';
-        passwordMatchStatus.className = 'text-sm text-green-600 mt-1';
-        confirmPassword.classList.remove('border-red-500');
-      }
-    }
-
-    password.addEventListener('input', validatePasswordMatch);
-    confirmPassword.addEventListener('input', validatePasswordMatch);
-
-    // === Final Form Validation on Submit ===
-    form.addEventListener('submit', (e) => {
-      let isValid = true;
-
-      requiredFields.forEach(id => {
+      fields.forEach(id => {
         const field = document.getElementById(id);
-        const errorEl = document.getElementById(`${id}_error`);
+        if (!field) return;
 
+        const error = document.createElement('p');
+        error.className = 'text-sm text-red-500 mt-1 hidden';
+        error.id = `${id}_error`;
+        field.parentNode.appendChild(error);
+
+        field.addEventListener('input', () => {
+          validateField(field, error);
+          if (id === 'password' || id === 'confirm_password') {
+            validatePasswordMatch();
+          }
+        });
+      });
+
+      function validateField(field, errorEl) {
         if (!field.value.trim()) {
           errorEl.textContent = 'This field is required';
           errorEl.classList.remove('hidden');
           field.classList.add('border-red-500');
-          isValid = false;
         } else {
           errorEl.textContent = '';
           errorEl.classList.add('hidden');
           field.classList.remove('border-red-500');
         }
+      }
+
+      function validatePasswordMatch() {
+        if (!password.value || !confirmPassword.value) {
+          passwordMatchStatus.textContent = '';
+          return;
+        }
+        if (password.value !== confirmPassword.value) {
+          passwordMatchStatus.textContent = '❌ Passwords do not match';
+          passwordMatchStatus.className = 'text-sm text-red-500 mt-1';
+          confirmPassword.classList.add('border-red-500');
+        } else {
+          passwordMatchStatus.textContent = '✅ Passwords match';
+          passwordMatchStatus.className = 'text-sm text-green-600 mt-1';
+          confirmPassword.classList.remove('border-red-500');
+        }
+      }
+
+      businessName.addEventListener('input', () => {
+        const name = businessName.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
+        subdomainInput.value = name;
+        checkSubdomain(name);
       });
 
-      if (password.value !== confirmPassword.value) {
-        const errorEl = document.getElementById('confirm_password_error');
-        errorEl.textContent = 'Passwords do not match';
-        errorEl.classList.remove('hidden');
-        confirmPassword.classList.add('border-red-500');
-        isValid = false;
+      async function checkSubdomain(subdomain) {
+        if (subdomain.length < 3) {
+          subdomainStatus.textContent = 'Subdomain too short';
+          subdomainStatus.className = 'text-sm text-red-500';
+          return;
+        }
+        try {
+          const res = await axios.get(`/api/business/check-subdomain?subdomain=${subdomain}`);
+          if (res.data.exists) {
+            subdomainStatus.textContent = `❌ Unavailable: ${subdomain}.tidyzenic.com is already taken`;
+            subdomainStatus.className = 'text-sm text-red-500';
+          } else {
+            subdomainStatus.textContent = `✅ Available: ${subdomain}.tidyzenic.com`;
+            subdomainStatus.className = 'text-sm text-green-600';
+          }
+        } catch (err) {
+          subdomainStatus.textContent = '⚠️ Could not verify subdomain';
+          subdomainStatus.className = 'text-sm text-yellow-600';
+        }
       }
 
-      if (!isValid) {
-        e.preventDefault();
-      }
+      form.addEventListener('submit', (e) => {
+        let isValid = true;
+
+        fields.forEach(id => {
+          const field = document.getElementById(id);
+          const error = document.getElementById(`${id}_error`);
+          if (!field || !error) return;
+
+          if (!field.value.trim()) {
+            error.textContent = 'This field is required';
+            error.classList.remove('hidden');
+            field.classList.add('border-red-500');
+            isValid = false;
+          }
+        });
+
+        if (password.value !== confirmPassword.value) {
+          const error = document.getElementById('confirm_password_error');
+          error.textContent = 'Passwords do not match';
+          error.classList.remove('hidden');
+          confirmPassword.classList.add('border-red-500');
+          isValid = false;
+        }
+
+        if (!isValid) {
+          e.preventDefault();
+        }
+      });
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>
