@@ -46,10 +46,11 @@ router.post('/register', async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
     const token = crypto.randomUUID();
 
-    await pool.query(`
-      INSERT INTO users (email, password_hash, name, role, business_id, is_verified, verification_token)
-      VALUES (?, ?, ?, ?, ?, 0, ?)
-    `, [email, password_hash, name, role, business_id, token]);
+    await pool.query(
+      `INSERT INTO users (email, password_hash, name, role, business_id, is_verified, verification_token)
+       VALUES (?, ?, ?, ?, ?, 0, ?)`,
+      [email, password_hash, name, role, business_id, token]
+    );
 
     await sendVerificationEmail(email, token);
 
@@ -63,7 +64,6 @@ router.post('/register', async (req, res) => {
 // === GET /auth/verify?token=... ===
 router.get('/verify', async (req, res) => {
   const { token } = req.query;
-
   if (!token) return res.status(400).send('Invalid or missing verification token.');
 
   try {
@@ -89,7 +89,6 @@ router.get('/verify', async (req, res) => {
 // === POST /auth/login ===
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
@@ -103,7 +102,6 @@ router.post('/login', async (req, res) => {
     if (!users.length) return res.status(401).json({ error: 'Invalid credentials.' });
 
     const user = users[0];
-
     if (!user.is_verified) {
       return res.status(403).json({ error: 'Please verify your email first.' });
     }
@@ -111,48 +109,65 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials.' });
 
+    // === Generate JWT ===
     const token = jwt.sign(
       { id: user.id, role: user.role, business_id: user.business_id },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // === Set cookie for subdomain-wide authentication ===
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,                // Always use secure for 'SameSite: None'
-      sameSite: 'None',            // Required for cross-subdomain cookies
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      domain: '.tidyzenic.com'     // Makes it available to all subdomains
-    });
-
-    const [biz] = await pool.query(
-      'SELECT subdomain FROM businesses WHERE id = ? LIMIT 1',
+    // === Get business + plan_id
+    const [bizRows] = await pool.query(
+      'SELECT subdomain, plan_id FROM businesses WHERE id = ? LIMIT 1',
       [user.business_id]
     );
 
-    if (!biz.length) return res.status(404).json({ error: 'Business not found.' });
+    if (!bizRows.length) return res.status(404).json({ error: 'Business not found.' });
 
-const redirect = `https://${biz[0].subdomain}.tidyzenic.com/admin/admin-dashboard.html`;
+    const { subdomain, plan_id } = bizRows[0];
 
-    res.json({ message: 'Login successful', redirect });
+    // === Get allowed features for this plan
+    const [features] = await pool.query(`
+      SELECT f.name FROM features f
+      JOIN plan_features pf ON pf.feature_id = f.id
+      WHERE pf.plan_id = ?
+    `, [plan_id]);
+
+    const allowedFeatures = features.map(row => row.name);
+
+    // === Set secure cookies
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      domain: '.tidyzenic.com',
+    });
+
+    res.cookie('features', JSON.stringify(allowedFeatures), {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      domain: '.tidyzenic.com',
+    });
+
+    const redirect = `https://${subdomain}.tidyzenic.com/admin/admin-dashboard.html`;
+
+    res.json({ message: 'Login successful', redirect, features: allowedFeatures });
   } catch (err) {
     console.error('❌ Login error:', err);
     res.status(500).json({ error: 'Internal server error during login.' });
   }
 });
+
 // === GET /auth/me ===
-// Used to check login status from the frontend
 router.get('/me', async (req, res) => {
   const token = req.cookies.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Not logged in' });
-  }
+  if (!token) return res.status(401).json({ error: 'Not logged in' });
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-
     const [users] = await pool.query(
       'SELECT id, email, name, role FROM users WHERE id = ? AND is_deleted = 0',
       [payload.id]
@@ -165,7 +180,7 @@ router.get('/me', async (req, res) => {
     res.json({ user: users[0] });
   } catch (err) {
     console.error('❌ /auth/me error:', err.message);
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 });
 
