@@ -18,6 +18,10 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+// Load translations per request
+const languageMiddleware = require('./middleware/language');
+app.use(languageMiddleware);
+
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // 2. CSP Nonce for inline scripts
@@ -148,6 +152,8 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
+const translationRoute = require('./routes/translation');
+app.use('/admin/translation', translationRoute);
 
 app.set('io', io);
 
