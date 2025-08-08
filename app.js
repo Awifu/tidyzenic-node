@@ -22,8 +22,7 @@ app.use(cookieParser());
 const languageMiddleware = require('./middleware/language');
 app.use(languageMiddleware);
 // Load translations per request
-const languageMiddleware = require('./middleware/language');
-app.use(languageMiddleware);
+
 
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
