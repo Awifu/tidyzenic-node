@@ -42,18 +42,23 @@ router.post('/', async (req, res) => {
     preferred_language, custom_domain
   } = req.body;
 
-  if (!businessName || !email || !subdomain || !password || !location || !ownerName || !preferred_language) {
+  // ✅ Required Fields Check
+  if (
+    !businessName?.trim() || !email?.trim() || !subdomain?.trim() ||
+    !password?.trim() || !location?.trim() || !ownerName?.trim() || !preferred_language
+  ) {
     return res.status(400).json({ error: '❌ Please fill in all required fields.' });
   }
 
   try {
+    // === Existing User/Business Check
     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     const [businesses] = await pool.query('SELECT * FROM businesses WHERE email = ?', [email]);
 
     const existingUser = users[0] || null;
     const existingBusiness = businesses[0] || null;
 
-    // === 1. Soft-deleted User ===
+    // === Soft-Deleted User Recovery
     if (existingUser && existingUser.is_deleted) {
       const hashed = await bcrypt.hash(password, 10);
       const token = crypto.randomUUID();
@@ -72,14 +77,14 @@ router.post('/', async (req, res) => {
       return res.status(200).json({ message: '✅ Account reactivated. Please check your email to verify.' });
     }
 
-    // === 2. User Already Registered ===
+    // === Email Already Exists
     if (existingUser) {
       return res.status(400).json({
         error: '❌ This email is already registered. <a href="/login.html" class="text-blue-600 underline">Login?</a>'
       });
     }
 
-    // === 3. Orphaned Business ===
+    // === Orphaned Business – Create User
     if (existingBusiness && !existingUser) {
       const hashed = await bcrypt.hash(password, 10);
       const token = crypto.randomUUID();
@@ -93,24 +98,18 @@ router.post('/', async (req, res) => {
       return res.status(200).json({ message: '✅ User account restored. Please check your email to verify.' });
     }
 
-    // === 4. Check Subdomain Uniqueness ===
-const [subdomainExists] = await pool.query(
-  'SELECT id FROM businesses WHERE subdomain = ? AND is_deleted = 0', 
-  [subdomain]
-);
-    if (existingBusiness || subdomainExists.length > 0) {
-      return res.status(400).json({
-        error: existingBusiness
-          ? '❌ A business with this email already exists. <a href="/login.html" class="text-blue-600 underline">Login instead?</a>'
-          : '❌ Subdomain is already taken. Please choose another.'
-      });
+    // === Subdomain Already Taken
+    const [subdomainCheck] = await pool.query(
+      'SELECT id FROM businesses WHERE subdomain = ? AND is_deleted = 0', [subdomain]
+    );
+    if (subdomainCheck.length > 0) {
+      return res.status(400).json({ error: '❌ Subdomain is already taken. Please choose another.' });
     }
 
-    // === 5. Create New Business & User ===
+    // === Insert New Business
     const hashedPassword = await bcrypt.hash(password, 10);
     const token = crypto.randomUUID();
 
-    // ✅ INSERT with all fields
     const [businessResult] = await pool.query(`
       INSERT INTO businesses (
         business_name, email, phone, subdomain, location,
@@ -119,18 +118,20 @@ const [subdomainExists] = await pool.query(
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      businessName, email, phone, subdomain, location,
+      businessName, email, phone || null, subdomain, location,
       vatNumber || null, ownerName, hashedPassword,
       preferred_language, custom_domain || null
     ]);
 
     const businessId = businessResult.insertId;
 
+    // === Create Admin User
     await pool.query(`
       INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token)
       VALUES (?, ?, ?, 'admin', 0, ?)
     `, [businessId, email, hashedPassword, token]);
 
+    // === Send Verification
     await sendVerificationEmail(email, token);
     return res.status(200).json({ message: '✅ Registration successful. Please check your email to verify.' });
 
