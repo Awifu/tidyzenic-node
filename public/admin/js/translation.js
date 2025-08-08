@@ -1,32 +1,31 @@
-// 📄 /public/admin/js/translation.js
+// public/admin/js/translation.js
 
-document.addEventListener("DOMContentLoaded", function () {
-  const languageSelect = document.getElementById("languageSelect");
+async function loadTranslations() {
+  try {
+    const res = await fetch('/admin/translation/api');
+    const data = await res.json();
+    window.translations = data.translations || {};
+    window.currentLang = data.lang || 'en';
+  } catch (error) {
+    console.error('Failed to load translations:', error);
+  }
+}
 
-  if (!languageSelect) return;
+// Usage helper
+function t(key) {
+  return window.translations?.[key] || key;
+}
 
-  languageSelect.addEventListener("change", async function () {
-    const selectedLang = languageSelect.value;
-
-    try {
-      const res = await fetch("/admin/set-language", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ language: selectedLang }),
-      });
-
-      if (res.ok) {
-        alert("🌐 Language preference saved. Reloading...");
-        window.location.reload();
-      } else {
-        const errorData = await res.json();
-        alert("❌ Error saving language: " + (errorData.message || "Unknown error"));
-      }
-    } catch (err) {
-      console.error("Language save failed:", err);
-      alert("❌ Network error while saving language");
-    }
+// Example: Update UI elements
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const translated = t(key);
+    if (translated) el.textContent = translated;
   });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadTranslations();
+  applyTranslations();
 });
