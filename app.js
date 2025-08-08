@@ -124,11 +124,19 @@ app.get(['/login', '/login.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// 8. Admin HTML Pages
 app.get('/reset-password.html', sendFile('reset-password.html'));
 app.get('/verified.html', sendFile('verified.html'));
-app.get('/admin-dashboard.html', (req, res) => res.redirect('/admin/dashboard.html'));
+
+// Redirect to actual dashboard file
+app.get('/admin/dashboard', (req, res) => {
+  res.redirect('/admin/admin-dashboard.html');
+});
+
+// Translation route
 const translationRoute = require('./routes/translation');
 app.use('/admin/translation', translationRoute);
+
 // 9. 404 Handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
