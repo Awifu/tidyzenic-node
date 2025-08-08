@@ -207,10 +207,24 @@
           <li><a href="/admin/timezones" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.timezones">🕒 Timezones</span></a></li>
           <li><a href="/admin/industries" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.industries">🏭 Industries</span></a></li>
           <li><a href="/admin/api-keys" class="block px-3 py-2 rounded hover:bg-gray-100"><span data-i18n="sidebar.apiKeys">🔑 API Keys</span></a></li>
-          <!-- Language Submenu -->
-          <li>
-            <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100" data-i18n="sidebar.language">🌍 Language</a>
-          </li>
+          <!-- 🌍 Language Dropdown -->
+      <li>
+        <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+          <span class="flex items-center gap-2" data-i18n="language">🌍 Language</span>
+          <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <ul class="dropdown-menu hidden ml-4 space-y-1">
+          <li><a href="/admin/translation?lang=en" class="block px-3 py-2 rounded hover:bg-gray-100">🇬🇧 English</a></li>
+          <li><a href="/admin/translation?lang=fr" class="block px-3 py-2 rounded hover:bg-gray-100">🇫🇷 French</a></li>
+          <li><a href="/admin/translation?lang=nl" class="block px-3 py-2 rounded hover:bg-gray-100">🇳🇱 Dutch</a></li>
+          <li><a href="/admin/translation?lang=es" class="block px-3 py-2 rounded hover:bg-gray-100">🇪🇸 Spanish</a></li>
+          <li><a href="/admin/translation?lang=pt" class="block px-3 py-2 rounded hover:bg-gray-100">🇵🇹 Portuguese</a></li>
+          <li><a href="/admin/translation?lang=de" class="block px-3 py-2 rounded hover:bg-gray-100">🇩🇪 German</a></li>
+        </ul>
+      </li>
+
         </ul>
       </li>
 
