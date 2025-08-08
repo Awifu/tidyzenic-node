@@ -16,21 +16,84 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// === Send Verification Email ===
-async function sendVerificationEmail(email, token) {
+// === Email Templates (Multilingual) ===
+const emailTemplates = {
+  en: {
+    subject: 'Verify Your Email Address',
+    body: (url) => `
+      <p>Welcome to Tidyzenic!</p>
+      <p>Please verify your email by clicking the link below:</p>
+      <a href="${url}">${url}</a>
+      <p>This link expires in 24 hours.</p>
+    `
+  },
+  fr: {
+    subject: 'Vérifiez votre adresse e-mail',
+    body: (url) => `
+      <p>Bienvenue chez Tidyzenic !</p>
+      <p>Veuillez vérifier votre adresse e-mail en cliquant ci-dessous :</p>
+      <a href="${url}">${url}</a>
+      <p>Ce lien expire dans 24 heures.</p>
+    `
+  },
+  de: {
+    subject: 'Bestätigen Sie Ihre E-Mail-Adresse',
+    body: (url) => `
+      <p>Willkommen bei Tidyzenic!</p>
+      <p>Bitte bestätigen Sie Ihre E-Mail-Adresse durch Klicken auf den folgenden Link:</p>
+      <a href="${url}">${url}</a>
+      <p>Dieser Link läuft in 24 Stunden ab.</p>
+    `
+  },
+  nl: {
+    subject: 'Bevestig uw e-mailadres',
+    body: (url) => `
+      <p>Welkom bij Tidyzenic!</p>
+      <p>Bevestig uw e-mailadres via de onderstaande link:</p>
+      <a href="${url}">${url}</a>
+      <p>Deze link verloopt over 24 uur.</p>
+    `
+  },
+  es: {
+    subject: 'Verifica tu dirección de correo electrónico',
+    body: (url) => `
+      <p>¡Bienvenido a Tidyzenic!</p>
+      <p>Por favor verifica tu correo electrónico haciendo clic en el siguiente enlace:</p>
+      <a href="${url}">${url}</a>
+      <p>Este enlace expirará en 24 horas.</p>
+    `
+  },
+  pt: {
+    subject: 'Verifique seu endereço de e-mail',
+    body: (url) => `
+      <p>Bem-vindo ao Tidyzenic!</p>
+      <p>Por favor, verifique seu e-mail clicando no link abaixo:</p>
+      <a href="${url}">${url}</a>
+      <p>Este link expirará em 24 horas.</p>
+    `
+  },
+  da: {
+    subject: 'Bekræft din e-mailadresse',
+    body: (url) => `
+      <p>Velkommen til Tidyzenic!</p>
+      <p>Bekræft venligst din e-mail ved at klikke på linket nedenfor:</p>
+      <a href="${url}">${url}</a>
+      <p>Dette link udløber om 24 timer.</p>
+    `
+  }
+};
+
+
+// === Send Verification Email with Language Support ===
+async function sendVerificationEmail(email, token, lang = 'en') {
   const url = `https://${process.env.APP_DOMAIN}/auth/verify?token=${token}`;
-  const html = `
-    <p>Welcome to Tidyzenic!</p>
-    <p>Please verify your email by clicking below:</p>
-    <a href="${url}">${url}</a>
-    <p>This link expires in 24 hours.</p>
-  `;
+  const template = emailTemplates[lang] || emailTemplates['en'];
 
   return transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: email,
-    subject: 'Verify Your Email Address',
-    html,
+    subject: template.subject,
+    html: template.body(url),
   });
 }
 
@@ -52,10 +115,11 @@ router.post('/', async (req, res) => {
     location,
     ownerName,
     vatNumber,
-    preferred_language
+    preferred_language,
+    'g-recaptcha-response': recaptchaToken // optional
   } = req.body;
 
-  // ✅ Required Fields Validation
+  // ✅ Basic Validation
   if (
     !businessName?.trim() || !email?.trim() || !subdomain?.trim() ||
     !password?.trim() || !location?.trim() || !ownerName?.trim() || !preferred_language
@@ -63,7 +127,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: '❌ Please fill in all required fields.' });
   }
 
-  // ✅ Normalize Fields
+  // ✅ Normalize Inputs
   const business_name = businessName.trim();
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedSubdomain = subdomain.trim().toLowerCase();
@@ -75,14 +139,17 @@ router.post('/', async (req, res) => {
   const normalizedLang = preferred_language;
 
   try {
-    // === Check if user or business exists
+    // === Optional: Validate reCAPTCHA (future-proofed)
+    // Skipped here, but you could verify it with Google if needed.
+
+    // === Existing user check
     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
     const [businesses] = await pool.query('SELECT * FROM businesses WHERE email = ?', [normalizedEmail]);
 
     const existingUser = users[0] || null;
     const existingBusiness = businesses[0] || null;
 
-    // === Reactivate Deleted User
+    // === Reactivate deleted user
     if (existingUser && existingUser.is_deleted) {
       const hashed = await bcrypt.hash(normalizedPassword, 10);
       const token = crypto.randomUUID();
@@ -96,14 +163,15 @@ router.post('/', async (req, res) => {
         await pool.query('UPDATE businesses SET is_deleted = 0 WHERE id = ?', [existingUser.business_id]);
       }
 
-      await sendVerificationEmail(normalizedEmail, token);
+      await sendVerificationEmail(normalizedEmail, token, normalizedLang);
+
       return res.status(200).json({
         message: '✅ Account reactivated. Please check your email to verify.',
         redirectTo: '/login.html'
       });
     }
 
-    // === Email Already Exists
+    // === Email already in use
     if (existingUser) {
       return res.status(400).json({
         error: '❌ This email is already registered.',
@@ -111,7 +179,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // === Orphaned Business: Create User
+    // === Orphaned business
     if (existingBusiness && !existingUser) {
       const hashed = await bcrypt.hash(normalizedPassword, 10);
       const token = crypto.randomUUID();
@@ -121,14 +189,15 @@ router.post('/', async (req, res) => {
         [existingBusiness.id, normalizedEmail, hashed, token]
       );
 
-      await sendVerificationEmail(normalizedEmail, token);
+      await sendVerificationEmail(normalizedEmail, token, normalizedLang);
+
       return res.status(200).json({
         message: '✅ User account restored. Please check your email to verify.',
         redirectTo: '/login.html'
       });
     }
 
-    // === Check Subdomain Uniqueness
+    // === Subdomain already taken
     const [subdomainCheck] = await pool.query(
       'SELECT id FROM businesses WHERE subdomain = ? AND is_deleted = 0',
       [normalizedSubdomain]
@@ -138,7 +207,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: '❌ Subdomain is already taken. Please choose another.' });
     }
 
-    // === Create New Business and User
+    // === Create business
     const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
     const token = crypto.randomUUID();
 
@@ -162,12 +231,14 @@ router.post('/', async (req, res) => {
 
     const businessId = businessResult.insertId;
 
+    // === Create admin user
     await pool.query(
       'INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token) VALUES (?, ?, ?, "admin", 0, ?)',
       [businessId, normalizedEmail, hashedPassword, token]
     );
 
-    await sendVerificationEmail(normalizedEmail, token);
+    // === Send verification email
+    await sendVerificationEmail(normalizedEmail, token, normalizedLang);
 
     return res.status(200).json({
       success: true,
