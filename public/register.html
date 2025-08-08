@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -7,146 +6,263 @@
   <title>Register | Tidyzenic</title>
   <link rel="stylesheet" href="/styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body class="min-h-screen bg-gray-100 flex items-center justify-center font-sans">
   <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
     <h1 class="text-2xl font-bold text-center text-blue-700 mb-6">Register Your Business</h1>
     <form id="registerForm" class="space-y-4">
-      <div><label for="business_name" class="block text-sm font-medium text-gray-700">Business Name</label>
-        <input type="text" id="business_name" name="business_name" required class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label class="block text-sm font-medium text-gray-700">Subdomain</label>
+      <div>
+        <label for="business_name" class="block text-sm font-medium text-gray-700">Business Name</label>
+        <input type="text" id="business_name" name="business_name" required class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Subdomain</label>
         <div class="mt-1 flex items-center space-x-2">
-          <input type="text" id="subdomain" name="subdomain" required readonly class="w-1/2 p-2 border rounded-md bg-gray-100 text-gray-700" />
-          <span class="text-gray-700">.tidyzenic.com</span></div>
-        <p id="subdomainStatus" class="text-sm mt-1 text-gray-500">Subdomain preview will appear here...</p></div>
-      <div><label for="owner_name" class="block text-sm font-medium text-gray-700">Owner Name</label>
-        <input type="text" id="owner_name" name="owner_name" required class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-        <input type="email" id="email" name="email" required class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-        <input type="tel" id="phone" name="phone" required class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="industry" class="block text-sm font-medium text-gray-700">Industry</label>
-        <input type="text" id="industry" name="industry" required class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="location" class="block text-sm font-medium text-gray-700">Location</label>
-        <input type="text" id="location" name="location" required class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="vat_number" class="block text-sm font-medium text-gray-700">VAT Number (optional)</label>
-        <input type="text" id="vat_number" name="vat_number" class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-        <input type="password" id="password" name="password" required minlength="6" class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required class="w-full mt-1 p-2 border rounded-md" /></div>
-      <div><label for="preferred_language" class="block text-sm font-medium text-gray-700">Preferred Language</label>
+          <input type="text" id="subdomain" name="subdomain" readonly required class="w-1/2 p-2 border rounded-md bg-gray-100 text-gray-700" />
+          <span class="text-gray-700">.tidyzenic.com</span>
+        </div>
+        <p id="subdomainStatus" class="text-sm mt-1 text-gray-500">Subdomain preview will appear here...</p>
+      </div>
+
+      <div>
+        <label for="owner_name" class="block text-sm font-medium text-gray-700">Owner Name</label>
+        <input type="text" id="owner_name" name="owner_name" required class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+        <input type="email" id="email" name="email" required class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+        <input type="tel" id="phone" name="phone" required pattern="^\+\d{1,4}[\d\s\-]{4,}$" placeholder="+1 555 123 4567" class="w-full mt-1 p-2 border rounded-md" />
+        <p id="phoneFeedback" class="text-sm mt-1 text-gray-500">Include country code (e.g. +44)</p>
+      </div>
+
+      <div>
+        <label for="industry" class="block text-sm font-medium text-gray-700">Industry</label>
+        <input type="text" id="industry" name="industry" required class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label for="location" class="block text-sm font-medium text-gray-700">Location (Country)</label>
+        <select id="location" name="location" required class="w-full mt-1 p-2 border rounded-md">
+          <option value="">Select Country</option>
+          <option value="United States">United States</option>
+          <option value="United Kingdom">United Kingdom</option>
+          <option value="Germany">Germany</option>
+          <option value="France">France</option>
+          <option value="Netherlands">Netherlands</option>
+          <option value="Spain">Spain</option>
+          <option value="Portugal">Portugal</option>
+          <option value="Canada">Canada</option>
+          <option value="Australia">Australia</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="vat_number" class="block text-sm font-medium text-gray-700">VAT Number (optional)</label>
+        <input type="text" id="vat_number" name="vat_number" class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+        <input type="password" id="password" name="password" required minlength="6" class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label for="confirm_password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required class="w-full mt-1 p-2 border rounded-md" />
+        <p id="passwordFeedback" class="text-sm mt-1 text-gray-500">Passwords must match.</p>
+      </div>
+
+      <div>
+        <label for="preferred_language" class="block text-sm font-medium text-gray-700">Preferred Language</label>
         <select id="preferred_language" name="preferred_language" required class="w-full mt-1 p-2 border rounded-md">
-          <option value="en">English</option><option value="fr">Français</option><option value="nl">Dutch</option>
-          <option value="es">Español</option><option value="pt">Português</option><option value="de">Deutsch</option>
-        </select></div>
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="nl">Dutch</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </div>
+
+      <!-- reCAPTCHA -->
+      <div class="g-recaptcha" data-sitekey="6Le_Qp8rAAAAAD3guWei5iGfTSkiPkbStxxO_PQm"></div>
+
       <button type="submit" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">✅ Register Business</button>
     </form>
+
     <p class="mt-4 text-sm text-center text-gray-600">Already registered?
-      <a href="/login.html" class="text-blue-600 hover:underline">Login</a></p>
+      <a href="/login.html" class="text-blue-600 hover:underline">Login</a>
+    </p>
   </div>
+
+  <!-- Success Modal -->
   <div id="successModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 text-center">
       <h2 class="text-xl font-semibold text-green-600 mb-2">✅ Registration Complete</h2>
       <p id="modalMessage" class="text-gray-700 mb-4">A verification email has been sent to your email address.</p>
-      <a id="goToLoginBtn" href="/login.html" class="inline-block mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Go to Login</a>
+      <a href="/login.html" class="inline-block mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Go to Login</a>
     </div>
   </div>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('registerForm');
+      const password = document.getElementById('password');
+      const confirmPassword = document.getElementById('confirm_password');
+      const passwordFeedback = document.getElementById('passwordFeedback');
+      const phone = document.getElementById('phone');
+      const phoneFeedback = document.getElementById('phoneFeedback');
+      const email = document.getElementById('email');
+      const location = document.getElementById('location');
+      const language = document.getElementById('preferred_language');
+      const businessName = document.getElementById('business_name');
+      const subdomain = document.getElementById('subdomain');
+      const subdomainStatus = document.getElementById('subdomainStatus');
+      const modal = document.getElementById('successModal');
+      const modalMessage = document.getElementById('modalMessage');
 
- <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registerForm');
-    const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirm_password');
-    const subdomainInput = document.getElementById('subdomain');
-    const businessNameInput = document.getElementById('business_name');
-    const subdomainStatus = document.getElementById('subdomainStatus');
-    const modal = document.getElementById('successModal');
-    const modalMessage = document.getElementById('modalMessage');
+      // Auto-fill country
+      (async () => {
+        try {
+          const res = await fetch('https://ipapi.co/json/');
+          const data = await res.json();
+          const country = data.country_name;
+          for (let opt of location.options) {
+            if (opt.value === country) {
+              opt.selected = true;
+              break;
+            }
+          }
+        } catch (err) {
+          console.warn('Geo lookup failed:', err);
+        }
+      })();
 
-    let debounceTimer;
+      // Language preference cookie
+      const getCookie = (name) => document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1];
+      const setCookie = (name, value) => document.cookie = `${name}=${value}; path=/; max-age=31536000`;
 
-    // Auto-generate subdomain from business name with debounce
-    businessNameInput.addEventListener('input', () => {
-      const sub = businessNameInput.value
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .substring(0, 30);
-
-      subdomainInput.value = sub;
-
-      clearTimeout(debounceTimer);
-      if (sub.length >= 3) {
-        debounceTimer = setTimeout(() => checkSubdomainAvailability(sub), 400);
-      } else {
-        subdomainStatus.textContent = 'Subdomain too short';
-        subdomainStatus.className = 'text-sm text-red-500';
+      const savedLang = getCookie('lang');
+      if (savedLang) {
+        for (let opt of language.options) {
+          if (opt.value === savedLang) {
+            opt.selected = true;
+            break;
+          }
+        }
       }
-    });
 
-    // Check if subdomain exists
-    async function checkSubdomainAvailability(subdomain) {
-      try {
-        const res = await axios.get('/register/check-subdomain', {
-          params: { subdomain }
-        });
+      language.addEventListener('change', () => {
+        setCookie('lang', language.value);
+      });
 
-        if (res.data.exists) {
-          subdomainStatus.textContent = `❌ ${subdomain}.tidyzenic.com is taken`;
+      // Subdomain generation and check
+      let debounceTimer;
+      businessName.addEventListener('input', () => {
+        const sub = businessName.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
+        subdomain.value = sub;
+        clearTimeout(debounceTimer);
+        if (sub.length >= 3) {
+          debounceTimer = setTimeout(() => checkSubdomain(sub), 400);
+        } else {
+          subdomainStatus.textContent = 'Subdomain too short';
           subdomainStatus.className = 'text-sm text-red-500';
-        } else {
-          subdomainStatus.textContent = `✅ ${subdomain}.tidyzenic.com is available`;
-          subdomainStatus.className = 'text-sm text-green-600';
         }
-      } catch (err) {
-        subdomainStatus.textContent = '⚠️ Unable to check subdomain';
-        subdomainStatus.className = 'text-sm text-yellow-600';
-        console.error('Subdomain check failed:', err);
-      }
-    }
+      });
 
-    // Validate password match
-    function passwordsMatch() {
-      return passwordInput.value === confirmPasswordInput.value;
-    }
-
-    // Form submission
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      if (!passwordsMatch()) {
-        alert('❌ Passwords do not match.');
-        return;
-      }
-
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
-
-      try {
-        const response = await fetch('/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          modalMessage.textContent = result.message || 'Registration successful!';
-          modal.classList.remove('hidden');
-          form.reset();
-        } else {
-          alert(result.error || '❌ Registration failed. Please try again.');
+      async function checkSubdomain(sub) {
+        try {
+          const res = await axios.get('/register/check-subdomain', { params: { subdomain: sub } });
+          if (res.data.exists) {
+            subdomainStatus.textContent = `❌ ${sub}.tidyzenic.com is taken`;
+            subdomainStatus.className = 'text-sm text-red-500';
+          } else {
+            subdomainStatus.textContent = `✅ ${sub}.tidyzenic.com is available`;
+            subdomainStatus.className = 'text-sm text-green-600';
+          }
+        } catch (err) {
+          subdomainStatus.textContent = '⚠️ Could not check subdomain';
+          subdomainStatus.className = 'text-sm text-yellow-600';
         }
-      } catch (err) {
-        console.error('Registration error:', err);
-        alert('❌ Server error. Please try again later.');
       }
+
+      // Validate password match
+      function validatePasswords() {
+        if (password.value && confirmPassword.value) {
+          if (password.value === confirmPassword.value) {
+            passwordFeedback.textContent = '✅ Passwords match';
+            passwordFeedback.className = 'text-sm text-green-600';
+          } else {
+            passwordFeedback.textContent = '❌ Passwords do not match';
+            passwordFeedback.className = 'text-sm text-red-500';
+          }
+        } else {
+          passwordFeedback.textContent = 'Passwords must match';
+          passwordFeedback.className = 'text-sm text-gray-500';
+        }
+      }
+
+      password.addEventListener('input', validatePasswords);
+      confirmPassword.addEventListener('input', validatePasswords);
+
+      // Phone validation
+      phone.addEventListener('input', () => {
+        const pattern = /^\+\d{1,4}[\d\s\-]{4,}$/;
+        if (pattern.test(phone.value)) {
+          phoneFeedback.textContent = '✅ Valid phone number';
+          phoneFeedback.className = 'text-sm text-green-600';
+        } else {
+          phoneFeedback.textContent = '❌ Must start with country code (e.g. +44)';
+          phoneFeedback.className = 'text-sm text-red-500';
+        }
+      });
+
+      // Submit
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (password.value !== confirmPassword.value) {
+          alert('❌ Passwords do not match.');
+          return;
+        }
+
+        if (!document.querySelector('.g-recaptcha-response')?.value) {
+          alert('❌ Please complete the reCAPTCHA.');
+          return;
+        }
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        data['g-recaptcha-response'] = document.querySelector('.g-recaptcha-response').value;
+
+        try {
+          const res = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          const result = await res.json();
+
+          if (res.ok) {
+            modalMessage.textContent = result.message || '✅ Registration successful!';
+            modal.classList.remove('hidden');
+            form.reset();
+          } else {
+            alert(result.error || '❌ Registration failed.');
+          }
+        } catch (err) {
+          console.error('Registration error:', err);
+          alert('❌ Server error. Please try again later.');
+        }
+      });
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>
