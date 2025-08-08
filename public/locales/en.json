@@ -2,6 +2,7 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "bookings": "Bookings",
+    "add_booking": "+ Add Booking",
     "upcoming": "Upcoming Bookings",
     "today": "Today's Bookings",
     "unassigned": "Unassigned Bookings",
@@ -78,6 +79,8 @@
     "billing": "Billing",
     "security": "Security",
     "teamSwitch": "Switch Team",
-    "logout": "Logout"
+    "logout": "Logout",
+    "products": "Products",
+    "stock": "Stock"
   }
 }
