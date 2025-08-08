@@ -36,6 +36,10 @@
         const plans = await res.json();
 
         plans.forEach(plan => {
+          const featuresList = Array.isArray(plan.features)
+            ? plan.features.map(f => `<li>✅ ${f}</li>`).join('')
+            : (plan.features || '').split(',').map(f => `<li>✅ ${f.trim()}</li>`).join('');
+
           const card = document.createElement('div');
           card.className = 'bg-white rounded-lg shadow p-6 flex flex-col justify-between';
 
@@ -47,7 +51,7 @@
                 €${plan.price}/mo
               </div>
               <ul class="text-sm text-gray-700 mb-6 space-y-1">
-                ${(plan.features || '').split(',').map(f => `<li>✅ ${f.trim()}</li>`).join('')}
+                ${featuresList}
               </ul>
             </div>
             <a href="/register.html?plan=${plan.slug}"
