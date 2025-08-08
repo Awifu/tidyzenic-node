@@ -19,7 +19,8 @@ const transporter = nodemailer.createTransport({
 
 async function sendVerificationEmail(email, token) {
   const url = `https://${process.env.APP_DOMAIN}/auth/verify?token=${token}`;
-  const html = \`
+  const html = `
+
     <p>Welcome to Tidyzenic!</p>
     <p>Please verify your email by clicking below:</p>
     <a href="\${url}">\${url}</a>
