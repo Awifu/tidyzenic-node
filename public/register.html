@@ -105,14 +105,19 @@
       'industry', 'location', 'password', 'confirm_password', 'preferred_language'
     ];
 
-    // Add error containers
-    requiredFields.forEach(id => {
-      const field = document.getElementById(id);
-      const error = document.createElement('p');
-      error.className = 'text-sm text-red-500 mt-1 hidden';
-      error.id = `${id}_error`;
-      field.parentNode.appendChild(error);
-    });
+  requiredFields.forEach(id => {
+  const field = document.getElementById(id);
+  if (!field) {
+    console.warn(`Field with ID "${id}" not found in the DOM.`);
+    return;
+  }
+
+  const error = document.createElement('p');
+  error.className = 'text-sm text-red-500 mt-1 hidden';
+  error.id = `${id}_error`;
+  field.parentNode.appendChild(error);
+});
+
 
     // Password Match Status
     const passwordMatchStatus = document.createElement('p');
