@@ -3,70 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register Your Business | Tidyzenic</title>
+  <title>Register | Tidyzenic</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 
-<body class="min-h-screen bg-gray-100 text-gray-900 flex items-center justify-center p-4">
-  <div class="max-w-xl w-full bg-white p-8 rounded-xl shadow-lg">
+<body class="min-h-screen bg-gray-100 flex items-center justify-center font-sans">
+  <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
     <h1 class="text-2xl font-bold text-center text-blue-700 mb-6">Register Your Business</h1>
 
-    <form id="registerForm" action="/register" method="POST" class="space-y-4">
+    <form action="/register" method="POST" class="space-y-4" id="registerForm">
       <div>
         <label for="business_name" class="block text-sm font-medium text-gray-700">Business Name</label>
-        <input type="text" id="business_name" name="business_name" required class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="text" id="business_name" name="business_name" required class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Your Subdomain</label>
+        <div class="mt-1 flex items-center space-x-2">
+          <input type="text" id="subdomain" name="subdomain" required readonly class="w-1/2 p-2 border rounded-md bg-gray-100 text-gray-700" />
+          <span class="text-gray-700">.tidyzenic.com</span>
+        </div>
+        <p id="subdomainStatus" class="text-sm mt-1 text-gray-500">Subdomain preview will appear here...</p>
       </div>
 
       <div>
         <label for="owner_name" class="block text-sm font-medium text-gray-700">Owner Name</label>
-        <input type="text" id="owner_name" name="owner_name" required class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="text" id="owner_name" name="owner_name" required class="w-full mt-1 p-2 border rounded-md" />
       </div>
 
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-        <input type="email" id="email" name="email" required class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="email" id="email" name="email" required class="w-full mt-1 p-2 border rounded-md" />
       </div>
 
       <div>
         <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-        <input type="tel" id="phone" name="phone" required class="mt-1 w-full p-2 border border-gray-300 rounded-md">
-      </div>
-
-      <!-- Subdomain (Auto-generated) -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Subdomain</label>
-        <input type="text" id="subdomain" name="subdomain" readonly required class="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600">
-        <p id="subdomainStatus" class="text-sm mt-1 text-red-600 hidden">Subdomain is already taken.</p>
-      </div>
-
-      <div>
-        <label for="custom_domain" class="block text-sm font-medium text-gray-700">Custom Domain (optional)</label>
-        <input type="text" id="custom_domain" name="custom_domain" class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="tel" id="phone" name="phone" required class="w-full mt-1 p-2 border rounded-md" />
       </div>
 
       <div>
         <label for="industry" class="block text-sm font-medium text-gray-700">Industry</label>
-        <input type="text" id="industry" name="industry" required class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="text" id="industry" name="industry" required class="w-full mt-1 p-2 border rounded-md" />
       </div>
 
       <div>
         <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
-        <input type="text" id="location" name="location" required class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="text" id="location" name="location" required class="w-full mt-1 p-2 border rounded-md" />
       </div>
 
       <div>
         <label for="vat_number" class="block text-sm font-medium text-gray-700">VAT Number (optional)</label>
-        <input type="text" id="vat_number" name="vat_number" class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="text" id="vat_number" name="vat_number" class="w-full mt-1 p-2 border rounded-md" />
+      </div>
+
+      <div>
+        <label for="custom_domain" class="block text-sm font-medium text-gray-700">Custom Domain (optional)</label>
+        <input type="text" id="custom_domain" name="custom_domain" class="w-full mt-1 p-2 border rounded-md" />
       </div>
 
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-        <input type="password" id="password" name="password" required minlength="6" class="mt-1 w-full p-2 border border-gray-300 rounded-md">
+        <input type="password" id="password" name="password" required minlength="6" class="w-full mt-1 p-2 border rounded-md" />
       </div>
 
       <div>
         <label for="preferred_language" class="block text-sm font-medium text-gray-700">Preferred Language</label>
-        <select id="preferred_language" name="preferred_language" required class="mt-1 w-full border border-gray-300 rounded-md p-2">
+        <select id="preferred_language" name="preferred_language" required class="w-full mt-1 p-2 border rounded-md">
           <option value="en">English</option>
           <option value="fr">Français</option>
           <option value="nl">Dutch</option>
@@ -76,41 +78,59 @@
         </select>
       </div>
 
-      <div class="pt-4">
-        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md">
-          Register Business
-        </button>
-      </div>
+      <button type="submit" id="submitBtn" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+        Register Business
+      </button>
     </form>
+
+    <p class="mt-4 text-sm text-center text-gray-600">
+      Already registered?
+      <a href="/login.html" class="text-blue-600 hover:underline">Login</a>
+    </p>
   </div>
 
   <script>
-    const businessNameInput = document.getElementById('business_name');
+    const businessInput = document.getElementById('business_name');
     const subdomainInput = document.getElementById('subdomain');
     const subdomainStatus = document.getElementById('subdomainStatus');
     const submitBtn = document.getElementById('submitBtn');
-    const form = document.getElementById('registerForm');
 
-    businessNameInput.addEventListener('input', async () => {
-      const name = businessNameInput.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
-      subdomainInput.value = name;
+    async function checkSubdomain(name) {
+      const sub = name.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-');
+      subdomainInput.value = sub;
 
-      if (!name) return;
+      if (!sub) {
+        subdomainStatus.textContent = "Subdomain preview will appear here...";
+        submitBtn.disabled = true;
+        return;
+      }
 
       try {
-        const res = await fetch(`/api/check-subdomain?subdomain=${name}`);
+        const res = await fetch(`/api/business/check-subdomain?subdomain=${sub}`);
         const data = await res.json();
 
-        if (data.exists) {
-          subdomainStatus.classList.remove('hidden');
-          submitBtn.disabled = true;
-        } else {
-          subdomainStatus.classList.add('hidden');
+        if (data.available) {
+          subdomainStatus.textContent = `✅ Available: ${sub}.tidyzenic.com`;
+          subdomainStatus.className = 'text-sm text-green-600 mt-1';
           submitBtn.disabled = false;
+        } else {
+          subdomainStatus.textContent = `❌ Unavailable: ${sub}.tidyzenic.com already taken`;
+          subdomainStatus.className = 'text-sm text-red-600 mt-1';
+          submitBtn.disabled = true;
         }
       } catch (err) {
-        console.error('Error checking subdomain:', err);
+        subdomainStatus.textContent = '⚠️ Could not check subdomain availability';
+        subdomainStatus.className = 'text-sm text-yellow-600 mt-1';
+        submitBtn.disabled = true;
       }
+    }
+
+    businessInput.addEventListener('input', () => {
+      checkSubdomain(businessInput.value);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      checkSubdomain(businessInput.value);
     });
   </script>
 </body>
