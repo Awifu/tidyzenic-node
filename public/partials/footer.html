@@ -1,0 +1,56 @@
+<!-- public/partials/footer.html -->
+<footer class="bg-gray-900 text-gray-300 pt-10 pb-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+    
+    <!-- Company Info -->
+    <div>
+      <a href="/" class="flex items-center space-x-2 mb-3">
+        <img src="/assets/logo-placeholder.png" alt="Logo" class="h-8 w-8 rounded-full">
+        <span class="text-white text-lg font-bold">Tidyzenic</span>
+      </a>
+      <p class="text-sm text-gray-400">
+        Smart, modern business management software for service providers and agencies.
+      </p>
+    </div>
+
+    <!-- Links -->
+    <div>
+      <h4 class="text-white font-semibold mb-3">Company</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/features.html" class="hover:underline">Features</a></li>
+        <li><a href="/pricing.html" class="hover:underline">Pricing</a></li>
+        <li><a href="/support.html" class="hover:underline">Support</a></li>
+        <li><a href="/blog.html" class="hover:underline">Blog</a></li>
+      </ul>
+    </div>
+
+    <!-- Legal -->
+    <div>
+      <h4 class="text-white font-semibold mb-3">Legal</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/terms.html" class="hover:underline">Terms of Service</a></li>
+        <li><a href="/privacy.html" class="hover:underline">Privacy Policy</a></li>
+        <li><a href="/cookies.html" class="hover:underline">Cookie Policy</a></li>
+      </ul>
+    </div>
+
+    <!-- CTA -->
+    <div>
+      <h4 class="text-white font-semibold mb-3">Start Free</h4>
+      <p class="text-sm text-gray-400 mb-3">
+        Ready to streamline your business? Get started with a 7-day free trial.
+      </p>
+      <a href="/signup.html" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
+        Start Free Trial
+      </a>
+    </div>
+  </div>
+
+  <div class="mt-10 text-center text-sm text-gray-500">
+    &copy; <span id="year"></span> Tidyzenic. All rights reserved.
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</footer>
