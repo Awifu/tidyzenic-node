@@ -1,4 +1,3 @@
-// routes/register_user.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -35,15 +34,28 @@ async function sendVerificationEmail(email, token) {
   });
 }
 
+// === Helper: Normalize Optional Fields ===
+const normalize = (val) => {
+  if (typeof val !== 'string') return val;
+  const trimmed = val.trim();
+  return trimmed === '' ? null : trimmed;
+};
+
 // === POST /register ===
 router.post('/', async (req, res) => {
   const {
-    businessName, email, phone, subdomain,
-    password, location, ownerName, vatNumber,
+    businessName,
+    email,
+    phone,
+    subdomain,
+    password,
+    location,
+    ownerName,
+    vatNumber,
     preferred_language
   } = req.body;
 
-  // ✅ Required Fields Check
+  // ✅ Required Fields Validation
   if (
     !businessName?.trim() || !email?.trim() || !subdomain?.trim() ||
     !password?.trim() || !location?.trim() || !ownerName?.trim() || !preferred_language
@@ -51,16 +63,28 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: '❌ Please fill in all required fields.' });
   }
 
+  // ✅ Normalize Fields
+  const business_name = businessName.trim();
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedSubdomain = subdomain.trim().toLowerCase();
+  const normalizedPassword = password.trim();
+  const normalizedLocation = normalize(location);
+  const normalizedPhone = normalize(phone);
+  const normalizedVAT = normalize(vatNumber);
+  const normalizedOwner = normalize(ownerName);
+  const normalizedLang = preferred_language;
+
   try {
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    const [businesses] = await pool.query('SELECT * FROM businesses WHERE email = ?', [email]);
+    // === Check if user or business exists
+    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+    const [businesses] = await pool.query('SELECT * FROM businesses WHERE email = ?', [normalizedEmail]);
 
     const existingUser = users[0] || null;
     const existingBusiness = businesses[0] || null;
 
     // === Reactivate Deleted User
     if (existingUser && existingUser.is_deleted) {
-      const hashed = await bcrypt.hash(password, 10);
+      const hashed = await bcrypt.hash(normalizedPassword, 10);
       const token = crypto.randomUUID();
 
       await pool.query(
@@ -72,7 +96,7 @@ router.post('/', async (req, res) => {
         await pool.query('UPDATE businesses SET is_deleted = 0 WHERE id = ?', [existingUser.business_id]);
       }
 
-      await sendVerificationEmail(email, token);
+      await sendVerificationEmail(normalizedEmail, token);
       return res.status(200).json({
         message: '✅ Account reactivated. Please check your email to verify.',
         redirectTo: '/login.html'
@@ -83,65 +107,72 @@ router.post('/', async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         error: '❌ This email is already registered.',
-        action: {
-          text: 'Login',
-          href: '/login.html'
-        }
+        action: { text: 'Login', href: '/login.html' }
       });
     }
 
     // === Orphaned Business: Create User
     if (existingBusiness && !existingUser) {
-      const hashed = await bcrypt.hash(password, 10);
+      const hashed = await bcrypt.hash(normalizedPassword, 10);
       const token = crypto.randomUUID();
 
       await pool.query(
         'INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token) VALUES (?, ?, ?, "admin", 0, ?)',
-        [existingBusiness.id, email, hashed, token]
+        [existingBusiness.id, normalizedEmail, hashed, token]
       );
 
-      await sendVerificationEmail(email, token);
+      await sendVerificationEmail(normalizedEmail, token);
       return res.status(200).json({
         message: '✅ User account restored. Please check your email to verify.',
         redirectTo: '/login.html'
       });
     }
 
-    // === Check Subdomain
+    // === Check Subdomain Uniqueness
     const [subdomainCheck] = await pool.query(
       'SELECT id FROM businesses WHERE subdomain = ? AND is_deleted = 0',
-      [subdomain]
+      [normalizedSubdomain]
     );
+
     if (subdomainCheck.length > 0) {
       return res.status(400).json({ error: '❌ Subdomain is already taken. Please choose another.' });
     }
 
-    // === Insert New Business
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // === Create New Business and User
+    const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
     const token = crypto.randomUUID();
 
     const [businessResult] = await pool.query(
-      'INSERT INTO businesses (business_name, email, phone, subdomain, location, vat_number, owner_name, password_hash, preferred_language) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO businesses (
+        business_name, email, phone, subdomain, location, vat_number,
+        owner_name, password_hash, preferred_language
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        businessName, email, phone || null, subdomain, location,
-        vatNumber || null, ownerName, hashedPassword, preferred_language
+        business_name,
+        normalizedEmail,
+        normalizedPhone,
+        normalizedSubdomain,
+        normalizedLocation,
+        normalizedVAT,
+        normalizedOwner,
+        hashedPassword,
+        normalizedLang
       ]
     );
 
     const businessId = businessResult.insertId;
 
-    // === Create User
     await pool.query(
       'INSERT INTO users (business_id, email, password_hash, role, is_verified, verification_token) VALUES (?, ?, ?, "admin", 0, ?)',
-      [businessId, email, hashedPassword, token]
+      [businessId, normalizedEmail, hashedPassword, token]
     );
 
-    await sendVerificationEmail(email, token);
+    await sendVerificationEmail(normalizedEmail, token);
 
     return res.status(200).json({
       success: true,
-      email,
-      message: `✅ Registration successful. A verification email has been sent to ${email}.`,
+      email: normalizedEmail,
+      message: `✅ Registration successful. A verification email has been sent to ${normalizedEmail}.`,
       redirectTo: '/login.html'
     });
 
@@ -160,7 +191,11 @@ router.get('/check-subdomain', async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.query('SELECT id FROM businesses WHERE subdomain = ?', [subdomain]);
+    const [rows] = await pool.query(
+      'SELECT id FROM businesses WHERE subdomain = ? AND is_deleted = 0',
+      [subdomain.trim().toLowerCase()]
+    );
+
     return res.json({ exists: rows.length > 0 });
   } catch (err) {
     console.error('❌ Subdomain check error:', err);
