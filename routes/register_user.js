@@ -94,7 +94,10 @@ router.post('/', async (req, res) => {
     }
 
     // === 4. Check Subdomain Uniqueness ===
-    const [subdomainExists] = await pool.query('SELECT id FROM businesses WHERE subdomain = ?', [subdomain]);
+const [subdomainExists] = await pool.query(
+  'SELECT id FROM businesses WHERE subdomain = ? AND is_deleted = 0', 
+  [subdomain]
+);
     if (existingBusiness || subdomainExists.length > 0) {
       return res.status(400).json({
         error: existingBusiness
