@@ -53,8 +53,26 @@
 
       <!-- Team -->
       <li><a href="/admin/providers" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">💼 Providers</a></li>
-      <li><a href="/admin/hiring" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">🤝 Hiring</a></li>
-      <li><a href="/admin/staff" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100">👥 Staff</a></li>
+     <!-- Staff Management Dropdown -->
+<li>
+  <button class="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dropdown-toggle">
+    <span class="flex items-center gap-2">🧑‍💼 Staff Management</span>
+    <svg class="w-3 h-3 ml-auto transition-transform duration-200 text-gray-500" fill="none"
+         stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  </button>
+  <ul class="dropdown-menu hidden ml-4 space-y-1">
+    <li><a href="/admin/staff" class="block px-3 py-2 rounded hover:bg-gray-100">👥 Staff</a></li>
+    <li><a href="/admin/hire" class="block px-3 py-2 rounded hover:bg-gray-100">🤝 Hiring</a></li>
+    <li><a href="/admin/scheduler" class="block px-3 py-2 rounded hover:bg-gray-100">⏱️ Scheduler</a></li>
+  </ul>
+</li>
+
+
+
+
+
 
       <!-- Marketing Dropdown -->
       <li>
