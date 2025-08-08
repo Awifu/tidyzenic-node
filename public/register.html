@@ -54,99 +54,99 @@
   </div>
 
 
-  <!-- Script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('registerForm');
-      const password = document.getElementById('password');
-      const confirmPassword = document.getElementById('confirm_password');
-      const passwordMatch = document.getElementById('passwordMatch');
-      const subdomainInput = document.getElementById('subdomain');
-      const businessName = document.getElementById('business_name');
-      const subdomainStatus = document.getElementById('subdomainStatus');
-      const modal = document.getElementById('successModal');
-      const modalMessage = document.getElementById('modalMessage');
+ <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('registerForm');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    const subdomainInput = document.getElementById('subdomain');
+    const businessNameInput = document.getElementById('business_name');
+    const subdomainStatus = document.getElementById('subdomainStatus');
+    const modal = document.getElementById('successModal');
+    const modalMessage = document.getElementById('modalMessage');
 
-      // Autofill subdomain
-      businessName.addEventListener('input', () => {
-        const sub = businessName.value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
-        subdomainInput.value = sub;
-        checkSubdomain(sub);
-      });
+    let debounceTimer;
 
-      async function checkSubdomain(sub) {
-        if (sub.length < 3) {
-          subdomainStatus.textContent = 'Subdomain too short';
-          subdomainStatus.className = 'text-sm text-red-500';
-          return;
-        }
-        try {
-          const res = await axios.post('/register/check-subdomain', { subdomain: sub });
-          if (res.data.exists) {
-            subdomainStatus.textContent = `❌ ${sub}.tidyzenic.com is taken`;
-            subdomainStatus.className = 'text-sm text-red-500';
-          } else {
-            subdomainStatus.textContent = `✅ ${sub}.tidyzenic.com is available`;
-            subdomainStatus.className = 'text-sm text-green-600';
-          }
-        } catch (err) {
-          subdomainStatus.textContent = '⚠️ Subdomain check failed';
-          subdomainStatus.className = 'text-sm text-yellow-600';
-        }
+    // Auto-generate subdomain from business name with debounce
+    businessNameInput.addEventListener('input', () => {
+      const sub = businessNameInput.value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .substring(0, 30);
+
+      subdomainInput.value = sub;
+
+      clearTimeout(debounceTimer);
+      if (sub.length >= 3) {
+        debounceTimer = setTimeout(() => checkSubdomainAvailability(sub), 400);
+      } else {
+        subdomainStatus.textContent = 'Subdomain too short';
+        subdomainStatus.className = 'text-sm text-red-500';
       }
-
-      // Password matching validation
-      function validatePasswords() {
-        if (!password.value || !confirmPassword.value) {
-          passwordMatch.textContent = '';
-          return;
-        }
-        if (password.value !== confirmPassword.value) {
-          passwordMatch.textContent = '❌ Passwords do not match';
-          passwordMatch.className = 'text-sm text-red-500';
-        } else {
-          passwordMatch.textContent = '✅ Passwords match';
-          passwordMatch.className = 'text-sm text-green-600';
-        }
-      }
-
-      password.addEventListener('input', validatePasswords);
-      confirmPassword.addEventListener('input', validatePasswords);
-
-      // Handle form submit
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        if (password.value !== confirmPassword.value) {
-          alert('❌ Passwords do not match.');
-          return;
-        }
-
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-          const res = await fetch('/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-          });
-
-          const result = await res.json();
-
-          if (res.ok) {
-            modalMessage.textContent = result.message;
-            modal.classList.remove('hidden');
-            form.reset();
-          } else {
-            alert(result.error || '❌ Something went wrong.');
-          }
-
-        } catch (err) {
-          alert('❌ Server error. Try again later.');
-        }
-      });
     });
-  </script>
+
+    // Check if subdomain exists
+    async function checkSubdomainAvailability(subdomain) {
+      try {
+        const res = await axios.get('/register/check-subdomain', {
+          params: { subdomain }
+        });
+
+        if (res.data.exists) {
+          subdomainStatus.textContent = `❌ ${subdomain}.tidyzenic.com is taken`;
+          subdomainStatus.className = 'text-sm text-red-500';
+        } else {
+          subdomainStatus.textContent = `✅ ${subdomain}.tidyzenic.com is available`;
+          subdomainStatus.className = 'text-sm text-green-600';
+        }
+      } catch (err) {
+        subdomainStatus.textContent = '⚠️ Unable to check subdomain';
+        subdomainStatus.className = 'text-sm text-yellow-600';
+        console.error('Subdomain check failed:', err);
+      }
+    }
+
+    // Validate password match
+    function passwordsMatch() {
+      return passwordInput.value === confirmPasswordInput.value;
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!passwordsMatch()) {
+        alert('❌ Passwords do not match.');
+        return;
+      }
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          modalMessage.textContent = result.message || 'Registration successful!';
+          modal.classList.remove('hidden');
+          form.reset();
+        } else {
+          alert(result.error || '❌ Registration failed. Please try again.');
+        }
+      } catch (err) {
+        console.error('Registration error:', err);
+        alert('❌ Server error. Please try again later.');
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
