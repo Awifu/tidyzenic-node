@@ -14,8 +14,10 @@ const pool = mysql.createPool({
   charset: 'utf8mb4',
 });
 
-// ---- ONE sanitizer to rule them all ----
-function sanitizeFeatures(raw) {
+const PROD = process.env.NODE_ENV === 'production';
+
+/** Turn whatever the DB gave us (JSON array, CSV, nulls) into a clean string[] */
+function sanitizeFeatures(raw, planSlugForLogs = '') {
   const isBad = (x) => {
     if (x === null || x === undefined) return true;
     const s = String(x).trim().toLowerCase();
@@ -41,24 +43,30 @@ function sanitizeFeatures(raw) {
     }
   } else if (raw && typeof raw === 'object') {
     if (Array.isArray(raw.features)) arr = raw.features;
-    else if (typeof raw.features === 'string') return sanitizeFeatures(raw.features);
-    else if (typeof raw.features_csv === 'string') return sanitizeFeatures(raw.features_csv);
+    else if (typeof raw.features === 'string') return sanitizeFeatures(raw.features, planSlugForLogs);
+    else if (typeof raw.features_csv === 'string') return sanitizeFeatures(raw.features_csv, planSlugForLogs);
     else arr = [];
   } else {
     arr = [];
   }
 
-  return arr
+  const before = arr.slice();
+  const cleaned = arr
     .map(v => String(v ?? '').trim().replace(/^"|"$/g, ''))
     .filter(v => !isBad(v));
+
+  if (!PROD && before.length && cleaned.length < before.length) {
+    console.warn(`plans: sanitized ${before.length - cleaned.length} bad feature token(s) for plan "${planSlugForLogs}"`);
+  }
+
+  return cleaned;
 }
 
-// Build both JSON + CSV in SQL (whichever exists will be sanitized)
 const BASE_SQL = `
   SELECT
     p.id, p.name, p.price, p.slug, p.description,
 
-    /* JSON (MySQL 8): will be [null,...] if we don't guard */
+    /* JSON (MySQL 8) */
     JSON_ARRAYAGG(
       CASE
         WHEN f.label IS NOT NULL AND f.label <> ''
@@ -67,7 +75,7 @@ const BASE_SQL = `
       END
     ) AS features_json,
 
-    /* CSV fallback for MySQL 5.7 */
+    /* CSV fallback (MySQL 5.7) */
     GROUP_CONCAT(
       CASE
         WHEN f.label IS NOT NULL AND f.label <> ''
@@ -95,15 +103,14 @@ router.get('/', async (req, res, next) => {
     const [rows] = await pool.query(sql);
 
     const payload = rows.map(r => {
-      // choose whichever the DB provided first (JSON array, CSV string)
-      const raw = (r.features ?? r.features_json ?? r.features_csv);
+      const raw = r.features_json ?? r.features_csv ?? r.features; // pick whatever exists
       return {
         id: r.id,
         name: r.name,
         price: Number(r.price ?? 0).toFixed(2),
         slug: r.slug,
         description: r.description || defaultDescription(r.slug),
-        features: sanitizeFeatures(raw)
+        features: sanitizeFeatures(raw, r.slug)
       };
     });
 
@@ -127,7 +134,7 @@ router.get('/:slug', async (req, res, next) => {
     if (!rows.length) return res.status(404).json({ error: 'Plan not found' });
 
     const r = rows[0];
-    const raw = (r.features ?? r.features_json ?? r.features_csv);
+    const raw = r.features_json ?? r.features_csv ?? r.features;
 
     res.json({
       id: r.id,
@@ -135,7 +142,7 @@ router.get('/:slug', async (req, res, next) => {
       price: Number(r.price ?? 0).toFixed(2),
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(raw)
+      features: sanitizeFeatures(raw, r.slug)
     });
   } catch (err) {
     next(err);
