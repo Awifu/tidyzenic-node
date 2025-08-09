@@ -1,170 +1,234 @@
-// public/scripts/pricing.js
-document.addEventListener('DOMContentLoaded', async () => {
-  const container = document.getElementById('plansContainer');
-  if (!container) return;
+// /public/scripts/pricing.js
+(() => {
+  const qs = (s) => document.querySelector(s);
+  const container = qs('#plansContainer');
+  const statusEl = qs('#plansStatus');
 
-  const planBadges = (slug) => {
-    if (slug === 'professional') {
-      return `<span class="ml-2 text-xs font-semibold text-white bg-green-500 px-2 py-1 rounded">Most Popular</span>`;
-    }
-    if (slug === 'business') {
-      return `<span class="ml-2 text-xs font-semibold text-white bg-purple-600 px-2 py-1 rounded">Best Value</span>`;
-    }
-    return '';
+  if (!container) {
+    console.error('[pricing] #plansContainer not found');
+    return;
+  }
+
+  const state = {
+    billing: (new URLSearchParams(location.search).get('billing') || 'monthly').toLowerCase(), // 'monthly' | 'annual'
+    plans: [],
   };
 
-  const planCTA = (slug) => `/register.html?plan=${encodeURIComponent(slug)}`;
-
-  const normalizeFeatures = (val) => {
-    if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
-    if (typeof val === 'string') {
-      const s = val.trim();
-      if (!s) return [];
-      if (s.startsWith('[')) {
-        try {
-          const arr = JSON.parse(s);
-          return Array.isArray(arr) ? arr.filter(Boolean).map(String).map(x => x.trim()).filter(Boolean) : [];
-        } catch { /* fall through */ }
-      }
-      const sep = s.includes('||') ? '||' : ',';
-      return s.split(sep).map(x => x.replace(/^"|"$/g, '').trim()).filter(Boolean);
-    }
-    if (val && typeof val === 'object') {
-      if (Array.isArray(val.features)) return normalizeFeatures(val.features);
-      if (typeof val.features === 'string') return normalizeFeatures(val.features);
-      if (typeof val.features_csv === 'string') return normalizeFeatures(val.features_csv);
-    }
-    return [];
+  const announce = (msg) => {
+    if (statusEl) statusEl.textContent = msg;
   };
 
-  const defaultDescription = (slug) => {
-    if (slug === 'starter') return 'Everything you need to get started.';
-    if (slug === 'professional') return 'Automation and growth tools for scaling teams.';
-    if (slug === 'business') return 'Advanced AI, multi-location, and enterprise-ready features.';
-    return '';
+  const money = (num, currency = 'USD') =>
+    new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: num % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+
+  const el = (html) => {
+    const t = document.createElement('template');
+    t.innerHTML = html.trim();
+    return t.content.firstElementChild;
   };
 
-  const renderFeatures = (slug, rawFeatures, firstCount = 12) => {
-    const features = normalizeFeatures(rawFeatures);
-    if (!features.length) {
-      return `<ul class="text-sm text-gray-700 mb-6 space-y-2"><li class="text-gray-500">Feature list coming soon.</li></ul>`;
-    }
-
-    const idBase = `plan-${slug}-features`;
-    const visible = features.slice(0, firstCount);
-    const hidden = features.slice(firstCount);
-
-    const li = (text) => `<li class="flex items-start gap-2"><span aria-hidden="true">✅</span><span>${text}</span></li>`;
-    const listTop = visible.map(li).join('');
-    const listHidden = hidden.length
-      ? `<div id="${idBase}-more" class="hidden">${hidden.map(li).join('')}</div>`
-      : '';
-
-    const toggle = hidden.length
-      ? `<button data-toggle="${idBase}" data-hidden-count="${hidden.length}" type="button" class="text-xs text-blue-600 hover:underline mt-2">
-           Show ${hidden.length} more
-         </button>`
-      : '';
-
-    return `
-      <ul class="text-sm text-gray-700 mb-4 space-y-2" id="${idBase}">
-        ${listTop}
-        ${listHidden}
-      </ul>
-      ${toggle}
-    `;
-  };
-
-  const renderSkeleton = () => {
-    const cards = Array.from({ length: 3 }).map(() => `
-      <div class="bg-white rounded-lg shadow p-6 border animate-pulse">
-        <div class="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
-        <div class="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
-        <div class="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-        <div class="space-y-2 mb-6">
-          <div class="h-4 bg-gray-200 rounded"></div>
-          <div class="h-4 bg-gray-200 rounded w-5/6"></div>
-          <div class="h-4 bg-gray-200 rounded w-4/6"></div>
+  // ---------- UI: Skeletons ----------
+  const renderSkeletons = (count = 3) => {
+    container.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      container.appendChild(
+        el(`
+        <div class="bg-white rounded-lg shadow p-6 border animate-pulse">
+          <div class="h-6 bg-gray-200 w-1/2 mb-4 rounded"></div>
+          <div class="h-8 bg-gray-200 w-1/3 mb-6 rounded"></div>
+          <ul class="space-y-2 mb-6">
+            <li class="h-4 bg-gray-200 rounded"></li>
+            <li class="h-4 bg-gray-200 w-5/6 rounded"></li>
+            <li class="h-4 bg-gray-200 w-2/3 rounded"></li>
+          </ul>
+          <div class="h-10 bg-gray-200 rounded"></div>
         </div>
-        <div class="h-10 bg-gray-200 rounded"></div>
-      </div>
-    `).join('');
-    container.innerHTML = cards;
+      `)
+      );
+    }
   };
 
-  try {
-    renderSkeleton();
+  // ---------- UI: Billing Toggle ----------
+  const ensureToggle = () => {
+    const hostId = 'billingToggleHost';
+    let host = qs(`#${hostId}`);
+    if (!host) {
+      host = el(`<div id="${hostId}" class="max-w-6xl mx-auto px-4 my-4 flex justify-center"></div>`);
+      container.parentElement.insertBefore(host, container);
+    }
 
-    const res = await fetch('/plans', { credentials: 'same-origin' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    host.innerHTML = `
+      <div class="inline-flex items-center bg-white border rounded-full shadow px-1 py-1">
+        <button type="button" data-bill="monthly"
+          class="bill-btn px-4 py-2 rounded-full text-sm font-medium ${state.billing === 'monthly' ? 'bg-gray-900 text-white' : 'text-gray-700'}">
+          Monthly
+        </button>
+        <button type="button" data-bill="annual"
+          class="bill-btn px-4 py-2 rounded-full text-sm font-medium ${state.billing === 'annual' ? 'bg-gray-900 text-white' : 'text-gray-700'}">
+          Annual <span class="ml-1 text-xs text-green-600">(save)</span>
+        </button>
+      </div>
+    `;
 
-    const rawPlans = await res.json();
-    if (!Array.isArray(rawPlans) || rawPlans.length === 0) {
-      container.innerHTML = `<p class="text-gray-600">Plans will be available soon.</p>`;
+    host.querySelectorAll('.bill-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-bill');
+        if (val && val !== state.billing) {
+          state.billing = val;
+          const url = new URL(location.href);
+          url.searchParams.set('billing', state.billing);
+          history.replaceState({}, '', url.toString());
+          renderPlans(); // re-render with new billing
+          announce(`Billing switched to ${state.billing}.`);
+        }
+      });
+    });
+  };
+
+  // ---------- Data fetch ----------
+  const fetchPlans = async () => {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const res = await fetch('/api/plans', { credentials: 'same-origin', signal: ctrl.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid plans payload');
+      return data;
+    } finally {
+      clearTimeout(to);
+    }
+  };
+
+  // ---------- Helpers ----------
+  const cleanFeatures = (arr) =>
+    (arr || []).filter((f) => typeof f === 'string' && f.trim() !== '');
+
+  const priceFor = (plan) => {
+    const block = state.billing === 'annual' ? plan.annual : plan.monthly;
+    if (!block || block.price == null) return null;
+    return money(block.price, plan.currency || 'USD');
+  };
+
+  // ---------- Card ----------
+  const planCard = (plan) => {
+    const price = priceFor(plan);
+    const features = cleanFeatures(plan.features);
+
+    return el(`
+      <article class="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col" aria-label="${plan.name} plan">
+        <div class="p-6 flex-1 flex flex-col">
+          <header class="mb-3">
+            <h3 class="text-lg font-semibold">${plan.name}</h3>
+            ${plan.badge ? `<div class="inline-block text-xs mt-1 px-2 py-1 rounded bg-indigo-50 text-indigo-700">${plan.badge}</div>` : ''}
+          </header>
+
+          <div class="mb-4">
+            ${
+              price
+                ? `<div class="text-3xl font-bold">${price}<span class="text-base text-gray-500">/${state.billing === 'annual' ? 'year' : 'month'}</span></div>`
+                : `<div class="text-sm text-gray-500">Contact sales</div>`
+            }
+            ${
+              state.billing === 'annual' && plan.annual && plan.annual.note
+                ? `<div class="text-xs text-green-700 mt-1">${plan.annual.note}</div>`
+                : ''
+            }
+          </div>
+
+          <ul class="mb-6 space-y-2 text-sm text-gray-700">
+            ${
+              (features.length
+                ? features
+                : ['Core tools included'] // fallback if no features
+              )
+                .slice(0, 12)
+                .map(
+                  (f) => `
+              <li class="flex items-start gap-2">
+                <span aria-hidden="true" class="text-green-600">✓</span>
+                <span>${f}</span>
+              </li>`
+                )
+                .join('')
+            }
+          </ul>
+
+          <a href="${ctaHref(plan)}"
+             class="inline-flex justify-center items-center px-4 py-2 rounded-lg font-medium
+                    ${ctaKind(plan) === 'secondary'
+                      ? 'bg-white border border-gray-300 text-gray-800 hover:bg-gray-50'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'}">
+            ${plan.cta?.label || 'Choose plan'}
+          </a>
+        </div>
+      </article>
+    `);
+  };
+
+  const ctaKind = (plan) => (plan.cta?.kind || '').toLowerCase();
+  const ctaHref = (plan) => {
+    const id = encodeURIComponent(plan.id);
+    if ((plan.cta?.label || '').toLowerCase().includes('sales')) {
+      return `/contact-sales?plan=${id}`;
+    }
+    const bill = encodeURIComponent(state.billing);
+    return `/signup?plan=${id}&billing=${bill}`;
+  };
+
+  // ---------- Render ----------
+  const renderPlans = () => {
+    container.innerHTML = '';
+    if (!state.plans.length) {
+      container.innerHTML = `<div class="text-sm text-gray-600">No plans available.</div>`;
       return;
     }
+    const frag = document.createDocumentFragment();
+    state.plans.forEach((plan) => frag.appendChild(planCard(plan)));
+    container.appendChild(frag);
+  };
 
-    const plans = [...rawPlans].sort((a, b) => {
-      const pa = Number(a.price) || 0;
-      const pb = Number(b.price) || 0;
-      if (pa !== pb) return pa - pb;
-      return String(a.name).localeCompare(String(b.name));
-    });
+  // ---------- Init ----------
+  const init = async () => {
+    ensureToggle();
+    renderSkeletons();
+    announce('Loading plans…');
+    try {
+      const plans = await fetchPlans();
 
-    container.innerHTML = '';
+      // Normalize: ensure arrays, strip nulls, coerce shapes
+      state.plans = plans.map((p) => ({
+        id: p.id,
+        name: p.name,
+        badge: p.badge || null,
+        popular: !!p.popular,
+        currency: p.currency || 'USD',
+        monthly: { price: p?.monthly?.price ?? null, note: p?.monthly?.note ?? null },
+        annual: { price: p?.annual?.price ?? null, note: p?.annual?.note ?? null },
+        features: cleanFeatures(p.features),
+        cta: p.cta || { label: 'Start free trial' },
+      }));
 
-    plans.forEach(plan => {
-      const featuresHTML = renderFeatures(plan.slug, plan.features);
+      renderPlans();
+      announce('Plans loaded.');
+    } catch (err) {
+      console.error('[pricing] failed to load plans', err);
+      container.innerHTML = `
+        <div class="max-w-md mx-auto p-4 border border-red-200 bg-red-50 text-red-700 rounded">
+          We couldn’t load plans right now. Please try again in a moment.
+        </div>`;
+      announce('Failed to load plans.');
+    }
+  };
 
-      const highlight =
-        plan.slug === 'professional' ? 'ring-2 ring-green-500' :
-        plan.slug === 'business' ? 'ring-2 ring-purple-600' :
-        'border';
-
-      const price = (Number(plan.price) || 0).toFixed(2);
-      const desc = plan.description || defaultDescription(plan.slug);
-
-      const card = document.createElement('div');
-      card.className = `bg-white rounded-lg shadow p-6 flex flex-col justify-between ${highlight}`;
-
-      card.innerHTML = `
-        <div>
-          <div class="flex items-center">
-            <h2 class="text-2xl font-semibold mb-2">${plan.name ?? ''}</h2>
-            ${planBadges(plan.slug)}
-          </div>
-          <p class="text-gray-600 mb-4">${desc}</p>
-          <div class="text-3xl font-bold text-blue-600 mb-6" aria-label="Price">
-            €${price}<span class="text-base text-gray-500 font-normal">/mo</span>
-          </div>
-
-          ${featuresHTML}
-        </div>
-
-        <a href="${planCTA(plan.slug)}"
-          class="mt-auto inline-block bg-blue-600 text-white text-center px-4 py-2 rounded hover:bg-blue-700 transition"
-          aria-label="Start free trial for ${plan.name}">
-          Start Free Trial
-        </a>
-      `;
-
-      container.appendChild(card);
-    });
-
-    // Event delegation for all toggles (no inline scripts, CSP-safe)
-    container.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-toggle]');
-      if (!btn) return;
-      const base = btn.getAttribute('data-toggle');
-      const moreEl = document.getElementById(`${base}-more`);
-      if (!moreEl) return;
-      const expanded = !moreEl.classList.contains('hidden');
-      moreEl.classList.toggle('hidden', expanded);
-      const hiddenCount = btn.getAttribute('data-hidden-count');
-      btn.textContent = expanded ? `Show ${hiddenCount} more` : 'Show less';
-    });
-  } catch (err) {
-    console.error('Failed to fetch plans:', err);
-    container.innerHTML = `<p class="text-red-500">Failed to load pricing plans. Please try again later.</p>`;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
-});
+})();
