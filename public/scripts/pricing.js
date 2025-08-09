@@ -1,12 +1,10 @@
-// /scripts/pricing.js
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   const plansContainer = document.getElementById('plansContainer');
   const plansStatus = document.getElementById('plansStatus');
-  const currencySymbol = '€'; // Define currency symbol, you can make this dynamic if needed.
+  const currencySymbol = '€';
 
-  // --- Step 1: Show loading state (skeletons) ---
-  // This function creates a loading skeleton card. It's good practice for UX.
   const createSkeletonCard = () => `
     <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between animate-pulse">
       <div>
@@ -24,24 +22,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     </div>
   `;
 
-  // Render three skeleton cards while we wait for the data
   plansContainer.innerHTML = createSkeletonCard() + createSkeletonCard() + createSkeletonCard();
   plansStatus.textContent = "Loading pricing plans...";
 
   try {
-    // --- Step 2: Fetch data from your API endpoint ---
-    // The endpoint is '/api/plans', as defined in your app.js
     const response = await fetch('/api/plans', { cache: 'no-store' });
     if (!response.ok) {
-      // If the server responds with an error status (like 404), throw an error.
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const plans = await response.json();
 
-    // Update the status for screen readers
     plansStatus.textContent = "Pricing plans loaded successfully.";
 
-    // --- Step 3: Handle no plans found ---
     if (!plans || plans.length === 0) {
       plansContainer.innerHTML = `
         <p class="col-span-full text-center text-gray-500 text-lg">No pricing plans available at the moment. Please check back later.</p>
@@ -49,18 +41,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // --- Step 4: Render the plans dynamically ---
-    plansContainer.innerHTML = ''; // Clear the skeletons
+    plansContainer.innerHTML = '';
     plans.forEach(plan => {
-      // Format the prices
-      const monthlyPrice = plan.monthly.price !== null 
-        ? `${currencySymbol}${plan.monthly.price.toFixed(2)}` 
+      const monthlyPrice = plan.monthly.price !== null
+        ? `${currencySymbol}${plan.monthly.price.toFixed(2)}`
         : 'Contact us';
-      const annualPrice = plan.annual.price !== null 
-        ? `${currencySymbol}${plan.annual.price.toFixed(2)}` 
+      const annualPrice = plan.annual.price !== null
+        ? `${currencySymbol}${plan.annual.price.toFixed(2)}`
         : 'Contact us';
 
-      // Build the features list
+      // **FIXED: Correctly iterate through the features array to create the list.**
       const featuresList = plan.features.map(feature => `
         <li class="flex items-start">
           <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -70,7 +60,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </li>
       `).join('');
 
-      // Create the CTA (Call to Action) button based on the plan's badge
       const ctaLabel = plan.cta.label || (plan.monthly.price === null ? 'Contact Sales' : 'Start free trial');
       const ctaHref = plan.monthly.price === null ? '/contact-sales' : '/register';
       const ctaClass = plan.popular ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-indigo-600 border border-gray-200';
@@ -99,7 +88,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
   } catch (error) {
-    // --- Step 5: Handle errors gracefully ---
     console.error("Failed to fetch pricing plans:", error);
     plansStatus.textContent = "Error loading pricing plans. Please try again.";
     plansContainer.innerHTML = `
