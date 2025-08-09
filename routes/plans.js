@@ -1,78 +1,117 @@
 // routes/plans.js
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const mysql = require('mysql2/promise');
 
-// cache schema once
-let schemaChecked = false;
-let hasFeaturesCsv = false;
-let hasFeaturesJson = false;
+/**
+ * ENV needed:
+ *  DB_HOST, DB_USER, DB_PASS, DB_NAME
+ */
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || '127.0.0.1',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASS || '',
+  database: process.env.DB_NAME || 'app',
+  waitForConnections: true,
+  connectionLimit: 10,
+  namedPlaceholders: true,
+  charset: 'utf8mb4'
+});
 
-async function checkSchemaOnce() {
-  if (schemaChecked) return;
-  const [rows] = await pool.query(`
-    SELECT COLUMN_NAME
-    FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'plans'
-  `);
-  const cols = new Set(rows.map(r => r.COLUMN_NAME));
-  hasFeaturesCsv = cols.has('features_csv');
-  hasFeaturesJson = cols.has('features');
-  schemaChecked = true;
-}
-
-async function selectPlans() {
-  await checkSchemaOnce();
-
-  const select = [
-    'id',
-    'name',
-    'slug',
-    'price',
-    'description',
-    hasFeaturesJson ? "JSON_EXTRACT(features, '$') AS features_json" : null,
-    hasFeaturesCsv  ? "COALESCE(features_csv, '') AS features_csv"   : null,
-  ].filter(Boolean).join(', ');
-
-  const [rows] = await pool.query(`
-    SELECT ${select}
-    FROM plans
-    ORDER BY price ASC, name ASC
-  `);
-
-  return rows.map(r => {
-    let features = '';
-    if (hasFeaturesJson && r.features_json != null) {
-      features = String(r.features_json); // pricing.js will parse if it starts with '['
-    } else if (hasFeaturesCsv) {
-      features = r.features_csv || '';
-    }
-    return {
-      id: Number(r.id),
-      name: r.name || '',
-      slug: r.slug || '',
-      price: r.price == null ? 0 : Number(r.price),
-      description: r.description || '',
-      features,
-    };
-  });
-}
-
-router.get('/', async (req, res) => {
+/**
+ * GET /plans
+ * Returns:
+ * [
+ *   { id, name, price: "19.00", slug, description, features: "A||B||C" }
+ * ]
+ */
+router.get('/', async (req, res, next) => {
   try {
-    await pool.query('SELECT 1');
-    const plans = await selectPlans();
-    res.setHeader('Cache-Control', 'no-store');
-    res.json(plans);
+    // MySQL 5.7+ compatible (GROUP_CONCAT). If you’re on MySQL 8, see JSON_ARRAYAGG version below.
+    const sql = `
+      SELECT
+        p.id,
+        p.name,
+        p.price,          -- DECIMAL
+        p.slug,
+        p.description,
+        GROUP_CONCAT(
+          TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+          ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
+          SEPARATOR '||'
+        ) AS features_csv
+      FROM plans p
+      LEFT JOIN plan_features pf
+        ON pf.plan_id = p.id AND pf.included = 1
+      LEFT JOIN features f
+        ON f.id = pf.feature_id
+      GROUP BY p.id
+      ORDER BY p.price ASC, p.name ASC
+    `;
+
+    const [rows] = await pool.query(sql);
+
+    const payload = rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      price: Number(r.price ?? 0).toFixed(2), // "19.00" as string for your UI
+      slug: r.slug,
+      description: r.description || defaultDescription(r.slug),
+      // You can switch this to an array if you prefer (your normalizeFeatures supports arrays).
+      features: r.features_csv || ''
+    }));
+
+    // Mild caching; you can tune this
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json(payload);
   } catch (err) {
-    console.error('GET /plans failed:', err);
-    const prod = process.env.NODE_ENV === 'production';
-    res.status(500).json({
-      error: 'Failed to load plans',
-      message: prod ? undefined : (err.sqlMessage || err.message || String(err)),
-      code: prod ? undefined : err.code,
-    });
+    next(err);
   }
 });
+
+// Optional: GET /plans/:slug  (handy if you link to /plans/{slug} later)
+router.get('/:slug', async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const sql = `
+      SELECT
+        p.id, p.name, p.price, p.slug, p.description,
+        GROUP_CONCAT(
+          TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+          ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
+          SEPARATOR '||'
+        ) AS features_csv
+      FROM plans p
+      LEFT JOIN plan_features pf
+        ON pf.plan_id = p.id AND pf.included = 1
+      LEFT JOIN features f
+        ON f.id = pf.feature_id
+      WHERE p.slug = :slug
+      GROUP BY p.id
+      LIMIT 1
+    `;
+    const [rows] = await pool.query(sql, { slug });
+    if (!rows.length) return res.status(404).json({ error: 'Plan not found' });
+
+    const r = rows[0];
+    res.json({
+      id: r.id,
+      name: r.name,
+      price: Number(r.price ?? 0).toFixed(2),
+      slug: r.slug,
+      description: r.description || defaultDescription(r.slug),
+      features: r.features_csv || ''
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+function defaultDescription(slug) {
+  if (slug === 'starter') return 'Everything you need to get started.';
+  if (slug === 'professional') return 'Automation and growth tools for scaling teams.';
+  if (slug === 'business') return 'Advanced AI, multi-location, and enterprise-ready features.';
+  return '';
+}
 
 module.exports = router;
