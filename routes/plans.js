@@ -16,7 +16,7 @@ const pool = mysql.createPool({
 
 const PROD = process.env.NODE_ENV === 'production';
 
-/** Turn whatever the DB gave us (JSON array, CSV, nulls) into a clean string[] */
+/** Turn whatever the DB gives (CSV/JSON/array) into a clean string[] */
 function sanitizeFeatures(raw, planSlugForLogs = '') {
   const isBad = (x) => {
     if (x === null || x === undefined) return true;
@@ -24,14 +24,14 @@ function sanitizeFeatures(raw, planSlugForLogs = '') {
     return !s || s === 'null' || s === 'undefined';
   };
 
-  let arr;
+  let arr = [];
 
   if (Array.isArray(raw)) {
     arr = raw;
   } else if (typeof raw === 'string') {
     const s = raw.trim();
-    if (!s) return [];
-    if (s.startsWith('[')) {
+    if (!s) arr = [];
+    else if (s.startsWith('[')) {
       try {
         const parsed = JSON.parse(s);
         arr = Array.isArray(parsed) ? parsed : [];
@@ -45,9 +45,6 @@ function sanitizeFeatures(raw, planSlugForLogs = '') {
     if (Array.isArray(raw.features)) arr = raw.features;
     else if (typeof raw.features === 'string') return sanitizeFeatures(raw.features, planSlugForLogs);
     else if (typeof raw.features_csv === 'string') return sanitizeFeatures(raw.features_csv, planSlugForLogs);
-    else arr = [];
-  } else {
-    arr = [];
   }
 
   const before = arr.slice();
@@ -62,20 +59,14 @@ function sanitizeFeatures(raw, planSlugForLogs = '') {
   return cleaned;
 }
 
-const BASE_SQL = `
+const BASE_SELECT = `
   SELECT
-    p.id, p.name, p.price, p.slug, p.description,
-
-    /* JSON (MySQL 8) */
-    JSON_ARRAYAGG(
-      CASE
-        WHEN f.label IS NOT NULL AND f.label <> ''
-          THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
-        ELSE NULL
-      END
-    ) AS features_json,
-
-    /* CSV fallback (MySQL 5.7) */
+    p.id,
+    p.name,
+    p.price,
+    p.slug,
+    p.description,
+    /* CSV only: GROUP_CONCAT naturally skips SQL NULLs */
     GROUP_CONCAT(
       CASE
         WHEN f.label IS NOT NULL AND f.label <> ''
@@ -85,7 +76,6 @@ const BASE_SQL = `
       ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
       SEPARATOR '||'
     ) AS features_csv
-
   FROM plans p
   LEFT JOIN plan_features pf
     ON pf.plan_id = p.id AND pf.included = 1
@@ -93,26 +83,26 @@ const BASE_SQL = `
     ON f.id = pf.feature_id
 `;
 
+/**
+ * GET /plans  -> [{ id, name, price:"00.00", slug, description, features: string[] }]
+ */
 router.get('/', async (req, res, next) => {
   try {
     const sql = `
-      ${BASE_SQL}
+      ${BASE_SELECT}
       GROUP BY p.id
       ORDER BY p.price ASC, p.name ASC
     `;
     const [rows] = await pool.query(sql);
 
-    const payload = rows.map(r => {
-      const raw = r.features_json ?? r.features_csv ?? r.features; // pick whatever exists
-      return {
-        id: r.id,
-        name: r.name,
-        price: Number(r.price ?? 0).toFixed(2),
-        slug: r.slug,
-        description: r.description || defaultDescription(r.slug),
-        features: sanitizeFeatures(raw, r.slug)
-      };
-    });
+    const payload = rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      price: Number(r.price ?? 0).toFixed(2),
+      slug: r.slug,
+      description: r.description || defaultDescription(r.slug),
+      features: sanitizeFeatures(r.features_csv, r.slug),
+    }));
 
     res.set('Cache-Control', 'public, max-age=60');
     res.json(payload);
@@ -121,11 +111,14 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+/**
+ * GET /plans/:slug  -> { ...single plan... }
+ */
 router.get('/:slug', async (req, res, next) => {
   try {
     const { slug } = req.params;
     const sql = `
-      ${BASE_SQL}
+      ${BASE_SELECT}
       WHERE p.slug = :slug
       GROUP BY p.id
       LIMIT 1
@@ -134,15 +127,13 @@ router.get('/:slug', async (req, res, next) => {
     if (!rows.length) return res.status(404).json({ error: 'Plan not found' });
 
     const r = rows[0];
-    const raw = r.features_json ?? r.features_csv ?? r.features;
-
     res.json({
       id: r.id,
       name: r.name,
       price: Number(r.price ?? 0).toFixed(2),
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(raw, r.slug)
+      features: sanitizeFeatures(r.features_csv, r.slug),
     });
   } catch (err) {
     next(err);

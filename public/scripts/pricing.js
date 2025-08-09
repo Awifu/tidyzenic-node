@@ -15,12 +15,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const planCTA = (slug) => `/register.html?plan=${encodeURIComponent(slug)}`;
 
-  // --- SAFER FEATURE NORMALIZATION ---
   const normalizeFeatures = (val) => {
     const isBad = (x) => {
       if (x === null || x === undefined) return true;
-      const s = String(x).trim();
-      return !s || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined';
+      const s = String(x).trim().toLowerCase();
+      return !s || s === 'null' || s === 'undefined';
     };
 
     if (Array.isArray(val)) {
@@ -36,9 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
           const arr = JSON.parse(s);
           return Array.isArray(arr) ? normalizeFeatures(arr) : [];
-        } catch {
-          /* fall through to CSV/pipe parsing */
-        }
+        } catch {}
       }
       const sep = s.includes('||') ? '||' : ',';
       return s
@@ -64,7 +61,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const renderFeatures = (slug, rawFeatures, firstCount = 12) => {
-    const features = normalizeFeatures(rawFeatures);
+    const features = normalizeFeatures(rawFeatures)
+      .map(x => String(x).trim())
+      .filter(x => x && x.toLowerCase() !== 'null' && x.toLowerCase() !== 'undefined');
+
     if (!features.length) {
       return `<ul class="text-sm text-gray-700 mb-6 space-y-2"><li class="text-gray-500">Feature list coming soon.</li></ul>`;
     }
@@ -73,8 +73,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const visible = features.slice(0, firstCount);
     const hidden = features.slice(firstCount);
 
-    const li = (text) =>
-      `<li class="flex items-start gap-2"><span aria-hidden="true">✅</span><span>${text}</span></li>`;
+    const li = (text) => {
+      const t = String(text || '').trim();
+      if (!t || t.toLowerCase() === 'null' || t.toLowerCase() === 'undefined') return '';
+      return `<li class="flex items-start gap-2"><span aria-hidden="true">✅</span><span>${t}</span></li>`;
+    };
 
     const listTop = visible.map(li).join('');
     const listHidden = hidden.length
@@ -97,9 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const renderSkeleton = () => {
-    const cards = Array.from({ length: 3 })
-      .map(
-        () => `
+    const cards = Array.from({ length: 3 }).map(() => `
       <div class="bg-white rounded-lg shadow p-6 border animate-pulse">
         <div class="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
         <div class="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
@@ -110,16 +111,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="h-4 bg-gray-200 rounded w-4/6"></div>
         </div>
         <div class="h-10 bg-gray-200 rounded"></div>
-      </div>`
-      )
-      .join('');
+      </div>
+    `).join('');
     container.innerHTML = cards;
   };
 
   try {
     renderSkeleton();
 
-    const res = await fetch('/plans', { credentials: 'same-origin' });
+    const res = await fetch('/plans', { credentials: 'same-origin', cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const rawPlans = await res.json();
@@ -137,18 +137,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     container.innerHTML = '';
 
-    plans.forEach((plan) => {
+    plans.forEach(plan => {
       const featuresHTML = renderFeatures(plan.slug, plan.features);
+
       const highlight =
-        plan.slug === 'professional'
-          ? 'ring-2 ring-green-500'
-          : plan.slug === 'business'
-          ? 'ring-2 ring-purple-600'
-          : 'border';
+        plan.slug === 'professional' ? 'ring-2 ring-green-500' :
+        plan.slug === 'business' ? 'ring-2 ring-purple-600' :
+        'border';
 
       const price = (Number(plan.price) || 0).toFixed(2);
       const desc = plan.description || defaultDescription(plan.slug) || '';
-
       const safeName = String(plan.name || '');
       const safeSlug = String(plan.slug || '');
 
@@ -179,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       container.appendChild(card);
     });
 
-    // Event delegation for all toggles (no inline scripts, CSP-safe)
+    // Toggle "Show more"
     container.addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-toggle]');
       if (!btn) return;
