@@ -1,243 +1,112 @@
-// /public/scripts/pricing.js
-(() => {
-  const qs = (s) => document.querySelector(s);
-  const container = qs('#plansContainer');
-  const statusEl = qs('#plansStatus');
+// /scripts/pricing.js
 
-  if (!container) {
-    console.error('[pricing] #plansContainer not found');
-    return;
-  }
+document.addEventListener('DOMContentLoaded', async () => {
+  const plansContainer = document.getElementById('plansContainer');
+  const plansStatus = document.getElementById('plansStatus');
+  const currencySymbol = '€'; // Define currency symbol, you can make this dynamic if needed.
 
-  const state = {
-    billing: (new URLSearchParams(location.search).get('billing') || 'monthly').toLowerCase(), // 'monthly' | 'annual'
-    plans: [],
-  };
-
-  const announce = (msg) => {
-    if (statusEl) statusEl.textContent = msg;
-  };
-
-  const money = (num, currency = 'USD') =>
-    new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: num % 1 === 0 ? 0 : 2,
-      maximumFractionDigits: 2,
-    }).format(num);
-
-  const el = (html) => {
-    const t = document.createElement('template');
-    t.innerHTML = html.trim();
-    return t.content.firstElementChild;
-  };
-
-  // ---------- UI: Skeletons ----------
-  const renderSkeletons = (count = 3) => {
-    container.innerHTML = '';
-    for (let i = 0; i < count; i++) {
-      container.appendChild(
-        el(`
-        <div class="bg-white rounded-lg shadow p-6 border animate-pulse">
-          <div class="h-6 bg-gray-200 w-1/2 mb-4 rounded"></div>
-          <div class="h-8 bg-gray-200 w-1/3 mb-6 rounded"></div>
-          <ul class="space-y-2 mb-6">
-            <li class="h-4 bg-gray-200 rounded"></li>
-            <li class="h-4 bg-gray-200 w-5/6 rounded"></li>
-            <li class="h-4 bg-gray-200 w-2/3 rounded"></li>
-          </ul>
-          <div class="h-10 bg-gray-200 rounded"></div>
-        </div>
-      `)
-      );
-    }
-  };
-
-  // ---------- UI: Billing Toggle ----------
-  const ensureToggle = () => {
-    const hostId = 'billingToggleHost';
-    let host = qs(`#${hostId}`);
-    if (!host) {
-      host = el(`<div id="${hostId}" class="max-w-6xl mx-auto px-4 my-4 flex justify-center"></div>`);
-      container.parentElement.insertBefore(host, container);
-    }
-
-    host.innerHTML = `
-      <div class="inline-flex items-center bg-white border rounded-full shadow px-1 py-1">
-        <button type="button" data-bill="monthly"
-          class="bill-btn px-4 py-2 rounded-full text-sm font-medium ${state.billing === 'monthly' ? 'bg-gray-900 text-white' : 'text-gray-700'}">
-          Monthly
-        </button>
-        <button type="button" data-bill="annual"
-          class="bill-btn px-4 py-2 rounded-full text-sm font-medium ${state.billing === 'annual' ? 'bg-gray-900 text-white' : 'text-gray-700'}">
-          Annual <span class="ml-1 text-xs text-green-600">(save)</span>
-        </button>
+  // --- Step 1: Show loading state (skeletons) ---
+  // This function creates a loading skeleton card. It's good practice for UX.
+  const createSkeletonCard = () => `
+    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between animate-pulse">
+      <div>
+        <div class="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+        <div class="text-3xl font-bold my-4 h-10 bg-gray-200 rounded"></div>
+        <ul class="space-y-2 mt-4">
+          <li class="h-4 bg-gray-200 rounded"></li>
+          <li class="h-4 bg-gray-200 rounded"></li>
+          <li class="h-4 bg-gray-200 rounded"></li>
+          <li class="h-4 bg-gray-200 rounded"></li>
+        </ul>
       </div>
-    `;
+      <div class="mt-6 h-10 bg-gray-200 rounded"></div>
+    </div>
+  `;
 
-    host.querySelectorAll('.bill-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const val = btn.getAttribute('data-bill');
-        if (val && val !== state.billing) {
-          state.billing = val;
-          const url = new URL(location.href);
-          url.searchParams.set('billing', state.billing);
-          history.replaceState({}, '', url.toString());
-          renderPlans(); // re-render with new billing
-          announce(`Billing switched to ${state.billing}.`);
-        }
-      });
-    });
-  };
+  // Render three skeleton cards while we wait for the data
+  plansContainer.innerHTML = createSkeletonCard() + createSkeletonCard() + createSkeletonCard();
+  plansStatus.textContent = "Loading pricing plans...";
 
-  // ---------- Data fetch ----------
-// replace existing fetchPlans with this:
-const fetchPlans = async () => {
-  const endpoints = ['/api/plans', '/plans']; // try canonical, then legacy
-  let lastErr;
-
-  for (const ep of endpoints) {
-    const url = ep + (ep.includes('?') ? '&' : '?') + '_dbg=' + Date.now();
-    try {
-      const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status} @ ${ep}`);
-      const data = await res.json();
-      if (!Array.isArray(data)) throw new Error(`Invalid payload @ ${ep}`);
-      console.log(`[pricing] using endpoint: ${ep}`);
-      return data;
-    } catch (e) {
-      console.warn(`[pricing] fetch failed for ${ep}:`, e);
-      lastErr = e;
+  try {
+    // --- Step 2: Fetch data from your API endpoint ---
+    // The endpoint is '/api/plans', as defined in your app.js
+    const response = await fetch('/api/plans', { cache: 'no-store' });
+    if (!response.ok) {
+      // If the server responds with an error status (like 404), throw an error.
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  }
-  throw lastErr || new Error('No pricing endpoints available');
-};
+    const plans = await response.json();
 
+    // Update the status for screen readers
+    plansStatus.textContent = "Pricing plans loaded successfully.";
 
-  // ---------- Helpers ----------
-  const cleanFeatures = (arr) =>
-    (arr || []).filter((f) => typeof f === 'string' && f.trim() !== '');
-
-  const priceFor = (plan) => {
-    const block = state.billing === 'annual' ? plan.annual : plan.monthly;
-    if (!block || block.price == null) return null;
-    return money(block.price, plan.currency || 'USD');
-  };
-
-  // ---------- Card ----------
-  const planCard = (plan) => {
-    const price = priceFor(plan);
-    const features = cleanFeatures(plan.features);
-
-    return el(`
-      <article class="bg-white rounded-lg shadow-md border border-gray-200 flex flex-col" aria-label="${plan.name} plan">
-        <div class="p-6 flex-1 flex flex-col">
-          <header class="mb-3">
-            <h3 class="text-lg font-semibold">${plan.name}</h3>
-            ${plan.badge ? `<div class="inline-block text-xs mt-1 px-2 py-1 rounded bg-indigo-50 text-indigo-700">${plan.badge}</div>` : ''}
-          </header>
-
-          <div class="mb-4">
-            ${
-              price
-                ? `<div class="text-3xl font-bold">${price}<span class="text-base text-gray-500">/${state.billing === 'annual' ? 'year' : 'month'}</span></div>`
-                : `<div class="text-sm text-gray-500">Contact sales</div>`
-            }
-            ${
-              state.billing === 'annual' && plan.annual && plan.annual.note
-                ? `<div class="text-xs text-green-700 mt-1">${plan.annual.note}</div>`
-                : ''
-            }
-          </div>
-
-          <ul class="mb-6 space-y-2 text-sm text-gray-700">
-            ${
-              (features.length
-                ? features
-                : ['Core tools included'] // fallback if no features
-              )
-                .slice(0, 12)
-                .map(
-                  (f) => `
-              <li class="flex items-start gap-2">
-                <span aria-hidden="true" class="text-green-600">✓</span>
-                <span>${f}</span>
-              </li>`
-                )
-                .join('')
-            }
-          </ul>
-
-          <a href="${ctaHref(plan)}"
-             class="inline-flex justify-center items-center px-4 py-2 rounded-lg font-medium
-                    ${ctaKind(plan) === 'secondary'
-                      ? 'bg-white border border-gray-300 text-gray-800 hover:bg-gray-50'
-                      : 'bg-gray-900 text-white hover:bg-gray-800'}">
-            ${plan.cta?.label || 'Choose plan'}
-          </a>
-        </div>
-      </article>
-    `);
-  };
-
-  const ctaKind = (plan) => (plan.cta?.kind || '').toLowerCase();
-  const ctaHref = (plan) => {
-    const id = encodeURIComponent(plan.id);
-    if ((plan.cta?.label || '').toLowerCase().includes('sales')) {
-      return `/contact-sales?plan=${id}`;
-    }
-    const bill = encodeURIComponent(state.billing);
-    return `/signup?plan=${id}&billing=${bill}`;
-  };
-
-  // ---------- Render ----------
-  const renderPlans = () => {
-    container.innerHTML = '';
-    if (!state.plans.length) {
-      container.innerHTML = `<div class="text-sm text-gray-600">No plans available.</div>`;
+    // --- Step 3: Handle no plans found ---
+    if (!plans || plans.length === 0) {
+      plansContainer.innerHTML = `
+        <p class="col-span-full text-center text-gray-500 text-lg">No pricing plans available at the moment. Please check back later.</p>
+      `;
       return;
     }
-    const frag = document.createDocumentFragment();
-    state.plans.forEach((plan) => frag.appendChild(planCard(plan)));
-    container.appendChild(frag);
-  };
 
-  // ---------- Init ----------
-  const init = async () => {
-    ensureToggle();
-    renderSkeletons();
-    announce('Loading plans…');
-    try {
-      const plans = await fetchPlans();
+    // --- Step 4: Render the plans dynamically ---
+    plansContainer.innerHTML = ''; // Clear the skeletons
+    plans.forEach(plan => {
+      // Format the prices
+      const monthlyPrice = plan.monthly.price !== null 
+        ? `${currencySymbol}${plan.monthly.price.toFixed(2)}` 
+        : 'Contact us';
+      const annualPrice = plan.annual.price !== null 
+        ? `${currencySymbol}${plan.annual.price.toFixed(2)}` 
+        : 'Contact us';
 
-      // Normalize: ensure arrays, strip nulls, coerce shapes
-      state.plans = plans.map((p) => ({
-        id: p.id,
-        name: p.name,
-        badge: p.badge || null,
-        popular: !!p.popular,
-        currency: p.currency || 'USD',
-        monthly: { price: p?.monthly?.price ?? null, note: p?.monthly?.note ?? null },
-        annual: { price: p?.annual?.price ?? null, note: p?.annual?.note ?? null },
-        features: cleanFeatures(p.features),
-        cta: p.cta || { label: 'Start free trial' },
-      }));
+      // Build the features list
+      const featuresList = plan.features.map(feature => `
+        <li class="flex items-start">
+          <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>${feature}</span>
+        </li>
+      `).join('');
 
-      renderPlans();
-      announce('Plans loaded.');
-    } catch (err) {
-      console.error('[pricing] failed to load plans', err);
-      container.innerHTML = `
-        <div class="max-w-md mx-auto p-4 border border-red-200 bg-red-50 text-red-700 rounded">
-          We couldn’t load plans right now. Please try again in a moment.
-        </div>`;
-      announce('Failed to load plans.');
-    }
-  };
+      // Create the CTA (Call to Action) button based on the plan's badge
+      const ctaLabel = plan.cta.label || (plan.monthly.price === null ? 'Contact Sales' : 'Start free trial');
+      const ctaHref = plan.monthly.price === null ? '/contact-sales' : '/register';
+      const ctaClass = plan.popular ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-indigo-600 border border-gray-200';
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+      const planCard = `
+        <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col justify-between ${plan.popular ? 'ring-2 ring-indigo-500 transform scale-105' : ''}">
+          ${plan.badge ? `<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase">${plan.badge}</div>` : ''}
+          <div>
+            <h2 class="text-xl font-bold mb-2">${plan.name}</h2>
+            <p class="text-sm text-gray-500">${plan.monthly.note || 'No credit card required'}</p>
+            <div class="mt-4">
+              <span class="text-4xl font-bold">${monthlyPrice}</span>
+              <span class="text-gray-500">/month</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-1">${plan.annual.note || ''}</p>
+            <ul class="space-y-3 mt-6 text-sm">
+              ${featuresList}
+            </ul>
+          </div>
+          <a href="${ctaHref}" class="mt-8 block w-full text-center py-3 px-4 rounded-lg font-semibold transition-colors duration-200 ${ctaClass}">
+            ${ctaLabel}
+          </a>
+        </div>
+      `;
+      plansContainer.innerHTML += planCard;
+    });
+
+  } catch (error) {
+    // --- Step 5: Handle errors gracefully ---
+    console.error("Failed to fetch pricing plans:", error);
+    plansStatus.textContent = "Error loading pricing plans. Please try again.";
+    plansContainer.innerHTML = `
+      <div class="col-span-full text-center p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <p class="font-semibold">Oops! Something went wrong.</p>
+        <p class="mt-1">We couldn't load the pricing plans. Please refresh the page or try again later.</p>
+      </div>
+    `;
   }
-})();
+});
