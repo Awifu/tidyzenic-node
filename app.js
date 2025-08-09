@@ -19,62 +19,53 @@ const PORT = Number(process.env.PORT || 3000);
 const PROD = process.env.NODE_ENV === 'production';
 const APP_DOMAIN = process.env.APP_DOMAIN || 'tidyzenic.com';
 
-// ---------- 0. Trust proxy (behind CDN/ELB) ----------
+// ---------- 0) Trust proxy (behind CDN/ELB) ----------
 app.set('trust proxy', 1);
 
-// ---------- 1. Core middleware ----------
+// ---------- 1) Core middleware ----------
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
 app.use(compression());
 app.use(morgan(PROD ? 'combined' : 'dev'));
 
-// ---------- 2. Per-request CSP nonce ----------
+// ---------- 2) Per-request CSP nonce ----------
 app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
 });
 
-// ---------- 3. Security headers with Helmet (CSP uses the nonce) ----------
+// ---------- 3) Security headers (Helmet with CSP using nonce) ----------
 app.use((req, res, next) => {
   const nonce = res.locals.nonce;
-
   helmet({
-    // Fine-tuned CSP; allow inline only via nonce
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: [
           "'self'",
-          // Only allow inline scripts that include this nonce
           `'nonce-${nonce}'`,
           'https://cdn.jsdelivr.net',
-          // reCAPTCHA / gstatic (if you use it on register.html)
           'https://www.google.com',
           'https://www.gstatic.com',
         ],
         styleSrc: [
           "'self'",
-          "'unsafe-inline'", // needed for Tailwind runtime classes or inline styles
+          "'unsafe-inline'",
           'https://fonts.googleapis.com',
-          'https://cdn.jsdelivr.net'
+          'https://cdn.jsdelivr.net',
         ],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: [
           "'self'",
-          // Your apex + subdomains
           `https://${APP_DOMAIN}`,
           `https://*.${APP_DOMAIN}`,
-          // Socket.io over HTTPS/WSS
           'wss:',
           'https:',
         ],
-        frameSrc: [
-          "'self'",
-          'https://www.google.com', // reCAPTCHA widget
-        ],
+        frameSrc: ["'self'", 'https://www.google.com'],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         upgradeInsecureRequests: PROD ? [] : null,
@@ -89,11 +80,11 @@ app.use((req, res, next) => {
   })(req, res, next);
 });
 
-// ---------- 4. i18n middleware (your existing one) ----------
+// ---------- 4) i18n middleware ----------
 const languageMiddleware = require('./middleware/language');
 app.use(languageMiddleware);
 
-// ---------- 5. CORS ----------
+// ---------- 5) CORS ----------
 const allowedOrigins = [
   'http://localhost:3000',
   `https://${APP_DOMAIN}`,
@@ -118,24 +109,10 @@ app.use(
   })
 );
 
-// ---------- 6. Static files ----------
-app.use(
-  express.static(path.join(__dirname, 'public'), {
-    maxAge: PROD ? '1y' : 0,
-    etag: true,
-    setHeaders(res, filePath) {
-      // Cache bust only for immutable assets (basic heuristic)
-      if (/\.(js|css|png|jpg|jpeg|gif|svg|woff2?)$/i.test(filePath)) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
-    },
-  })
-);
-
-// ---------- 7. Rate limits (auth/register sensitive endpoints) ----------
+// ---------- 6) Rate limits (sensitive endpoints) ----------
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100, // Adjust as desired
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -149,11 +126,11 @@ const writeLimiter = rateLimit({
 app.use('/auth', authLimiter);
 app.use('/register', writeLimiter);
 
-// ---------- 8. Routers ----------
+// ---------- 7) Routers (mounted BEFORE static so APIs win) ----------
 const plansRouter = require('./routes/plans');
 const templateRoutes = require('./routes/templates');
 
-app.use('/plans', plansRouter);
+app.use('/plans', plansRouter);                 // ← important: before static
 app.use('/api/templates', templateRoutes);
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
@@ -163,7 +140,26 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/reviews', require('./routes/reviewAnalytics'));
 app.use('/api/sms', require('./routes/sms'));
 
-// ---------- 9. Admin HTML pages & helpers ----------
+// ---------- 8) Static files (AFTER routers) ----------
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    maxAge: PROD ? '1y' : 0,
+    etag: true,
+    setHeaders(res, filePath) {
+      // Don’t aggressively cache HTML
+      if (/\.html?$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'no-cache');
+        return;
+      }
+      // Immutable for versioned assets
+      if (/\.(js|css|png|jpg|jpeg|gif|svg|woff2?)$/i.test(filePath)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  })
+);
+
+// ---------- 9) Admin HTML pages & helpers ----------
 const sendFile = (file) => (req, res) => res.sendFile(path.join(__dirname, 'public', file));
 
 app.get('/admin/support.html', (req, res) => {
@@ -186,16 +182,16 @@ app.get('/admin/dashboard', (req, res) => res.redirect('/admin/admin-dashboard.h
 const translationRoute = require('./routes/translation');
 app.use('/admin/translation', translationRoute);
 
-// ---------- 10. Health checks ----------
+// ---------- 10) Health checks ----------
 app.get('/healthz', (req, res) => res.status(200).json({ ok: true }));
 app.get('/readyz', (req, res) => res.status(200).json({ ready: true }));
 
-// ---------- 11. 404 handler ----------
+// ---------- 11) 404 handler ----------
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// ---------- 12. Error handler ----------
+// ---------- 12) Error handler ----------
 app.use((err, req, res, next) => {
   const status = err.status || 500;
   if (!PROD) {
@@ -208,7 +204,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ---------- 13. HTTP + Socket.IO ----------
+// ---------- 13) HTTP + Socket.IO ----------
 const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
@@ -238,13 +234,13 @@ io.on('connection', (socket) => {
   });
 });
 
-// ---------- 14. Start server ----------
+// ---------- 14) Start server ----------
 httpServer.listen(PORT, () => {
   const url = PROD ? `https://${APP_DOMAIN}` : `http://localhost:${PORT}`;
   console.log(`✅ Server running at ${url}`);
 });
 
-// ---------- 15. Graceful shutdown ----------
+// ---------- 15) Graceful shutdown ----------
 function shutdown(signal) {
   console.log(`🛑 ${signal} received. Shutting down gracefully...`);
   httpServer.close(() => {
