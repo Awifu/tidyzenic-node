@@ -15,25 +15,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const planCTA = (slug) => `/register.html?plan=${encodeURIComponent(slug)}`;
 
+  // --- SAFER FEATURE NORMALIZATION ---
   const normalizeFeatures = (val) => {
-    if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
+    const isBad = (x) => {
+      if (x === null || x === undefined) return true;
+      const s = String(x).trim();
+      return !s || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined';
+    };
+
+    if (Array.isArray(val)) {
+      return val
+        .filter((v) => !isBad(v))
+        .map((v) => String(v).trim());
+    }
+
     if (typeof val === 'string') {
       const s = val.trim();
-      if (!s) return [];
+      if (!s || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return [];
       if (s.startsWith('[')) {
         try {
           const arr = JSON.parse(s);
-          return Array.isArray(arr) ? arr.filter(Boolean).map(String).map(x => x.trim()).filter(Boolean) : [];
-        } catch { /* fall through */ }
+          return Array.isArray(arr) ? normalizeFeatures(arr) : [];
+        } catch {
+          /* fall through to CSV/pipe parsing */
+        }
       }
       const sep = s.includes('||') ? '||' : ',';
-      return s.split(sep).map(x => x.replace(/^"|"$/g, '').trim()).filter(Boolean);
+      return s
+        .split(sep)
+        .map((x) => x.replace(/^"|"$/g, '').trim())
+        .filter((x) => !isBad(x));
     }
+
     if (val && typeof val === 'object') {
       if (Array.isArray(val.features)) return normalizeFeatures(val.features);
       if (typeof val.features === 'string') return normalizeFeatures(val.features);
       if (typeof val.features_csv === 'string') return normalizeFeatures(val.features_csv);
     }
+
     return [];
   };
 
@@ -54,7 +73,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const visible = features.slice(0, firstCount);
     const hidden = features.slice(firstCount);
 
-    const li = (text) => `<li class="flex items-start gap-2"><span aria-hidden="true">✅</span><span>${text}</span></li>`;
+    const li = (text) =>
+      `<li class="flex items-start gap-2"><span aria-hidden="true">✅</span><span>${text}</span></li>`;
+
     const listTop = visible.map(li).join('');
     const listHidden = hidden.length
       ? `<div id="${idBase}-more" class="hidden">${hidden.map(li).join('')}</div>`
@@ -76,7 +97,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const renderSkeleton = () => {
-    const cards = Array.from({ length: 3 }).map(() => `
+    const cards = Array.from({ length: 3 })
+      .map(
+        () => `
       <div class="bg-white rounded-lg shadow p-6 border animate-pulse">
         <div class="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
         <div class="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
@@ -87,8 +110,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="h-4 bg-gray-200 rounded w-4/6"></div>
         </div>
         <div class="h-10 bg-gray-200 rounded"></div>
-      </div>
-    `).join('');
+      </div>`
+      )
+      .join('');
     container.innerHTML = cards;
   };
 
@@ -108,21 +132,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       const pa = Number(a.price) || 0;
       const pb = Number(b.price) || 0;
       if (pa !== pb) return pa - pb;
-      return String(a.name).localeCompare(String(b.name));
+      return String(a.name || '').localeCompare(String(b.name || ''));
     });
 
     container.innerHTML = '';
 
-    plans.forEach(plan => {
+    plans.forEach((plan) => {
       const featuresHTML = renderFeatures(plan.slug, plan.features);
-
       const highlight =
-        plan.slug === 'professional' ? 'ring-2 ring-green-500' :
-        plan.slug === 'business' ? 'ring-2 ring-purple-600' :
-        'border';
+        plan.slug === 'professional'
+          ? 'ring-2 ring-green-500'
+          : plan.slug === 'business'
+          ? 'ring-2 ring-purple-600'
+          : 'border';
 
       const price = (Number(plan.price) || 0).toFixed(2);
-      const desc = plan.description || defaultDescription(plan.slug);
+      const desc = plan.description || defaultDescription(plan.slug) || '';
+
+      const safeName = String(plan.name || '');
+      const safeSlug = String(plan.slug || '');
 
       const card = document.createElement('div');
       card.className = `bg-white rounded-lg shadow p-6 flex flex-col justify-between ${highlight}`;
@@ -130,8 +158,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       card.innerHTML = `
         <div>
           <div class="flex items-center">
-            <h2 class="text-2xl font-semibold mb-2">${plan.name ?? ''}</h2>
-            ${planBadges(plan.slug)}
+            <h2 class="text-2xl font-semibold mb-2">${safeName}</h2>
+            ${planBadges(safeSlug)}
           </div>
           <p class="text-gray-600 mb-4">${desc}</p>
           <div class="text-3xl font-bold text-blue-600 mb-6" aria-label="Price">
@@ -141,9 +169,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${featuresHTML}
         </div>
 
-        <a href="${planCTA(plan.slug)}"
+        <a href="${planCTA(safeSlug)}"
           class="mt-auto inline-block bg-blue-600 text-white text-center px-4 py-2 rounded hover:bg-blue-700 transition"
-          aria-label="Start free trial for ${plan.name}">
+          aria-label="Start free trial for ${safeName}">
           Start Free Trial
         </a>
       `;

@@ -27,7 +27,7 @@ const pool = mysql.createPool({
  */
 router.get('/', async (req, res, next) => {
   try {
-    // MySQL 5.7+ compatible (GROUP_CONCAT). If you’re on MySQL 8, see JSON_ARRAYAGG version below.
+    // Filter out null/empty labels so CSV never contains "null"
     const sql = `
       SELECT
         p.id,
@@ -36,7 +36,11 @@ router.get('/', async (req, res, next) => {
         p.slug,
         p.description,
         GROUP_CONCAT(
-          TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+          CASE
+            WHEN f.label IS NOT NULL AND f.label <> ''
+              THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+            ELSE NULL
+          END
           ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
           SEPARATOR '||'
         ) AS features_csv
@@ -51,17 +55,17 @@ router.get('/', async (req, res, next) => {
 
     const [rows] = await pool.query(sql);
 
-    const payload = rows.map(r => ({
+    const payload = rows.map((r) => ({
       id: r.id,
       name: r.name,
       price: Number(r.price ?? 0).toFixed(2), // "19.00" as string for your UI
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      // You can switch this to an array if you prefer (your normalizeFeatures supports arrays).
+      // Your frontend supports array/JSON too, but we keep CSV for simplicity.
       features: r.features_csv || ''
     }));
 
-    // Mild caching; you can tune this
+    // Mild caching to reduce DB hits
     res.set('Cache-Control', 'public, max-age=60');
     res.json(payload);
   } catch (err) {
@@ -69,7 +73,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// Optional: GET /plans/:slug  (handy if you link to /plans/{slug} later)
+// Optional: GET /plans/:slug (handy for detail pages)
 router.get('/:slug', async (req, res, next) => {
   try {
     const { slug } = req.params;
@@ -77,7 +81,11 @@ router.get('/:slug', async (req, res, next) => {
       SELECT
         p.id, p.name, p.price, p.slug, p.description,
         GROUP_CONCAT(
-          TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+          CASE
+            WHEN f.label IS NOT NULL AND f.label <> ''
+              THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+            ELSE NULL
+          END
           ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
           SEPARATOR '||'
         ) AS features_csv
