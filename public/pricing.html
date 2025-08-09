@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pricing Plans | Tidyzenic</title>
+  <meta name="description" content="Choose the plan that fits your business. Start a free trial—no credit card required." />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -11,22 +12,62 @@
   <!-- Header Include -->
   <div id="header"></div>
 
-  <!-- Hero Section -->
-  <section class="text-center py-12 px-4 bg-white shadow">
-    <h1 class="text-4xl font-bold mb-4">Choose the Plan That Fits Your Business</h1>
-    <p class="text-lg text-gray-600">Start with a 7-day free trial. No credit card required.</p>
-  </section>
+  <main>
 
-  <!-- Pricing Cards Section -->
-  <section class="max-w-6xl mx-auto py-12 px-4">
-    <div id="plansContainer" class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3"></div>
-  </section>
+    <!-- Hero -->
+    <section class="text-center py-12 px-4 bg-white shadow">
+      <h1 class="text-4xl font-bold mb-4">Choose the Plan That Fits Your Business</h1>
+      <p class="text-lg text-gray-600">Start with a 7-day free trial. No credit card required.</p>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="max-w-6xl mx-auto py-12 px-4">
+      <!-- Live region for errors/status updates -->
+      <div id="plansStatus" class="sr-only" aria-live="polite"></div>
+
+      <div id="plansContainer" class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- JS will render a skeleton first, then real cards -->
+      </div>
+
+      <!-- Footnote / fine print -->
+      <p class="mt-6 text-xs text-gray-500">
+        * “Unlimited” features are subject to fair use and technical limits. Contact sales for higher quotas.
+      </p>
+    </section>
+
+    <!-- FAQ (optional – nice for SEO; keep it minimal) -->
+    <section class="max-w-4xl mx-auto pb-16 px-4">
+      <h2 class="text-2xl font-semibold mb-4">Frequently asked questions</h2>
+      <div class="space-y-3 text-sm text-gray-700">
+        <details class="bg-white rounded p-4 shadow border">
+          <summary class="font-medium cursor-pointer">Can I change plans later?</summary>
+          <p class="mt-2">Yes, you can upgrade or downgrade at any time. Changes prorate automatically.</p>
+        </details>
+        <details class="bg-white rounded p-4 shadow border">
+          <summary class="font-medium cursor-pointer">Is my data safe?</summary>
+          <p class="mt-2">We use industry-standard encryption and access controls. Business plans include SSO/SAML and IP allowlists.</p>
+        </details>
+        <details class="bg-white rounded p-4 shadow border">
+          <summary class="font-medium cursor-pointer">Do you offer discounts?</summary>
+          <p class="mt-2">Annual billing includes a discount. Contact sales for non-profit and education pricing.</p>
+        </details>
+      </div>
+    </section>
+
+  </main>
 
   <!-- Footer Include -->
   <div id="footer"></div>
 
+  <noscript>
+    <div class="max-w-4xl mx-auto p-4 my-6 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+      JavaScript is required to load pricing. Please enable JavaScript and refresh the page.
+    </div>
+  </noscript>
+
   <!-- Scripts -->
   <script defer src="/scripts/partials-loader.js?v=2"></script>
-  <script defer src="/scripts/pricing.js?v=1"></script>
+  <!-- NOTE: bump the version to ensure browsers pull the new JS -->
+  <script defer src="/scripts/pricing.js?v=2"></script>
 </body>
 </html>
