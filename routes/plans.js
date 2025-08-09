@@ -13,18 +13,18 @@ const pool = mysql.createPool({
 
 router.get('/', async (req, res, next) => {
   try {
-    // Fetch active plans in display order
+    // 1) Plans
     const [plans] = await pool.query(
       `SELECT id, slug, name, badge, popular, currency
          FROM plans
         WHERE active = 1
         ORDER BY sort_order, id`
     );
+    if (!plans.length) return res.json([]);
 
-    if (plans.length === 0) return res.json([]);
-
-    // Fetch prices (monthly + annual)
     const planIds = plans.map(p => p.id);
+
+    // 2) Prices
     const [prices] = await pool.query(
       `SELECT plan_id, \`interval\`, amount_cents, note
          FROM plan_prices
@@ -32,38 +32,41 @@ router.get('/', async (req, res, next) => {
       planIds
     );
 
-    // Fetch features
+    // 3) Features (filter blanks at SQL level)
     const [features] = await pool.query(
       `SELECT plan_id, feature
          FROM plan_features
         WHERE plan_id IN (${planIds.map(()=>'?').join(',')})
+          AND feature IS NOT NULL
+          AND TRIM(feature) <> ''
         ORDER BY sort_order, id`,
       planIds
     );
 
-    // Shape into frontend format
-    const byPlan = Object.fromEntries(plans.map(p => [p.id, {
-      id: p.slug,                    // we expose slug as stable id
-      name: p.name,
-      badge: p.badge,
-      popular: !!p.popular,
-      currency: p.currency || 'USD',
-      monthly: { price: null, note: null },
-      annual:  { price: null, note: null },
-      features: [],
-      cta: { label: p.badge === 'Contact sales' ? 'Contact sales' : 'Start free trial' },
-    }]));
+    // 4) Shape
+    const byPlan = Object.fromEntries(
+      plans.map(p => [p.id, {
+        id: p.slug, // expose slug as stable id
+        name: p.name,
+        badge: p.badge || null,
+        popular: !!p.popular,
+        currency: p.currency || 'USD',
+        monthly: { price: null, note: null },
+        annual:  { price: null, note: null },
+        features: [],
+        cta: { label: (p.badge || '').toLowerCase() === 'contact sales' ? 'Contact sales' : 'Start free trial' },
+      }])
+    );
 
     for (const pr of prices) {
       const dest = byPlan[pr.plan_id];
       if (!dest) continue;
-      const amount = Math.round(pr.amount_cents) / 100;
+      const amount = pr.amount_cents != null ? Math.round(pr.amount_cents) / 100 : null;
+      const note = pr.note || null;
       if (pr.interval === 'monthly') {
-        dest.monthly.price = amount;
-        dest.monthly.note = pr.note || null;
+        dest.monthly = { price: amount, note };
       } else if (pr.interval === 'annual') {
-        dest.annual.price = amount;
-        dest.annual.note = pr.note || null;
+        dest.annual = { price: amount, note };
       }
     }
 
