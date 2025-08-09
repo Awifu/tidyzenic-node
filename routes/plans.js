@@ -3,10 +3,6 @@ const express = require('express');
 const router = express.Router();
 const mysql = require('mysql2/promise');
 
-/**
- * ENV needed:
- *  DB_HOST, DB_USER, DB_PASS, DB_NAME
- */
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '127.0.0.1',
   user: process.env.DB_USER || 'root',
@@ -18,7 +14,7 @@ const pool = mysql.createPool({
   charset: 'utf8mb4',
 });
 
-/** Normalize/sanitize any shape of "features" into a clean array of strings */
+// ---- ONE sanitizer to rule them all ----
 function sanitizeFeatures(raw) {
   const isBad = (x) => {
     if (x === null || x === undefined) return true;
@@ -38,7 +34,6 @@ function sanitizeFeatures(raw) {
         const parsed = JSON.parse(s);
         arr = Array.isArray(parsed) ? parsed : [];
       } catch {
-        // fall back to CSV split
         arr = s.split(s.includes('||') ? '||' : ',');
       }
     } else {
@@ -54,56 +49,63 @@ function sanitizeFeatures(raw) {
   }
 
   return arr
-    .map((v) => String(v ?? '').trim().replace(/^"|"$/g, ''))
-    .filter((v) => !isBad(v));
+    .map(v => String(v ?? '').trim().replace(/^"|"$/g, ''))
+    .filter(v => !isBad(v));
 }
 
-/**
- * GET /plans
- * Returns:
- * [
- *   { id, name, price: "19.00", slug, description, features: ["A","B","C"] }
- * ]
- */
+// Build both JSON + CSV in SQL (whichever exists will be sanitized)
+const BASE_SQL = `
+  SELECT
+    p.id, p.name, p.price, p.slug, p.description,
+
+    /* JSON (MySQL 8): will be [null,...] if we don't guard */
+    JSON_ARRAYAGG(
+      CASE
+        WHEN f.label IS NOT NULL AND f.label <> ''
+          THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+        ELSE NULL
+      END
+    ) AS features_json,
+
+    /* CSV fallback for MySQL 5.7 */
+    GROUP_CONCAT(
+      CASE
+        WHEN f.label IS NOT NULL AND f.label <> ''
+          THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
+        ELSE NULL
+      END
+      ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
+      SEPARATOR '||'
+    ) AS features_csv
+
+  FROM plans p
+  LEFT JOIN plan_features pf
+    ON pf.plan_id = p.id AND pf.included = 1
+  LEFT JOIN features f
+    ON f.id = pf.feature_id
+`;
+
 router.get('/', async (req, res, next) => {
   try {
-    // Use GROUP_CONCAT with CASE to avoid concatenating NULL/empty labels
     const sql = `
-      SELECT
-        p.id,
-        p.name,
-        p.price,
-        p.slug,
-        p.description,
-        GROUP_CONCAT(
-          CASE
-            WHEN f.label IS NOT NULL AND f.label <> ''
-              THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
-            ELSE NULL
-          END
-          ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
-          SEPARATOR '||'
-        ) AS features_csv
-      FROM plans p
-      LEFT JOIN plan_features pf
-        ON pf.plan_id = p.id AND pf.included = 1
-      LEFT JOIN features f
-        ON f.id = pf.feature_id
+      ${BASE_SQL}
       GROUP BY p.id
       ORDER BY p.price ASC, p.name ASC
     `;
-
     const [rows] = await pool.query(sql);
 
-    const payload = rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      price: Number(r.price ?? 0).toFixed(2),
-      slug: r.slug,
-      description: r.description || defaultDescription(r.slug),
-      // Always send a clean **array** to the frontend
-      features: sanitizeFeatures(r.features_csv),
-    }));
+    const payload = rows.map(r => {
+      // choose whichever the DB provided first (JSON array, CSV string)
+      const raw = (r.features ?? r.features_json ?? r.features_csv);
+      return {
+        id: r.id,
+        name: r.name,
+        price: Number(r.price ?? 0).toFixed(2),
+        slug: r.slug,
+        description: r.description || defaultDescription(r.slug),
+        features: sanitizeFeatures(raw)
+      };
+    });
 
     res.set('Cache-Control', 'public, max-age=60');
     res.json(payload);
@@ -112,47 +114,28 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// Optional: GET /plans/:slug for detail pages
 router.get('/:slug', async (req, res, next) => {
   try {
     const { slug } = req.params;
     const sql = `
-      SELECT
-        p.id,
-        p.name,
-        p.price,
-        p.slug,
-        p.description,
-        GROUP_CONCAT(
-          CASE
-            WHEN f.label IS NOT NULL AND f.label <> ''
-              THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
-            ELSE NULL
-          END
-          ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
-          SEPARATOR '||'
-        ) AS features_csv
-      FROM plans p
-      LEFT JOIN plan_features pf
-        ON pf.plan_id = p.id AND pf.included = 1
-      LEFT JOIN features f
-        ON f.id = pf.feature_id
+      ${BASE_SQL}
       WHERE p.slug = :slug
       GROUP BY p.id
       LIMIT 1
     `;
-
     const [rows] = await pool.query(sql, { slug });
     if (!rows.length) return res.status(404).json({ error: 'Plan not found' });
 
     const r = rows[0];
+    const raw = (r.features ?? r.features_json ?? r.features_csv);
+
     res.json({
       id: r.id,
       name: r.name,
       price: Number(r.price ?? 0).toFixed(2),
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(r.features_csv),
+      features: sanitizeFeatures(raw)
     });
   } catch (err) {
     next(err);
