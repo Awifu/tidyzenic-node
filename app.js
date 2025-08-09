@@ -19,7 +19,7 @@ const PORT = Number(process.env.PORT || 3000);
 const PROD = process.env.NODE_ENV === 'production';
 const APP_DOMAIN = process.env.APP_DOMAIN || 'tidyzenic.com';
 
-// ---------- 0) Trust proxy (behind CDN/ELB) ----------
+// ---------- 0) Trust proxy ----------
 app.set('trust proxy', 1);
 
 // ---------- 1) Core middleware ----------
@@ -35,7 +35,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---------- 3) Security headers (Helmet with CSP using nonce) ----------
+// ---------- 3) Security headers ----------
 app.use((req, res, next) => {
   const nonce = res.locals.nonce;
   helmet({
@@ -97,7 +97,7 @@ app.use(
     origin(origin, callback) {
       if (
         !origin ||
-        allowedOrigins.some((entry) =>
+        allowedOrigins.some(entry =>
           entry instanceof RegExp ? entry.test(origin) : entry === origin
         )
       ) {
@@ -109,7 +109,7 @@ app.use(
   })
 );
 
-// ---------- 6) Rate limits (sensitive endpoints) ----------
+// ---------- 6) Rate limits ----------
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -126,12 +126,9 @@ const writeLimiter = rateLimit({
 app.use('/auth', authLimiter);
 app.use('/register', writeLimiter);
 
-// ---------- 7) Routers (mounted BEFORE static so APIs win) ----------
-const plansRouter = require('./routes/plans');
-const templateRoutes = require('./routes/templates');
-
-app.use('/plans', plansRouter);                 // ← important: before static
-app.use('/api/templates', templateRoutes);
+// ---------- 7) Routers (before static) ----------
+app.use('/api/plans', require('./routes/plans'));
+app.use('/api/templates', require('./routes/templates'));
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/business', require('./routes/business'));
@@ -140,18 +137,16 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/reviews', require('./routes/reviewAnalytics'));
 app.use('/api/sms', require('./routes/sms'));
 
-// ---------- 8) Static files (AFTER routers) ----------
+// ---------- 8) Static files ----------
 app.use(
   express.static(path.join(__dirname, 'public'), {
     maxAge: PROD ? '1y' : 0,
     etag: true,
     setHeaders(res, filePath) {
-      // Don’t aggressively cache HTML
       if (/\.html?$/i.test(filePath)) {
         res.setHeader('Cache-Control', 'no-cache');
         return;
       }
-      // Immutable for versioned assets
       if (/\.(js|css|png|jpg|jpeg|gif|svg|woff2?)$/i.test(filePath)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       }
@@ -159,8 +154,9 @@ app.use(
   })
 );
 
-// ---------- 9) Admin HTML pages & helpers ----------
-const sendFile = (file) => (req, res) => res.sendFile(path.join(__dirname, 'public', file));
+// ---------- 9) Admin HTML pages ----------
+const sendFile = (file) => (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', file));
 
 app.get('/admin/support.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'support_ticket.html'));
@@ -176,11 +172,12 @@ app.get(['/login', '/login.html'], (req, res) => {
 
 app.get('/reset-password.html', sendFile('reset-password.html'));
 app.get('/verified.html', sendFile('verified.html'));
-app.get('/admin/dashboard', (req, res) => res.redirect('/admin/admin-dashboard.html'));
+app.get('/admin/dashboard', (req, res) =>
+  res.redirect('/admin/admin-dashboard.html')
+);
 
 // Translation route
-const translationRoute = require('./routes/translation');
-app.use('/admin/translation', translationRoute);
+app.use('/admin/translation', require('./routes/translation'));
 
 // ---------- 10) Health checks ----------
 app.get('/healthz', (req, res) => res.status(200).json({ ok: true }));
@@ -212,7 +209,7 @@ const io = new Server(httpServer, {
     origin(origin, callback) {
       if (
         !origin ||
-        allowedOrigins.some((entry) =>
+        allowedOrigins.some(entry =>
           entry instanceof RegExp ? entry.test(origin) : entry === origin
         )
       ) {

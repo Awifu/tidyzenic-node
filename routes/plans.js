@@ -22,9 +22,12 @@ function sanitizeFeatures(raw) {
     const s = String(x).trim().toLowerCase();
     return !s || s === 'null' || s === 'undefined';
   };
+
+  // Accept CSV string "A||B||C" or array, return clean array of strings
   const arr = typeof raw === 'string'
     ? raw.split(raw.includes('||') ? '||' : ',')
     : Array.isArray(raw) ? raw : [];
+
   return arr
     .map(v => String(v ?? '').trim().replace(/^"|"$/g, ''))
     .filter(v => !isBad(v));
@@ -37,6 +40,7 @@ const BASE_SQL = `
     p.price,
     p.slug,
     p.description,
+    /* CSV aggregator; MariaDB/MySQL drops SQL NULLs inside GROUP_CONCAT */
     GROUP_CONCAT(
       CASE
         WHEN f.label IS NOT NULL AND f.label <> ''
@@ -47,10 +51,15 @@ const BASE_SQL = `
       SEPARATOR '||'
     ) AS features_csv
   FROM plans p
-  LEFT JOIN plan_features pf ON pf.plan_id = p.id AND pf.included = 1
-  LEFT JOIN features f       ON f.id = pf.feature_id
+  LEFT JOIN plan_features pf
+    ON pf.plan_id = p.id AND pf.included = 1
+  LEFT JOIN features f
+    ON f.id = pf.feature_id
 `;
 
+/**
+ * GET /api/plans
+ */
 router.get('/', async (req, res, next) => {
   try {
     const sql = `
@@ -66,7 +75,7 @@ router.get('/', async (req, res, next) => {
       price: Number(r.price ?? 0).toFixed(2),
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(r.features_csv),   // ← USE CSV ONLY
+      features: sanitizeFeatures(r.features_csv),
     }));
 
     res.set('X-Plans-Version', API_VERSION);
@@ -77,6 +86,9 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/plans/:slug
+ */
 router.get('/:slug', async (req, res, next) => {
   try {
     const { slug } = req.params;
@@ -97,7 +109,7 @@ router.get('/:slug', async (req, res, next) => {
       price: Number(r.price ?? 0).toFixed(2),
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(r.features_csv),  // ← USE CSV ONLY
+      features: sanitizeFeatures(r.features_csv),
     });
   } catch (err) {
     next(err);
