@@ -91,19 +91,28 @@
   };
 
   // ---------- Data fetch ----------
-  const fetchPlans = async () => {
-    const ctrl = new AbortController();
-    const to = setTimeout(() => ctrl.abort(), 8000);
+// replace existing fetchPlans with this:
+const fetchPlans = async () => {
+  const endpoints = ['/api/plans', '/plans']; // try canonical, then legacy
+  let lastErr;
+
+  for (const ep of endpoints) {
+    const url = ep + (ep.includes('?') ? '&' : '?') + '_dbg=' + Date.now();
     try {
-      const res = await fetch('/api/plans', { credentials: 'same-origin', signal: ctrl.signal });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status} @ ${ep}`);
       const data = await res.json();
-      if (!Array.isArray(data)) throw new Error('Invalid plans payload');
+      if (!Array.isArray(data)) throw new Error(`Invalid payload @ ${ep}`);
+      console.log(`[pricing] using endpoint: ${ep}`);
       return data;
-    } finally {
-      clearTimeout(to);
+    } catch (e) {
+      console.warn(`[pricing] fetch failed for ${ep}:`, e);
+      lastErr = e;
     }
-  };
+  }
+  throw lastErr || new Error('No pricing endpoints available');
+};
+
 
   // ---------- Helpers ----------
   const cleanFeatures = (arr) =>
