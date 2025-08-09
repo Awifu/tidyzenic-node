@@ -14,59 +14,29 @@ const pool = mysql.createPool({
   charset: 'utf8mb4',
 });
 
-const PROD = process.env.NODE_ENV === 'production';
+const API_VERSION = 'plans-v3-mariadb-csv';
 
-/** Turn whatever the DB gives (CSV/JSON/array) into a clean string[] */
-function sanitizeFeatures(raw, planSlugForLogs = '') {
+function sanitizeFeatures(raw) {
   const isBad = (x) => {
-    if (x === null || x === undefined) return true;
+    if (x == null) return true;
     const s = String(x).trim().toLowerCase();
     return !s || s === 'null' || s === 'undefined';
   };
-
-  let arr = [];
-
-  if (Array.isArray(raw)) {
-    arr = raw;
-  } else if (typeof raw === 'string') {
-    const s = raw.trim();
-    if (!s) arr = [];
-    else if (s.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(s);
-        arr = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        arr = s.split(s.includes('||') ? '||' : ',');
-      }
-    } else {
-      arr = s.split(s.includes('||') ? '||' : ',');
-    }
-  } else if (raw && typeof raw === 'object') {
-    if (Array.isArray(raw.features)) arr = raw.features;
-    else if (typeof raw.features === 'string') return sanitizeFeatures(raw.features, planSlugForLogs);
-    else if (typeof raw.features_csv === 'string') return sanitizeFeatures(raw.features_csv, planSlugForLogs);
-  }
-
-  const before = arr.slice();
-  const cleaned = arr
+  const arr = typeof raw === 'string'
+    ? raw.split(raw.includes('||') ? '||' : ',')
+    : Array.isArray(raw) ? raw : [];
+  return arr
     .map(v => String(v ?? '').trim().replace(/^"|"$/g, ''))
     .filter(v => !isBad(v));
-
-  if (!PROD && before.length && cleaned.length < before.length) {
-    console.warn(`plans: sanitized ${before.length - cleaned.length} bad feature token(s) for plan "${planSlugForLogs}"`);
-  }
-
-  return cleaned;
 }
 
-const BASE_SELECT = `
+const BASE_SQL = `
   SELECT
     p.id,
     p.name,
     p.price,
     p.slug,
     p.description,
-    /* CSV only: GROUP_CONCAT naturally skips SQL NULLs */
     GROUP_CONCAT(
       CASE
         WHEN f.label IS NOT NULL AND f.label <> ''
@@ -77,19 +47,14 @@ const BASE_SELECT = `
       SEPARATOR '||'
     ) AS features_csv
   FROM plans p
-  LEFT JOIN plan_features pf
-    ON pf.plan_id = p.id AND pf.included = 1
-  LEFT JOIN features f
-    ON f.id = pf.feature_id
+  LEFT JOIN plan_features pf ON pf.plan_id = p.id AND pf.included = 1
+  LEFT JOIN features f       ON f.id = pf.feature_id
 `;
 
-/**
- * GET /plans  -> [{ id, name, price:"00.00", slug, description, features: string[] }]
- */
 router.get('/', async (req, res, next) => {
   try {
     const sql = `
-      ${BASE_SELECT}
+      ${BASE_SQL}
       GROUP BY p.id
       ORDER BY p.price ASC, p.name ASC
     `;
@@ -101,9 +66,10 @@ router.get('/', async (req, res, next) => {
       price: Number(r.price ?? 0).toFixed(2),
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(r.features_csv, r.slug),
+      features: sanitizeFeatures(r.features_csv),   // ← USE CSV ONLY
     }));
 
+    res.set('X-Plans-Version', API_VERSION);
     res.set('Cache-Control', 'public, max-age=60');
     res.json(payload);
   } catch (err) {
@@ -111,14 +77,11 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/**
- * GET /plans/:slug  -> { ...single plan... }
- */
 router.get('/:slug', async (req, res, next) => {
   try {
     const { slug } = req.params;
     const sql = `
-      ${BASE_SELECT}
+      ${BASE_SQL}
       WHERE p.slug = :slug
       GROUP BY p.id
       LIMIT 1
@@ -127,13 +90,14 @@ router.get('/:slug', async (req, res, next) => {
     if (!rows.length) return res.status(404).json({ error: 'Plan not found' });
 
     const r = rows[0];
+    res.set('X-Plans-Version', API_VERSION);
     res.json({
       id: r.id,
       name: r.name,
       price: Number(r.price ?? 0).toFixed(2),
       slug: r.slug,
       description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(r.features_csv, r.slug),
+      features: sanitizeFeatures(r.features_csv),  // ← USE CSV ONLY
     });
   } catch (err) {
     next(err);
