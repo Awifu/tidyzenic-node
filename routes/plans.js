@@ -1,126 +1,82 @@
 // routes/plans.js
 const express = require('express');
-const router = express.Router();
 const mysql = require('mysql2/promise');
+const router = express.Router();
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASS || '',
-  database: process.env.DB_NAME || 'app',
-  waitForConnections: true,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
   connectionLimit: 10,
-  namedPlaceholders: true,
-  charset: 'utf8mb4',
 });
 
-const API_VERSION = 'plans-v3-mariadb-csv';
-
-function sanitizeFeatures(raw) {
-  const isBad = (x) => {
-    if (x == null) return true;
-    const s = String(x).trim().toLowerCase();
-    return !s || s === 'null' || s === 'undefined';
-  };
-
-  // Accept CSV string "A||B||C" or array, return clean array of strings
-  const arr = typeof raw === 'string'
-    ? raw.split(raw.includes('||') ? '||' : ',')
-    : Array.isArray(raw) ? raw : [];
-
-  return arr
-    .map(v => String(v ?? '').trim().replace(/^"|"$/g, ''))
-    .filter(v => !isBad(v));
-}
-
-const BASE_SQL = `
-  SELECT
-    p.id,
-    p.name,
-    p.price,
-    p.slug,
-    p.description,
-    /* CSV aggregator; MariaDB/MySQL drops SQL NULLs inside GROUP_CONCAT */
-    GROUP_CONCAT(
-      CASE
-        WHEN f.label IS NOT NULL AND f.label <> ''
-          THEN TRIM(CONCAT(f.label, IFNULL(CONCAT(' (', pf.value, ')'), '')))
-        ELSE NULL
-      END
-      ORDER BY COALESCE(pf.sort_order, f.sort_order), f.label
-      SEPARATOR '||'
-    ) AS features_csv
-  FROM plans p
-  LEFT JOIN plan_features pf
-    ON pf.plan_id = p.id AND pf.included = 1
-  LEFT JOIN features f
-    ON f.id = pf.feature_id
-`;
-
-/**
- * GET /api/plans
- */
 router.get('/', async (req, res, next) => {
   try {
-    const sql = `
-      ${BASE_SQL}
-      GROUP BY p.id
-      ORDER BY p.price ASC, p.name ASC
-    `;
-    const [rows] = await pool.query(sql);
+    // Fetch active plans in display order
+    const [plans] = await pool.query(
+      `SELECT id, slug, name, badge, popular, currency
+         FROM plans
+        WHERE active = 1
+        ORDER BY sort_order, id`
+    );
 
-    const payload = rows.map(r => ({
-      id: r.id,
-      name: r.name,
-      price: Number(r.price ?? 0).toFixed(2),
-      slug: r.slug,
-      description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(r.features_csv),
-    }));
+    if (plans.length === 0) return res.json([]);
 
-    res.set('X-Plans-Version', API_VERSION);
-    res.set('Cache-Control', 'public, max-age=60');
-    res.json(payload);
+    // Fetch prices (monthly + annual)
+    const planIds = plans.map(p => p.id);
+    const [prices] = await pool.query(
+      `SELECT plan_id, \`interval\`, amount_cents, note
+         FROM plan_prices
+        WHERE plan_id IN (${planIds.map(()=>'?').join(',')})`,
+      planIds
+    );
+
+    // Fetch features
+    const [features] = await pool.query(
+      `SELECT plan_id, feature
+         FROM plan_features
+        WHERE plan_id IN (${planIds.map(()=>'?').join(',')})
+        ORDER BY sort_order, id`,
+      planIds
+    );
+
+    // Shape into frontend format
+    const byPlan = Object.fromEntries(plans.map(p => [p.id, {
+      id: p.slug,                    // we expose slug as stable id
+      name: p.name,
+      badge: p.badge,
+      popular: !!p.popular,
+      currency: p.currency || 'USD',
+      monthly: { price: null, note: null },
+      annual:  { price: null, note: null },
+      features: [],
+      cta: { label: p.badge === 'Contact sales' ? 'Contact sales' : 'Start free trial' },
+    }]));
+
+    for (const pr of prices) {
+      const dest = byPlan[pr.plan_id];
+      if (!dest) continue;
+      const amount = Math.round(pr.amount_cents) / 100;
+      if (pr.interval === 'monthly') {
+        dest.monthly.price = amount;
+        dest.monthly.note = pr.note || null;
+      } else if (pr.interval === 'annual') {
+        dest.annual.price = amount;
+        dest.annual.note = pr.note || null;
+      }
+    }
+
+    for (const f of features) {
+      const dest = byPlan[f.plan_id];
+      if (!dest) continue;
+      dest.features.push(f.feature);
+    }
+
+    res.json(Object.values(byPlan));
   } catch (err) {
     next(err);
   }
 });
-
-/**
- * GET /api/plans/:slug
- */
-router.get('/:slug', async (req, res, next) => {
-  try {
-    const { slug } = req.params;
-    const sql = `
-      ${BASE_SQL}
-      WHERE p.slug = :slug
-      GROUP BY p.id
-      LIMIT 1
-    `;
-    const [rows] = await pool.query(sql, { slug });
-    if (!rows.length) return res.status(404).json({ error: 'Plan not found' });
-
-    const r = rows[0];
-    res.set('X-Plans-Version', API_VERSION);
-    res.json({
-      id: r.id,
-      name: r.name,
-      price: Number(r.price ?? 0).toFixed(2),
-      slug: r.slug,
-      description: r.description || defaultDescription(r.slug),
-      features: sanitizeFeatures(r.features_csv),
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-function defaultDescription(slug) {
-  if (slug === 'starter') return 'Everything you need to get started.';
-  if (slug === 'professional') return 'Automation and growth tools for scaling teams.';
-  if (slug === 'business') return 'Advanced AI, multi-location, and enterprise-ready features.';
-  return '';
-}
 
 module.exports = router;
