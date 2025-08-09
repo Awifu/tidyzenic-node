@@ -122,12 +122,14 @@ const writeLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
 app.use('/auth', authLimiter);
 app.use('/register', writeLimiter);
 
-// ---------- 7) Routers (before static) ----------
-app.use('/api/plans', require('./routes/plans'));
+// ---------- 7) Routers (BEFORE static) ----------
+const plansRouter = require('./routes/plans');
+app.use('/api/plans', plansRouter); // new path
+app.use('/plans', plansRouter);     // legacy path kept for compatibility
+
 app.use('/api/templates', require('./routes/templates'));
 app.use('/register', require('./routes/register_user'));
 app.use('/auth', require('./routes/auth'));
@@ -136,8 +138,9 @@ app.use('/api/tickets', require('./routes/tickets'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/reviews', require('./routes/reviewAnalytics'));
 app.use('/api/sms', require('./routes/sms'));
+app.use('/admin/translation', require('./routes/translation'));
 
-// ---------- 8) Static files ----------
+// ---------- 8) Static files (AFTER routers) ----------
 app.use(
   express.static(path.join(__dirname, 'public'), {
     maxAge: PROD ? '1y' : 0,
@@ -154,7 +157,7 @@ app.use(
   })
 );
 
-// ---------- 9) Admin HTML pages ----------
+// ---------- 9) Admin HTML pages & helpers ----------
 const sendFile = (file) => (req, res) =>
   res.sendFile(path.join(__dirname, 'public', file));
 
@@ -175,9 +178,6 @@ app.get('/verified.html', sendFile('verified.html'));
 app.get('/admin/dashboard', (req, res) =>
   res.redirect('/admin/admin-dashboard.html')
 );
-
-// Translation route
-app.use('/admin/translation', require('./routes/translation'));
 
 // ---------- 10) Health checks ----------
 app.get('/healthz', (req, res) => res.status(200).json({ ok: true }));
@@ -245,6 +245,5 @@ function shutdown(signal) {
     process.exit(0);
   });
 }
-
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
