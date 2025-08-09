@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('plansContainer');
   if (!container) return;
 
-  // --- UI helpers ---
   const planBadges = (slug) => {
     if (slug === 'professional') {
       return `<span class="ml-2 text-xs font-semibold text-white bg-green-500 px-2 py-1 rounded">Most Popular</span>`;
@@ -16,40 +15,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const planCTA = (slug) => `/register.html?plan=${encodeURIComponent(slug)}`;
 
-  // Normalize features from API (JSON array string, CSV, or real array). Strips null/empty.
   const normalizeFeatures = (val) => {
     if (Array.isArray(val)) return val.filter(Boolean).map(String).map(s => s.trim()).filter(Boolean);
-
     if (typeof val === 'string') {
       const s = val.trim();
       if (!s) return [];
-      // Try JSON array string first
       if (s.startsWith('[')) {
         try {
           const arr = JSON.parse(s);
-          return Array.isArray(arr)
-            ? arr.filter(Boolean).map(String).map(x => x.trim()).filter(Boolean)
-            : [];
-        } catch {
-          // fall through to CSV parsing
-        }
+          return Array.isArray(arr) ? arr.filter(Boolean).map(String).map(x => x.trim()).filter(Boolean) : [];
+        } catch { /* fall through */ }
       }
-      // CSV fallback. Prefer custom '||' sep if present to avoid comma-in-text issues.
       const sep = s.includes('||') ? '||' : ',';
       return s.split(sep).map(x => x.replace(/^"|"$/g, '').trim()).filter(Boolean);
     }
-
-    // Some backends might return an object like { features_csv: "...", features: null }
     if (val && typeof val === 'object') {
       if (Array.isArray(val.features)) return normalizeFeatures(val.features);
       if (typeof val.features === 'string') return normalizeFeatures(val.features);
       if (typeof val.features_csv === 'string') return normalizeFeatures(val.features_csv);
     }
-
     return [];
   };
 
-  // Nice default copy if description is null
   const defaultDescription = (slug) => {
     if (slug === 'starter') return 'Everything you need to get started.';
     if (slug === 'professional') return 'Automation and growth tools for scaling teams.';
@@ -57,64 +44,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     return '';
   };
 
-  // Render a features list with a collapsible "Show more" when long
   const renderFeatures = (slug, rawFeatures, firstCount = 12) => {
     const features = normalizeFeatures(rawFeatures);
-
     if (!features.length) {
-      return {
-        html: `<ul class="text-sm text-gray-700 mb-6 space-y-2"><li class="text-gray-500">Feature list coming soon.</li></ul>`,
-        script: ''
-      };
+      return `<ul class="text-sm text-gray-700 mb-6 space-y-2"><li class="text-gray-500">Feature list coming soon.</li></ul>`;
     }
 
-    // Keep the original order! (No sorting)
     const idBase = `plan-${slug}-features`;
     const visible = features.slice(0, firstCount);
     const hidden = features.slice(firstCount);
 
     const li = (text) => `<li class="flex items-start gap-2"><span aria-hidden="true">✅</span><span>${text}</span></li>`;
-
     const listTop = visible.map(li).join('');
-    const hasHidden = hidden.length > 0;
-    const listHidden = hasHidden
+    const listHidden = hidden.length
       ? `<div id="${idBase}-more" class="hidden">${hidden.map(li).join('')}</div>`
       : '';
 
-    const toggle = hasHidden
-      ? `<button id="${idBase}-toggle" type="button" class="text-xs text-blue-600 hover:underline mt-2">
+    const toggle = hidden.length
+      ? `<button data-toggle="${idBase}" data-hidden-count="${hidden.length}" type="button" class="text-xs text-blue-600 hover:underline mt-2">
            Show ${hidden.length} more
          </button>`
       : '';
 
-    const html = `
+    return `
       <ul class="text-sm text-gray-700 mb-4 space-y-2" id="${idBase}">
         ${listTop}
         ${listHidden}
       </ul>
       ${toggle}
     `;
-
-    const script = hasHidden
-      ? `
-        (function(){
-          const btn = document.getElementById('${idBase}-toggle');
-          const more = document.getElementById('${idBase}-more');
-          if (!btn || !more) return;
-          let expanded = false;
-          btn.addEventListener('click', () => {
-            expanded = !expanded;
-            more.classList.toggle('hidden', !expanded);
-            btn.textContent = expanded ? 'Show less' : 'Show ${hidden.length} more';
-          });
-        })();
-      `
-      : '';
-
-    return { html, script };
   };
 
-  // Optional: small skeleton while loading
   const renderSkeleton = () => {
     const cards = Array.from({ length: 3 }).map(() => `
       <div class="bg-white rounded-lg shadow p-6 border animate-pulse">
@@ -144,7 +104,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Ensure consistent order (by price asc, fallback by name)
     const plans = [...rawPlans].sort((a, b) => {
       const pa = Number(a.price) || 0;
       const pb = Number(b.price) || 0;
@@ -152,12 +111,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       return String(a.name).localeCompare(String(b.name));
     });
 
-    container.innerHTML = ''; // clear skeleton
-
-    const pendingInlineScripts = [];
+    container.innerHTML = '';
 
     plans.forEach(plan => {
-      const { html: featuresHTML, script: inlineScript } = renderFeatures(plan.slug, plan.features);
+      const featuresHTML = renderFeatures(plan.slug, plan.features);
 
       const highlight =
         plan.slug === 'professional' ? 'ring-2 ring-green-500' :
@@ -192,17 +149,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
 
       container.appendChild(card);
-
-      if (inlineScript) pendingInlineScripts.push(inlineScript);
     });
 
-    // Run any per-card toggle scripts
-    if (pendingInlineScripts.length) {
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.textContent = pendingInlineScripts.join('\n');
-      document.body.appendChild(s);
-    }
+    // Event delegation for all toggles (no inline scripts, CSP-safe)
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-toggle]');
+      if (!btn) return;
+      const base = btn.getAttribute('data-toggle');
+      const moreEl = document.getElementById(`${base}-more`);
+      if (!moreEl) return;
+      const expanded = !moreEl.classList.contains('hidden');
+      moreEl.classList.toggle('hidden', expanded);
+      const hiddenCount = btn.getAttribute('data-hidden-count');
+      btn.textContent = expanded ? `Show ${hiddenCount} more` : 'Show less';
+    });
   } catch (err) {
     console.error('Failed to fetch plans:', err);
     container.innerHTML = `<p class="text-red-500">Failed to load pricing plans. Please try again later.</p>`;
